@@ -134,14 +134,17 @@ function applyAdvertise(game: GameState, action: CampaignAction, rng: Rng) {
     raw *= 0.9 + rng.next() * 0.2;
 
     if (mode === "contrast") {
-      // Negative ads push the bloc away from the opponent (toward you), but
-      // risk depressing turnout slightly (the "everyone's bad" effect).
-      addCause(game, bloc, state, `Contrast ads in ${state.abbr}`, favorSign(c) * raw * 0.9);
-      bloc.enthusiasm = Math.max(0.8, bloc.enthusiasm - 0.005);
+      // Negative ads move a bloc less than a positive buy and depress turnout
+      // (the "everyone's bad" effect) — a tactical tool with a real trade-off,
+      // not a strictly-better option.
+      addCause(game, bloc, state, `Contrast ads in ${state.abbr}`, favorSign(c) * raw * 0.6);
+      bloc.enthusiasm = Math.max(0.78, bloc.enthusiasm - 0.018);
     } else {
       addCause(game, bloc, state, `Positive ads in ${state.abbr}`, favorSign(c) * raw);
     }
   }
+  // Going negative dents your own media narrative.
+  if (mode === "contrast") res.mediaNarrative = clamp(res.mediaNarrative - 4, -100, 100);
 }
 
 // ── RALLY (candidate stop) ────────────────────────────────────────────────

@@ -124,17 +124,21 @@ export function queueEventsForTurn(game: GameState, rng: Rng) {
   };
 
   // Scheduled beats tied to the calendar.
-  const scheduledDeck = (game.eventMode ?? "historical") === "historical"
+  const historical = (game.eventMode ?? "historical") === "historical";
+  const scheduledDeck = historical
     ? HISTORICAL_EVENTS[game.scenarioId ?? "2020"] ?? HISTORICAL_EVENTS["2020"]
     : GENERIC_DEBATES;
   for (const event of scheduledDeck) {
-    if (event.trigger.kind === "scheduled" && event.trigger.turn === game.turn) {
-      queue(event);
-    }
+    if (event.trigger.kind !== "scheduled") continue;
+    // The opening week is event-free (no modal on load), so the turn-0 beat (the
+    // convention / the ticket switch) would be lost — surface it with week 2.
+    const due = event.trigger.turn === game.turn || (game.turn === 1 && event.trigger.turn === 0);
+    if (due) queue(event);
   }
 
-  // Stochastic draw — ~70% chance of a year-agnostic wildcard, gated by state.
-  if (rng.chance(0.7)) {
+  // Stochastic draw — a year-agnostic wildcard. In historical mode it's rare
+  // (occasional flavor); in plausible mode it's the main source of events.
+  if (rng.chance(historical ? 0.35 : 0.75)) {
     const pool = GENERIC_EVENTS.filter((e) => {
       if (e.trigger.kind !== "stochastic") return false;
       if (e.oncePerGame && (alreadyFired(game, e.id, "dem") || alreadyFired(game, e.id, "rep"))) return false;
