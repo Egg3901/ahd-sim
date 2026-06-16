@@ -137,11 +137,14 @@ export function queueEventsForTurn(game: GameState, rng: Rng) {
     if (due) queue(event);
   }
 
-  // Stochastic draw — a year-agnostic wildcard. In historical mode it's rare
-  // (occasional flavor); in plausible mode it's the main source of events.
+  // Stochastic draw. In historical mode it's a rare year-agnostic wildcard
+  // (occasional flavor). In plausible mode it's the main source of events AND
+  // the pool is scenario-specific: the year's real beats get shuffled into the
+  // generic pool and drawn at random times, so 2012's random mode pulls 2012
+  // events — never COVID — and differs from the scripted historical order.
   if (rng.chance(historical ? 0.35 : 0.75)) {
-    const pool = GENERIC_EVENTS.filter((e) => {
-      if (e.trigger.kind !== "stochastic") return false;
+    const scenarioBeats = historical ? [] : HISTORICAL_EVENTS[game.scenarioId ?? "2020"] ?? [];
+    const pool = [...GENERIC_EVENTS, ...scenarioBeats].filter((e) => {
       if (e.oncePerGame && (alreadyFired(game, e.id, "dem") || alreadyFired(game, e.id, "rep"))) return false;
       const g = e.gate;
       if (g?.minTurn !== undefined && game.turn < g.minTurn) return false;
@@ -149,9 +152,9 @@ export function queueEventsForTurn(game: GameState, rng: Rng) {
       return true;
     });
     if (pool.length > 0) {
-      const weights = pool.map((e) =>
-        e.trigger.kind === "stochastic" ? e.trigger.baseWeight : 0,
-      );
+      // Generic events keep their authored weight; scenario beats get a flat,
+      // slightly higher weight so the year's real moments surface.
+      const weights = pool.map((e) => (e.trigger.kind === "stochastic" ? e.trigger.baseWeight : 1.4));
       const picked = rng.weightedPick(pool, weights);
       queue(picked);
     }

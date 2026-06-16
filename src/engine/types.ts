@@ -232,7 +232,9 @@ export interface GameEvent {
   // Which candidate the event is "about" (whose choices we resolve). For
   // scripted shared events (debates) this is the viewing/player perspective;
   // the engine resolves the player's choice and lets the AI auto-pick.
-  subject: "player" | "opponent" | "both";
+  // Whose beat this is: a specific ticket (dem/rep, for scandals), "both"
+  // (debates), or the legacy perspective tags. Informational/flavor only.
+  subject: CandidateId | "both" | "player" | "opponent";
   trigger: EventTrigger;
   choices: EventChoice[];
   // Optional gating on game state for stochastic events.

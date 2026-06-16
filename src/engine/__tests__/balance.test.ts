@@ -42,8 +42,10 @@ describe("calibration: every scenario reproduces its historical winner", () => {
 
 // ── Sticky leans ───────────────────────────────────────────────────────────
 describe("leans are sticky: the AI can't flip deep-safe states", () => {
-  const DEEP_DEM = ["CA", "NY", "MA", "HI", "MD"];
-  const DEEP_REP = ["WY", "WV", "OK", "ID", "AR"];
+  // States that are deep-safe in EVERY scenario in the picker (2004/2000 compress
+  // the map, so CA/HI/MD aren't uniformly deep — these are).
+  const DEEP_DEM = ["DC", "MA", "VT", "RI", "NY"];
+  const DEEP_REP = ["WY", "ID", "OK", "UT"];
   for (const scenario of SCENARIO_IDS) {
     it(`${scenario}: deep states stay put vs a passive player (hard AI)`, () => {
       let g = beginGame(createGame({ scenario, playerCandidate: "dem", seed: `safe-${scenario}` }));

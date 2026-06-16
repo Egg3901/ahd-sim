@@ -7,7 +7,8 @@ export function IntelPanel() {
   const game = useGameStore((s) => s.game)!;
   const natl = nationalPoll(game);
   // Issues sorted by current national salience.
-  const issues = [...ISSUE_IDS].sort((a, b) => game.salience[b] - game.salience[a]);
+  // Only issues that are actually live this cycle (covid is ~0 before 2020).
+  const issues = [...ISSUE_IDS].filter((id) => game.salience[id] >= 0.08).sort((a, b) => game.salience[b] - game.salience[a]);
 
   const opp = game.playerCandidate === "dem" ? "rep" : "dem";
   const oppLocId = game.locations?.[opp];

@@ -21,7 +21,7 @@ describe("event modes", () => {
     expect(g.pendingEvents.map((p) => p.eventId)).toContain("h16_debate1");
   });
 
-  it("plausible mode never fires scenario-specific historical beats", () => {
+  it("plausible mode draws the scenario's own pool — never another year's beats", () => {
     let g = beginGame(createGame({ scenario: "2016", eventMode: "plausible", seed: "p16" }));
     const seen = new Set<string>();
     while (g.turn < 8 && g.phase !== "result") {
@@ -29,7 +29,9 @@ describe("event modes", () => {
       g = advanceTurn(g, [], "ff", { autoResolvePlayerEvents: false });
     }
     g.pendingEvents.forEach((p) => seen.add(p.eventId));
-    expect([...seen].some((id) => id.startsWith("h16_"))).toBe(false);
+    // No cross-year beats leak in (e.g. a 2020 COVID event in a 2016 game).
+    const crossYear = [...seen].filter((id) => /^h(20|24|12|08|04|00)_/.test(id));
+    expect(crossYear).toEqual([]);
   });
 
   it("default (no eventMode) is historical 2020 — the original beats still fire", () => {

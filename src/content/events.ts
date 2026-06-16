@@ -651,7 +651,7 @@ export const EVENTS: GameEvent[] = [
 // year's real beats (debates, COVID surge, SCOTUS vacancy, …), its stochastic
 // entries are year-agnostic campaign moments. We partition it accordingly and
 // add per-scenario historical decks + generic debates for the plausible mode.
-import { GENERIC_DEBATES, HIST_2020, HIST_2016, HIST_2024, HIST_2000, HIST_2012, HIST_2008 } from "./historicalEvents";
+import { GENERIC_DEBATES, HIST_2020, HIST_2016, HIST_2024, HIST_2000, HIST_2012, HIST_2008, HIST_2004 } from "./historicalEvents";
 
 // Year-agnostic random pool, drawn in both modes.
 export const GENERIC_EVENTS: GameEvent[] = EVENTS.filter((e) => e.trigger.kind === "stochastic");
@@ -665,9 +665,10 @@ export const HISTORICAL_EVENTS: Record<string, GameEvent[]> = {
   "2024": HIST_2024,
   "2012": HIST_2012,
   "2008": HIST_2008,
+  "2004": HIST_2004,
   "2000": HIST_2000,
 };
 
 export const EVENTS_BY_ID: Record<string, GameEvent> = Object.fromEntries(
-  [...EVENTS, ...GENERIC_DEBATES, ...HIST_2020, ...HIST_2016, ...HIST_2024, ...HIST_2012, ...HIST_2008, ...HIST_2000].map((e) => [e.id, e]),
+  [...EVENTS, ...GENERIC_DEBATES, ...HIST_2020, ...HIST_2016, ...HIST_2024, ...HIST_2012, ...HIST_2008, ...HIST_2004, ...HIST_2000].map((e) => [e.id, e]),
 );

@@ -39,6 +39,10 @@ export interface Scenario {
   evOverrides?: Record<string, number>;
   // Apportionment note shown in the UI.
   evNote?: string;
+  // National issue salience for this year (0..1), overriding the issue's base.
+  // Omitted issues fall back to content/issues baseSalience; this is how COVID
+  // stays out of 2012 and the Iraq war dominates 2004.
+  issueSalience?: Partial<Record<IssueId, number>>;
 }
 
 const DEM_BLUE = "#2563eb";
@@ -197,6 +201,36 @@ const VPS_2012_REP: RunningMate[] = [
     traitBonuses: { debatePrep: 6, policyKnowledge: 5 }, favorability: { noncollege_white: 0.06, seniors: 0.03 } },
 ];
 
+const VPS_2004_DEM: RunningMate[] = [
+  { id: "edwards04", name: "John Edwards", ticket: "dem", historical: true,
+    blurb: "Southern charmer — 'two Americas' populism and a sunny disposition.",
+    traitBonuses: { charisma: 8 }, favorability: { noncollege_white: 0.06, suburban_women: 0.04 } },
+  { id: "gephardt04", name: "Dick Gephardt", ticket: "dem",
+    blurb: "Labor's champion — locks down union households in the Rust Belt.",
+    traitBonuses: { debatePrep: 5, energy: 4 }, favorability: { noncollege_white: 0.08, seniors: 0.03 } },
+  { id: "vilsack04", name: "Tom Vilsack", ticket: "dem",
+    blurb: "Heartland governor — quiet appeal in the farm-belt battlegrounds.",
+    traitBonuses: { energy: 4, debatePrep: 4 }, favorability: { noncollege_white: 0.06, seniors: 0.04 } },
+  { id: "clark04", name: "Wesley Clark", ticket: "dem",
+    blurb: "Four-star general — credibility on security and the war.",
+    traitBonuses: { debatePrep: 6, intelligence: 5 }, favorability: { seniors: 0.05, suburban_women: 0.03 } },
+];
+
+const VPS_2004_REP: RunningMate[] = [
+  { id: "cheney04", name: "Dick Cheney", ticket: "rep", historical: true,
+    blurb: "Wartime gravitas — the steady, hawkish hand of the incumbency.",
+    traitBonuses: { debatePrep: 7, policyKnowledge: 6 }, favorability: { seniors: 0.06, noncollege_white: 0.04 } },
+  { id: "mccain04", name: "John McCain", ticket: "rep",
+    blurb: "Maverick veteran — independents and suburban crossover appeal.",
+    traitBonuses: { charisma: 6, debatingSkill: 5 }, favorability: { suburban_women: 0.05, seniors: 0.05 }, cashBonus: 8_000_000 },
+  { id: "giuliani04", name: "Rudy Giuliani", ticket: "rep",
+    blurb: "America's Mayor — 9/11 security credibility in the suburbs.",
+    traitBonuses: { charisma: 6, debatingSkill: 4 }, favorability: { suburban_women: 0.05, noncollege_white: 0.04 } },
+  { id: "frist04", name: "Bill Frist", ticket: "rep",
+    blurb: "Doctor-senator — a softer, values-and-healthcare emphasis.",
+    traitBonuses: { policyKnowledge: 6, debatePrep: 4 }, favorability: { seniors: 0.06 } },
+];
+
 // ─────────────────────────────────────────────────────────────────────────
 // Per-state two-party Democratic share (historical, ~1pt). States omitted from
 // a map fall back to the 2020 default baked into content/states.ts.
@@ -257,6 +291,16 @@ const PRIORS_2008: Record<string, number> = {
   PA: 0.547, RI: 0.640, SC: 0.450, SD: 0.448, TN: 0.418, TX: 0.438, UT: 0.345, VT: 0.674, VA: 0.527,
   WA: 0.575, WV: 0.430, WI: 0.564, WY: 0.327,
   "ME-1": 0.600, "ME-2": 0.550, "ME-AL": 0.578, "NE-1": 0.450, "NE-2": 0.500, "NE-3": 0.340, "NE-AL": 0.420,
+};
+
+const PRIORS_2004: Record<string, number> = {
+  AL: 0.367, AK: 0.360, AZ: 0.443, AR: 0.448, CA: 0.546, CO: 0.471, CT: 0.544, DE: 0.535, DC: 0.900,
+  FL: 0.472, GA: 0.413, HI: 0.540, ID: 0.300, IL: 0.547, IN: 0.390, IA: 0.497, KS: 0.360, KY: 0.400,
+  LA: 0.420, MD: 0.560, MA: 0.620, MI: 0.512, MN: 0.512, MS: 0.400, MO: 0.464, MT: 0.390, NV: 0.483,
+  NH: 0.504, NJ: 0.535, NM: 0.495, NY: 0.585, NC: 0.435, ND: 0.360, OH: 0.487, OK: 0.340, OR: 0.516,
+  PA: 0.512, RI: 0.595, SC: 0.410, SD: 0.385, TN: 0.430, TX: 0.385, UT: 0.265, VT: 0.595, VA: 0.455,
+  WA: 0.531, WV: 0.435, WI: 0.503, WY: 0.290,
+  "ME-1": 0.560, "ME-2": 0.520, "ME-AL": 0.540, "NE-1": 0.330, "NE-2": 0.380, "NE-3": 0.260, "NE-AL": 0.330,
 };
 
 // 2008 used the 2000-census apportionment. Net change is zero (still 538) — the
@@ -360,11 +404,36 @@ const MCCAIN_2008: ScenarioTicket = {
   runningMates: VPS_2008_REP,
 };
 
+const KERRY: ScenarioTicket = {
+  name: "John Kerry", shortName: "Kerry", party: "Democratic", color: DEM_BLUE,
+  traits: { charisma: 52, energy: 60, debatePrep: 82, intelligence: 80, policyKnowledge: 80, debatingSkill: 78, fundraisingProwess: 76 },
+  issuePositions: { economy: -0.2, covid_response: 0, healthcare: -0.45, immigration: -0.25, race_policing: -0.25, climate: -0.4, taxes: -0.25, law_and_order: -0.05, abortion: -0.5, trade: -0.05 },
+  baseFavorability: { college_white: 0.12, seniors: 0.08, black: 0.30, suburban_women: 0.10 },
+  runningMates: VPS_2004_DEM,
+};
+
+const BUSH_2004: ScenarioTicket = {
+  name: "George W. Bush", shortName: "Bush", party: "Republican", color: GOP_RED,
+  traits: { charisma: 64, energy: 64, debatePrep: 56, intelligence: 52, policyKnowledge: 56, debatingSkill: 58, fundraisingProwess: 84 },
+  issuePositions: { economy: 0.45, covid_response: 0, healthcare: 0.35, immigration: 0.3, race_policing: 0.4, climate: 0.5, taxes: 0.6, law_and_order: 0.6, abortion: 0.5, trade: 0.25 },
+  baseFavorability: { noncollege_white: 0.24, seniors: 0.10, suburban_women: 0.06 },
+  runningMates: VPS_2004_REP,
+};
+
+// Per-year national issue salience (0..1). covid_response is zeroed out before
+// 2020 (and lingers low in 2024); each year leads with its own concerns.
+const SAL_2024: Partial<Record<IssueId, number>> = { economy: 0.90, immigration: 0.78, abortion: 0.72, law_and_order: 0.55, healthcare: 0.55, taxes: 0.50, climate: 0.45, race_policing: 0.45, trade: 0.40, covid_response: 0.10 };
+const SAL_2016: Partial<Record<IssueId, number>> = { economy: 0.80, immigration: 0.70, trade: 0.65, law_and_order: 0.55, healthcare: 0.55, taxes: 0.50, race_policing: 0.45, abortion: 0.45, climate: 0.35, covid_response: 0 };
+const SAL_2012: Partial<Record<IssueId, number>> = { economy: 0.92, healthcare: 0.75, taxes: 0.65, immigration: 0.45, trade: 0.45, abortion: 0.45, climate: 0.40, law_and_order: 0.35, race_policing: 0.35, covid_response: 0 };
+const SAL_2008: Partial<Record<IssueId, number>> = { economy: 0.95, healthcare: 0.65, law_and_order: 0.60, taxes: 0.55, immigration: 0.50, trade: 0.50, climate: 0.45, abortion: 0.45, race_policing: 0.40, covid_response: 0 };
+const SAL_2004: Partial<Record<IssueId, number>> = { law_and_order: 0.85, economy: 0.70, taxes: 0.60, abortion: 0.55, healthcare: 0.55, immigration: 0.45, trade: 0.45, race_policing: 0.35, climate: 0.30, covid_response: 0 };
+const SAL_2000: Partial<Record<IssueId, number>> = { economy: 0.75, healthcare: 0.70, taxes: 0.65, abortion: 0.55, law_and_order: 0.45, trade: 0.45, race_policing: 0.40, immigration: 0.40, climate: 0.35, covid_response: 0 };
+
 export const SCENARIOS: Record<string, Scenario> = {
   "2024": {
     id: "2024", year: 2024, label: "2024 · Harris v. Trump",
     tagline: "Labor Day, 2024. A late switch at the top of the ticket, the Sun Belt and the Blue Wall both in play. Ninety days to find 270.",
-    dem: HARRIS, rep: TRUMP_2024, statePriors: PRIORS_2024, evOverrides: EV_2024, evNote: "2020-census apportionment",
+    dem: HARRIS, rep: TRUMP_2024, statePriors: PRIORS_2024, evOverrides: EV_2024, evNote: "2020-census apportionment", issueSalience: SAL_2024,
   },
   "2020": {
     id: "2020", year: 2020, label: "2020 · Biden v. Trump",
@@ -374,27 +443,32 @@ export const SCENARIOS: Record<string, Scenario> = {
   "2016": {
     id: "2016", year: 2016, label: "2016 · Clinton v. Trump",
     tagline: "September, 2016. The map looks settled and the blue wall looks safe — but the Rust Belt is restless. Don't be the one who let it crack.",
-    dem: CLINTON, rep: TRUMP_2016, statePriors: PRIORS_2016, evNote: "2010-census apportionment",
+    dem: CLINTON, rep: TRUMP_2016, statePriors: PRIORS_2016, evNote: "2010-census apportionment", issueSalience: SAL_2016
   },
   "2012": {
     id: "2012", year: 2012, label: "2012 · Obama v. Romney",
     tagline: "Fall, 2012. A slow recovery, a re-election fight, and a turnout war in the swing states. Defend the coalition that made history.",
-    dem: OBAMA_2012, rep: ROMNEY_2012, statePriors: PRIORS_2012, evNote: "2010-census apportionment",
+    dem: OBAMA_2012, rep: ROMNEY_2012, statePriors: PRIORS_2012, evNote: "2010-census apportionment", issueSalience: SAL_2012
   },
   "2008": {
     id: "2008", year: 2008, label: "2008 · Obama v. McCain",
     tagline: "Fall, 2008. An open seat, two wars, and a financial system in free fall. Change is in the air — if your coalition turns out.",
-    dem: OBAMA_2008, rep: MCCAIN_2008, statePriors: PRIORS_2008, evOverrides: EV_2008, evNote: "2000-census apportionment",
+    dem: OBAMA_2008, rep: MCCAIN_2008, statePriors: PRIORS_2008, evOverrides: EV_2008, evNote: "2000-census apportionment", issueSalience: SAL_2008
+  },
+  "2004": {
+    id: "2004", year: 2004, label: "2004 · Bush v. Kerry",
+    tagline: "Fall, 2004. A wartime incumbent, a decorated challenger, and a country split down the middle. It runs through Ohio.",
+    dem: KERRY, rep: BUSH_2004, statePriors: PRIORS_2004, evOverrides: EV_2008, evNote: "2000-census apportionment", issueSalience: SAL_2004
   },
   "2000": {
     id: "2000", year: 2000, label: "2000 · Gore v. Bush",
     tagline: "Fall, 2000. Peace, prosperity, and a knife's-edge electorate. Every state matters — and a recount is waiting to happen.",
-    dem: GORE, rep: BUSH, statePriors: PRIORS_2000, evNote: "modern (2010-census) map",
+    dem: GORE, rep: BUSH, statePriors: PRIORS_2000, evNote: "modern (2010-census) map", issueSalience: SAL_2000
   },
 };
 
 // Display order for the picker (newest first feels current; keep 2020 prominent).
-export const SCENARIO_IDS = ["2024", "2020", "2016", "2012", "2008", "2000"] as const;
+export const SCENARIO_IDS = ["2024", "2020", "2016", "2012", "2008", "2004", "2000"] as const;
 
 export function getScenario(id?: string): Scenario {
   return (id && SCENARIOS[id]) || SCENARIOS["2020"];

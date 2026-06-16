@@ -185,12 +185,14 @@ export function createGame(opts: NewGameOptions = {}): GameState {
     ? hashStr(seedInput)
     : seedInput >>> 0;
 
-  const salience = {} as GameState["salience"];
-  for (const id of ISSUE_IDS) salience[id] = ISSUES[id].baseSalience;
-
   // Pick the scenario, build the two slot tickets, and resolve running mates:
   // the player's chosen pick, the AI's historical default.
   const scenario: Scenario = getScenario(opts.scenario);
+
+  // National issue salience — the scenario's year-specific values where given
+  // (so COVID isn't an issue in 2012), otherwise the issue's base salience.
+  const salience = {} as GameState["salience"];
+  for (const id of ISSUE_IDS) salience[id] = scenario.issueSalience?.[id] ?? ISSUES[id].baseSalience;
   const player = opts.playerCandidate ?? "dem";
   const tickets: Record<CandidateId, ScenarioTicket> = { dem: scenario.dem, rep: scenario.rep };
   const candidates: Record<CandidateId, Candidate> = {
