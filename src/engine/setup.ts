@@ -12,8 +12,9 @@ import type {
 import { BLOCS, BLOC_IDS, logit } from "@content/blocs";
 import { STATE_SEEDS, type StateSeed } from "@content/states";
 import { ISSUES, ISSUE_IDS } from "@content/issues";
-import { CANDIDATES, OPPONENT_OF } from "@content/candidates";
+import { OPPONENT_OF } from "@content/candidates";
 import { resolveRunningMate, defaultRunningMate } from "@content/runningMates";
+import { getScenario, type Scenario, type ScenarioTicket } from "@content/scenarios";
 
 export function sigmoid(x: number): number {
   return 1 / (1 + Math.exp(-x));
@@ -45,7 +46,7 @@ function solveStateShift(
   return (lo + hi) / 2;
 }
 
-function buildBlocsForState(seed: StateSeed): StateBloc[] {
+function buildBlocsForState(seed: StateSeed, targetDemShare: number): StateBloc[] {
   // Normalize the (national share × profile multiplier) into shares summing to 1.
   const raw = BLOC_IDS.map((id) => {
     const mult = seed.profile?.[id] ?? 1;
@@ -66,7 +67,7 @@ function buildBlocsForState(seed: StateSeed): StateBloc[] {
 
   const shift = solveStateShift(
     prelim.map((p) => ({ size: p.size, turnout: p.turnout, nationalLogit: p.nationalLogit })),
-    seed.prior2020DemShare,
+    targetDemShare,
   );
 
   return prelim.map((p) => {
@@ -84,19 +85,27 @@ function buildBlocsForState(seed: StateSeed): StateBloc[] {
   });
 }
 
-export function buildStates(): StateContest[] {
+// Build the contest list. A scenario supplies per-state two-party Dem priors
+// (falling back to the 2020 default) and electoral-vote overrides for its
+// cycle's apportionment.
+export function buildStates(
+  priors?: Record<string, number>,
+  evOverrides?: Record<string, number>,
+): StateContest[] {
   return STATE_SEEDS.map((seed) => {
     const isAggregate = (seed.electorate ?? 0) <= 0 && seed.aggregateOf;
+    const demShare = priors?.[seed.id] ?? seed.prior2020DemShare;
+    const ev = evOverrides?.[seed.id] ?? seed.ev;
     return {
       id: seed.id,
       name: seed.name,
       abbr: seed.abbr,
-      electoralVotes: seed.ev,
+      electoralVotes: ev,
       region: seed.region,
-      prior2020DemShare: seed.prior2020DemShare,
+      prior2020DemShare: demShare,
       mediaMarketCost: seed.mediaCost,
       battleground: seed.battleground,
-      blocs: isAggregate ? [] : buildBlocsForState(seed),
+      blocs: isAggregate ? [] : buildBlocsForState(seed, demShare),
       groundGame: { dem: 0, rep: 0 },
       momentum: 0,
       aggregateOf: seed.aggregateOf,
@@ -104,11 +113,10 @@ export function buildStates(): StateContest[] {
   });
 }
 
-function startingResources(candidate: CandidateId, vp: RunningMate): Resources {
-  const energy = CANDIDATES[candidate].traits.energy;
-  const maxDays = Math.round(3 + energy / 25) + (vp.candidateDayBonus ?? 0); // ~5–6 candidate-days/week
+function startingResources(candidate: CandidateId, vp: RunningMate, baseEnergy: number): Resources {
+  const maxDays = Math.round(3 + baseEnergy / 25) + (vp.candidateDayBonus ?? 0); // ~5–6 candidate-days/week
   return {
-    // Both campaigns enter the fall flush; Biden held a real cash edge. A
+    // The Democratic ticket enters with a cash edge (true of 2020/2016/2024). A
     // fundraiser VP adds a one-time war-chest bump.
     cash: (candidate === "dem" ? 220_000_000 : 180_000_000) + (vp.cashBonus ?? 0),
     candidateDays: maxDays,
@@ -137,6 +145,22 @@ function applyRunningMate(cand: Candidate, vp: RunningMate) {
   }
 }
 
+// Build a slot candidate from a scenario ticket. The default (historical) VP
+// name is set here; applyRunningMate may overwrite it with the player's pick.
+function buildCandidate(slot: CandidateId, t: ScenarioTicket): Candidate {
+  return {
+    id: slot,
+    name: t.name,
+    shortName: t.shortName,
+    party: t.party,
+    color: t.color,
+    runningMate: defaultRunningMate(t.runningMates).name,
+    traits: { ...t.traits },
+    issuePositions: { ...t.issuePositions },
+    baseFavorability: { ...t.baseFavorability },
+  };
+}
+
 export interface NewGameOptions {
   seed?: number | string;
   playerCandidate?: CandidateId;
@@ -144,6 +168,8 @@ export interface NewGameOptions {
   granularity?: "week" | "day";
   // Chosen running mate id for the player's ticket (see content/runningMates).
   runningMate?: string;
+  // Election scenario id (see content/scenarios); defaults to "2020".
+  scenario?: string;
 }
 
 // Builds a fresh, fully-initialized game state. Deterministic given the seed.
@@ -156,16 +182,21 @@ export function createGame(opts: NewGameOptions = {}): GameState {
   const salience = {} as GameState["salience"];
   for (const id of ISSUE_IDS) salience[id] = ISSUES[id].baseSalience;
 
-  // Resolve running mates: the player's chosen pick, the AI's historical default.
+  // Pick the scenario, build the two slot tickets, and resolve running mates:
+  // the player's chosen pick, the AI's historical default.
+  const scenario: Scenario = getScenario(opts.scenario);
   const player = opts.playerCandidate ?? "dem";
-  const opponent = OPPONENT_OF[player];
-  const candidates = structuredClone(CANDIDATES);
+  const tickets: Record<CandidateId, ScenarioTicket> = { dem: scenario.dem, rep: scenario.rep };
+  const candidates: Record<CandidateId, Candidate> = {
+    dem: buildCandidate("dem", scenario.dem),
+    rep: buildCandidate("rep", scenario.rep),
+  };
   const vps = {
-    [player]: resolveRunningMate(player, opts.runningMate),
-    [opponent]: defaultRunningMate(opponent),
+    [player]: resolveRunningMate(tickets[player].runningMates, opts.runningMate),
+    [OPPONENT_OF[player]]: defaultRunningMate(tickets[OPPONENT_OF[player]].runningMates),
   } as Record<CandidateId, RunningMate>;
-  applyRunningMate(candidates[player], vps[player]);
-  applyRunningMate(candidates[opponent], vps[opponent]);
+  applyRunningMate(candidates.dem, vps.dem);
+  applyRunningMate(candidates.rep, vps.rep);
 
   return {
     seed,
@@ -175,13 +206,14 @@ export function createGame(opts: NewGameOptions = {}): GameState {
     granularity: opts.granularity ?? "week",
     phase: "intel",
     playerCandidate: player,
+    scenarioId: scenario.id,
     candidates,
     issues: structuredClone(ISSUES),
     salience,
-    states: buildStates(),
+    states: buildStates(scenario.statePriors, scenario.evOverrides),
     resources: {
-      dem: startingResources("dem", vps.dem),
-      rep: startingResources("rep", vps.rep),
+      dem: startingResources("dem", vps.dem, scenario.dem.traits.energy),
+      rep: startingResources("rep", vps.rep, scenario.rep.traits.energy),
     },
     pendingEvents: [],
     firedEventIds: [],

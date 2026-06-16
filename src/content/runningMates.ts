@@ -102,15 +102,14 @@ export const RUNNING_MATES: Record<CandidateId, RunningMate[]> = {
   ],
 };
 
-// The default (historical) VP for a ticket — used when the player hasn't chosen
+// The default (historical) VP in a roster — used when the player hasn't chosen
 // and for the AI opponent.
-export function defaultRunningMate(ticket: CandidateId): RunningMate {
-  const list = RUNNING_MATES[ticket];
-  return list.find((m) => m.historical) ?? list[0];
+export function defaultRunningMate(roster: RunningMate[]): RunningMate {
+  return roster.find((m) => m.historical) ?? roster[0];
 }
 
-// Resolve a chosen VP id to its record, falling back to the historical default.
-export function resolveRunningMate(ticket: CandidateId, id?: string): RunningMate {
-  if (!id) return defaultRunningMate(ticket);
-  return RUNNING_MATES[ticket].find((m) => m.id === id) ?? defaultRunningMate(ticket);
+// Resolve a chosen VP id within a roster, falling back to the historical default.
+export function resolveRunningMate(roster: RunningMate[], id?: string): RunningMate {
+  if (!id) return defaultRunningMate(roster);
+  return roster.find((m) => m.id === id) ?? defaultRunningMate(roster);
 }

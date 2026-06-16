@@ -269,6 +269,8 @@ export interface GameState {
   granularity: "week" | "day";
   phase: GamePhase;
   playerCandidate: CandidateId;
+  // Election scenario id (see content/scenarios); absent on pre-scenario saves.
+  scenarioId?: string;
   candidates: Record<CandidateId, Candidate>;
   issues: Record<IssueId, Issue>;
   // Live national salience, starts from issue.baseSalience, shifts via events.

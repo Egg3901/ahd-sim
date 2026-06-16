@@ -1,6 +1,5 @@
 import { useGameStore } from "@store/gameStore";
 import { GRID, SPLIT_UNITS, GRID_COLS, GRID_ROWS } from "@content/mapLayout";
-import { CANDIDATES } from "@content/candidates";
 import { shareToColor } from "./colors";
 import { money, pct } from "./format";
 
@@ -9,9 +8,12 @@ export function ResultsScreen() {
   const newGame = useGameStore((s) => s.newGame);
   const result = game.result!;
   const byState = new Map(result.stateResults.map((s) => [s.stateId, s]));
+  const cands = game.candidates;
+  const dem = cands.dem.shortName;
+  const rep = cands.rep.shortName;
 
   const winnerName =
-    result.winner === "tie" ? "No one — 269–269" : CANDIDATES[result.winner].name;
+    result.winner === "tie" ? "No one — 269–269" : cands[result.winner].name;
   const playerWon = result.winner === game.playerCandidate;
 
   const tile = (id: string, size?: number) => {
@@ -19,7 +21,7 @@ export function ResultsScreen() {
     const st = game.states.find((s) => s.id === id);
     if (!sr || !st) return null;
     return (
-      <div className="tile" key={id} style={{ background: shareToColor(sr.demShare), width: size }} title={`${st.name}: ${sr.winner === "dem" ? "Biden" : "Trump"} +${sr.margin.toFixed(1)}`}>
+      <div className="tile" key={id} style={{ background: shareToColor(sr.demShare), width: size }} title={`${st.name}: ${sr.winner === "dem" ? dem : rep} +${sr.margin.toFixed(1)}`}>
         <span>{st.abbr}</span>
         <span className="ev">{st.electoralVotes}</span>
       </div>
@@ -31,15 +33,15 @@ export function ResultsScreen() {
       <div className="results scroll">
         <div className="bigresult">
           <div className="tag muted small">{result.winner === "tie" ? "CONTINGENT ELECTION" : "PROJECTED WINNER"}</div>
-          <div className="who" style={{ color: result.winner === "tie" ? "var(--gold)" : CANDIDATES[result.winner].color }}>
+          <div className="who" style={{ color: result.winner === "tie" ? "var(--gold)" : cands[result.winner].color }}>
             {winnerName}
           </div>
           {result.winner !== "tie" && (
-            <div className="ev" style={{ color: CANDIDATES[result.winner].color }}>{result.electoralVotes[result.winner]}</div>
+            <div className="ev" style={{ color: cands[result.winner].color }}>{result.electoralVotes[result.winner]}</div>
           )}
           <div className="muted">
-            Biden {result.electoralVotes.dem} — Trump {result.electoralVotes.rep} ·
-            Popular vote: Biden {pct(result.popularShare.dem)} ({money(result.popularVote.dem)} votes)
+            {dem} {result.electoralVotes.dem} — {rep} {result.electoralVotes.rep} ·
+            Popular vote: {dem} {pct(result.popularShare.dem)} ({money(result.popularVote.dem)} votes)
           </div>
           {result.winner === "tie" ? (
             <p className="muted small" style={{ marginTop: 8 }}>

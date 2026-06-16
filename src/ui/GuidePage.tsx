@@ -231,7 +231,7 @@ export function GuidePage({ onClose }: { onClose: () => void }) {
             <div className="guide-section">
               <h3>Polls & Margin</h3>
               <p className="guide-text">
-                Polls show Biden's two-party share in each state. The margin is Biden − Trump. Positive = Biden leads. The model uses a logit transform: small changes near 50% matter more than changes at the extremes.
+                Polls show the Democrat's two-party share in each state. The margin is Democrat − Republican. Positive = the Democrat leads. The model uses a logit transform: small changes near 50% matter more than changes at the extremes.
               </p>
               <h3>Electoral Votes</h3>
               <p className="guide-text">

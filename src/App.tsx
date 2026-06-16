@@ -11,7 +11,6 @@ import { RecapModal } from "@ui/RecapModal";
 import { EvBar } from "@ui/EvBar";
 import { GuidePage } from "@ui/GuidePage";
 import { CandidateScreen } from "@ui/CandidateScreen";
-import { CANDIDATES } from "@content/candidates";
 import { money, turnLabel } from "@ui/format";
 import { Vote } from "lucide-react";
 
@@ -70,7 +69,7 @@ function GameScreen() {
 
   const player = game.playerCandidate;
   const res = game.resources[player];
-  const cand = CANDIDATES[player];
+  const cand = game.candidates[player];
   const hasPendingEvent = game.pendingEvents.some((p) => p.forCandidate === player);
 
   const handleEndTurn = () => {
@@ -117,7 +116,7 @@ function GameScreen() {
       {recapOpen && <RecapModal onClose={() => setRecapOpen(false)} />}
       {!recapOpen && hasPendingEvent && <EventModal />}
       {guideOpen && <GuidePage onClose={() => setGuideOpen(false)} />}
-      {candOpen && <CandidateScreen onClose={() => setCandOpen(false)} />}
+      {candOpen && <CandidateScreen scenarioId={game.scenarioId} onClose={() => setCandOpen(false)} />}
     </div>
   );
 }

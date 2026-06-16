@@ -52,7 +52,7 @@ function buildRecap(game: GameState, turn: number, evBefore: number): TurnRecapI
   const evAfter = projectElection(game).ev.dem;
   recap.unshift({
     label: "Projected electoral votes",
-    detail: `Biden ${evAfter} (was ${evBefore})`,
+    detail: `${game.candidates.dem.shortName} ${evAfter} (was ${evBefore})`,
     marginDelta: evAfter - evBefore,
   });
   return recap.slice(0, 12);

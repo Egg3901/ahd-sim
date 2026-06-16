@@ -70,8 +70,8 @@ export function ActionPanel() {
   const evPreview = preview?.ev.dem ?? 0;
   const evLive = live?.ev.dem ?? 0;
   const evDelta = evPreview - evLive;
-  const playerIsBiden = player === "dem";
-  const myDelta = playerIsBiden ? evDelta : -evDelta;
+  const playerIsDem = player === "dem";
+  const myDelta = playerIsDem ? evDelta : -evDelta;
 
   return (
     <div className="card">
@@ -175,7 +175,7 @@ export function ActionPanel() {
 
       {preview && (
         <div className="preview">
-          Projected with this plan: Biden {evPreview} EV
+          Projected with this plan: {game.candidates.dem.shortName} {evPreview} EV
           {myDelta !== 0 && <strong>{` (${myDelta > 0 ? "+" : ""}${myDelta} for you)`}</strong>}
         </div>
       )}

@@ -98,9 +98,9 @@ export function USMap() {
           })}
         </svg>
         <div className="legend">
-          <span>Trump</span>
+          <span>{game.candidates.rep.shortName}</span>
           <span className="bar" />
-          <span>Biden</span>
+          <span>{game.candidates.dem.shortName}</span>
           <span style={{ marginLeft: 12 }}>◻ gold outline = battleground</span>
         </div>
       </div>
@@ -144,9 +144,9 @@ export function USMap() {
       </div>
 
       <div className="legend">
-        <span>Trump</span>
+        <span>{game.candidates.rep.shortName}</span>
         <span className="bar" />
-        <span>Biden</span>
+        <span>{game.candidates.dem.shortName}</span>
         <span style={{ marginLeft: 12 }}>◻ gold outline = battleground</span>
       </div>
     </div>

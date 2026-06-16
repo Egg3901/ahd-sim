@@ -1,42 +1,79 @@
 import { useState } from "react";
 import { useGameStore, type Difficulty } from "@store/gameStore";
-import { CANDIDATES } from "@content/candidates";
-import { RUNNING_MATES, defaultRunningMate } from "@content/runningMates";
+import { SCENARIOS, SCENARIO_IDS } from "@content/scenarios";
+import { defaultRunningMate } from "@content/runningMates";
 import { GuidePage } from "@ui/GuidePage";
 import { CandidateScreen } from "@ui/CandidateScreen";
 import { mateBonusChips } from "@ui/labels";
+import { Avatar } from "@ui/Avatar";
 import type { CandidateId } from "@engine/index";
 import { Vote } from "lucide-react";
 
 export function SetupScreen() {
   const newGame = useGameStore((s) => s.newGame);
+  const [scenarioId, setScenarioId] = useState<string>("2024");
   const [pick, setPick] = useState<CandidateId>("dem");
-  const [mate, setMate] = useState<string>(defaultRunningMate("dem").id);
+  const scenario = SCENARIOS[scenarioId];
+  const ticket = pick === "dem" ? scenario.dem : scenario.rep;
+  const [mate, setMate] = useState<string>(defaultRunningMate(scenario.dem.runningMates).id);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
-  const [seed, setSeed] = useState<string>("2020");
+  const [seed, setSeed] = useState<string>("1789");
   const [guideOpen, setGuideOpen] = useState(false);
   const [candOpen, setCandOpen] = useState(false);
 
-  // Switching the top of the ticket resets the VP to that side's default.
-  const choosePick = (id: CandidateId) => { setPick(id); setMate(defaultRunningMate(id).id); };
-  const roster = RUNNING_MATES[pick];
+  const chooseScenario = (id: string) => {
+    setScenarioId(id);
+    setPick("dem");
+    setMate(defaultRunningMate(SCENARIOS[id].dem.runningMates).id);
+  };
+  const choosePick = (id: CandidateId) => {
+    setPick(id);
+    const t = id === "dem" ? scenario.dem : scenario.rep;
+    setMate(defaultRunningMate(t.runningMates).id);
+  };
+  const roster = ticket.runningMates;
   const selectedMate = roster.find((m) => m.id === mate) ?? roster[0];
 
   return (
     <div className="center">
       <div className="setup">
-        <div className="setup-eyebrow"><span className="mark"><Vote size={18} /></span>CAMPAIGN 2020</div>
+        <div className="setup-eyebrow"><span className="mark"><Vote size={18} /></span>PRESIDENTIAL CAMPAIGN</div>
         <div className="title">A House Divided</div>
-        <p className="sub">September 1st. Sixty-three days to Election Day. You are the campaign manager. Read the map, spend what you have, answer the moments that matter, and get to 270.</p>
+        <p className="sub">{scenario.tagline}</p>
+
+        <div className="field" style={{ textAlign: "left" }}>
+          <label>Election</label>
+          <div className="scenario-grid">
+            {SCENARIO_IDS.map((id) => {
+              const s = SCENARIOS[id];
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  className={`scenario-card${scenarioId === id ? " sel" : ""}`}
+                  onClick={() => chooseScenario(id)}
+                >
+                  <span className="scenario-year">{s.year}</span>
+                  <span className="scenario-match">{s.dem.shortName} v. {s.rep.shortName}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         <div className="pick">
-          {(Object.keys(CANDIDATES) as CandidateId[]).map((id) => {
-            const c = CANDIDATES[id];
+          {(["dem", "rep"] as CandidateId[]).map((id) => {
+            const c = id === "dem" ? scenario.dem : scenario.rep;
             const selClass = pick === id ? (id === "dem" ? " sel-d" : " sel-r") : "";
             return (
               <div key={id} className={`candcard${selClass}`} onClick={() => choosePick(id)} style={{ cursor: "pointer" }}>
-                <div className="nm" style={{ color: c.color }}>{c.name}</div>
-                <div className="rm">{c.party}</div>
+                <div className="row" style={{ gap: 10 }}>
+                  <Avatar name={c.name} color={c.color} size={40} />
+                  <div>
+                    <div className="nm" style={{ color: c.color }}>{c.name}</div>
+                    <div className="rm">{c.party}</div>
+                  </div>
+                </div>
               </div>
             );
           })}
@@ -53,7 +90,7 @@ export function SetupScreen() {
                 onClick={() => setMate(m.id)}
               >
                 <span className="vp-name">{m.name}</span>
-                {m.historical && <span className="vp-star" title="Historical 2020 pick">★</span>}
+                {m.historical && <span className="vp-star" title="Historical pick">★</span>}
               </button>
             ))}
           </div>
@@ -84,14 +121,14 @@ export function SetupScreen() {
           <button className="ghost" onClick={() => setCandOpen(true)}>Candidates</button>
           <button
             className="primary begin"
-            onClick={() => newGame({ seed, playerCandidate: pick, difficulty, runningMate: mate })}
+            onClick={() => newGame({ seed, scenario: scenarioId, playerCandidate: pick, difficulty, runningMate: mate })}
           >
-            Begin Campaign as {CANDIDATES[pick].shortName} →
+            Begin {scenario.year} as {ticket.shortName} →
           </button>
         </div>
       </div>
       {guideOpen && <GuidePage onClose={() => setGuideOpen(false)} />}
-      {candOpen && <CandidateScreen onClose={() => setCandOpen(false)} />}
+      {candOpen && <CandidateScreen scenarioId={scenarioId} onClose={() => setCandOpen(false)} />}
     </div>
   );
 }

@@ -30,6 +30,8 @@ export function StatePanel() {
 
   const tally = tallyContest(st);
   const player = game.playerCandidate;
+  const dem = game.candidates.dem.shortName;
+  const rep = game.candidates.rep.shortName;
   const polls = pollState(game, st.id);
   const avg = pollAverage(game, st.id);
 
@@ -37,8 +39,8 @@ export function StatePanel() {
     <div className="card scroll">
       <h3>{st.name} — {st.electoralVotes} EV</h3>
       <div className="kv"><span className="k">Lean (true model)</span><span style={{ color: shareToColor(tally.demShare) }}>{leanLabel(tally.demShare)}</span></div>
-      <div className="kv"><span className="k">Biden / Trump</span><span>{pct(tally.demShare)} / {pct(1 - tally.demShare)}</span></div>
-      {avg !== null && <div className="kv"><span className="k">Poll average</span><span>Biden {pct(avg)}</span></div>}
+      <div className="kv"><span className="k">{dem} / {rep}</span><span>{pct(tally.demShare)} / {pct(1 - tally.demShare)}</span></div>
+      {avg !== null && <div className="kv"><span className="k">Poll average</span><span>{dem} {pct(avg)}</span></div>}
       <div className="kv"><span className="k">Your ground game</span><span>{pct(st.groundGame[player], 0)}</span></div>
       <div className="kv"><span className="k">Momentum (D−R)</span><span>{st.momentum >= 0 ? "+" : ""}{st.momentum.toFixed(0)}</span></div>
 
@@ -55,7 +57,7 @@ export function StatePanel() {
               <div className="r" style={{ width: `${(1 - d) * 100}%` }} />
             </div>
             <span className="meta" style={{ gridColumn: "1 / -1" }}>
-              Biden {pct(d)} · Trump {pct(1 - d)}{b.enthusiasm !== 1 ? ` · enthusiasm ${b.enthusiasm.toFixed(2)}×` : ""}
+              {dem} {pct(d)} · {rep} {pct(1 - d)}{b.enthusiasm !== 1 ? ` · enthusiasm ${b.enthusiasm.toFixed(2)}×` : ""}
             </span>
           </div>
         );
@@ -65,7 +67,7 @@ export function StatePanel() {
       {polls.map((p) => (
         <div className="pollrow" key={p.pollster}>
           <span>{p.pollster}</span>
-          <span>Biden {pct(p.demShare)} <span className="moe">±{p.marginOfError}</span></span>
+          <span>{dem} {pct(p.demShare)} <span className="moe">±{p.marginOfError}</span></span>
         </div>
       ))}
     </div>
