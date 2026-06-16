@@ -13,22 +13,54 @@ import {
   Search,
   GraduationCap,
   ArrowLeftRight,
+  Plus,
+  X,
 } from "lucide-react";
 
-const ACTIONS: { type: ActionType; label: string; cost: string; Icon: React.ComponentType<{ size?: number | string; className?: string }> }[] = [
-  { type: "advertise", label: "Advertising", cost: "$ + market", Icon: Tv },
-  { type: "rally", label: "Rally / Stop", cost: "1+ days", Icon: Megaphone },
-  { type: "surrogate", label: "Surrogate", cost: "$250K", Icon: Handshake },
-  { type: "fundraise", label: "Fundraise", cost: "1+ days", Icon: DollarSign },
-  { type: "ground_game", label: "Field Offices", cost: "$1.5M + staff", Icon: Building2 },
-  { type: "gotv", label: "GOTV", cost: "$1M", Icon: Vote },
-  { type: "oppo_research", label: "Oppo Research", cost: "$2M", Icon: Search },
-  { type: "debate_prep", label: "Debate Prep", cost: "1+ days", Icon: GraduationCap },
-  { type: "issue_pivot", label: "Issue Pivot", cost: "free", Icon: ArrowLeftRight },
+type IconComp = React.ComponentType<{ size?: number | string; className?: string }>;
+
+const ICON: Record<ActionType, IconComp> = {
+  advertise: Tv,
+  rally: Megaphone,
+  surrogate: Handshake,
+  fundraise: DollarSign,
+  ground_game: Building2,
+  gotv: Vote,
+  oppo_research: Search,
+  debate_prep: GraduationCap,
+  issue_pivot: ArrowLeftRight,
+};
+
+const ACTIONS: { type: ActionType; label: string; cost: string }[] = [
+  { type: "advertise", label: "Advertising", cost: "$ + market" },
+  { type: "rally", label: "Rally / Stop", cost: "candidate" },
+  { type: "surrogate", label: "Surrogate", cost: "$250K" },
+  { type: "fundraise", label: "Fundraise", cost: "+ cash" },
+  { type: "ground_game", label: "Field Offices", cost: "$1.5M" },
+  { type: "gotv", label: "GOTV", cost: "$1M" },
+  { type: "oppo_research", label: "Oppo Research", cost: "$2M" },
+  { type: "debate_prep", label: "Debate Prep", cost: "prep" },
+  { type: "issue_pivot", label: "Issue Pivot", cost: "free" },
 ];
 
 const NEEDS_STATE: ActionType[] = ["advertise", "rally", "surrogate", "ground_game", "gotv"];
-const NEEDS_DAYS: ActionType[] = ["rally", "fundraise", "debate_prep"];
+const DAYS = [1, 2, 3, 4, 5, 6, 7];
+const MAX_PER_DAY = 3;
+
+function shortDesc(a: CampaignAction): string {
+  switch (a.type) {
+    case "advertise": return `${a.stateId} ads`;
+    case "rally": return `${a.stateId} rally`;
+    case "surrogate": return `${a.stateId} surrogate`;
+    case "ground_game": return `${a.stateId} field`;
+    case "gotv": return `${a.stateId} GOTV`;
+    case "fundraise": return "Fundraise";
+    case "oppo_research": return "Oppo research";
+    case "debate_prep": return "Debate prep";
+    case "issue_pivot": return `Pivot ${a.issueId}`;
+    default: return a.type;
+  }
+}
 
 export function ActionPanel() {
   const game = useGameStore((s) => s.game)!;
@@ -46,15 +78,16 @@ export function ActionPanel() {
   const [adMode, setAdMode] = useState<AdMode>("positive");
   const [issueId, setIssueId] = useState<IssueId>("economy");
   const [spendM, setSpendM] = useState<number>(8);
-  const [days, setDays] = useState<number>(1);
-  const [pivotPos, setPivotPos] = useState<number>(
-    game.candidates[player].issuePositions.economy,
-  );
+  const [pivotPos, setPivotPos] = useState<number>(game.candidates[player].issuePositions.economy);
 
-  const add = () => {
+  const plan = game.queuedActions;
+  const used = plan.length;
+  const pool = res.maxActions;
+  const dayItems = (d: number) => plan.map((a, i) => ({ a, i })).filter((x) => (x.a.day ?? 1) === d);
+
+  const buildAction = (): CampaignAction => {
     const action: CampaignAction = { type, candidate: player };
     if (NEEDS_STATE.includes(type)) action.stateId = stateId;
-    if (NEEDS_DAYS.includes(type)) action.days = days;
     if (type === "advertise") {
       action.adMode = adMode;
       action.spend = spendM * 1_000_000;
@@ -64,38 +97,45 @@ export function ActionPanel() {
       action.issueId = issueId;
       action.newPosition = pivotPos;
     }
-    queueAction(action);
+    return action;
   };
 
-  const evPreview = preview?.ev.biden ?? 0;
-  const evLive = live?.ev.biden ?? 0;
+  const addToDay = (d: number) => {
+    if (used >= pool || dayItems(d).length >= MAX_PER_DAY) return;
+    queueAction({ ...buildAction(), day: d });
+  };
+
+  const evPreview = preview?.ev.dem ?? 0;
+  const evLive = live?.ev.dem ?? 0;
   const evDelta = evPreview - evLive;
-  const playerIsBiden = player === "biden";
-  const myDelta = playerIsBiden ? evDelta : -evDelta;
+  const myDelta = player === "dem" ? evDelta : -evDelta;
+
+  const TypeIcon = ICON[type];
 
   return (
     <div className="card">
-      <div className="row">
-        <h3 style={{ flex: 1 }}>Allocate Resources</h3>
+      <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
+        <h3 style={{ margin: 0 }}>Week Plan</h3>
+        <span className="muted small">{used}/{pool} actions · max {MAX_PER_DAY}/day</span>
       </div>
-      <div className="row" style={{ gap: 16, marginBottom: 8 }}>
+      <div className="row" style={{ gap: 16, margin: "6px 0 10px" }}>
         <div className="stat" style={{ alignItems: "flex-start" }}><span className="l">Cash</span><span className="v">{money(res.cash)}</span></div>
-        <div className="stat" style={{ alignItems: "flex-start" }}><span className="l">Cand. Days</span><span className="v">{res.candidateDays}/{res.maxCandidateDays}</span></div>
+        <div className="stat" style={{ alignItems: "flex-start" }}><span className="l">Actions</span><span className="v">{res.actions}/{res.maxActions}</span></div>
         <div className="stat" style={{ alignItems: "flex-start" }}><span className="l">Staff</span><span className="v">{res.staffCapacity}</span></div>
       </div>
 
+      {/* Action builder — configure one action, then drop it on a day below. */}
       <div className="actiongrid">
-        {ACTIONS.map((a) => (
-          <button
-            key={a.type}
-            className={`actionbtn${type === a.type ? " sel" : ""}`}
-            onClick={() => setType(a.type)}
-          >
-            <a.Icon size={18} />
-            <span className="t">{a.label}</span>
-            <span className="c">{a.cost}</span>
-          </button>
-        ))}
+        {ACTIONS.map((a) => {
+          const Ico = ICON[a.type];
+          return (
+            <button key={a.type} className={`actionbtn${type === a.type ? " sel" : ""}`} onClick={() => setType(a.type)}>
+              <Ico size={18} />
+              <span className="t">{a.label}</span>
+              <span className="c">{a.cost}</span>
+            </button>
+          );
+        })}
       </div>
 
       <div style={{ marginTop: 10 }}>
@@ -135,13 +175,6 @@ export function ActionPanel() {
           </>
         )}
 
-        {NEEDS_DAYS.includes(type) && (
-          <div className="field">
-            <label>Candidate days: {days}</label>
-            <input type="range" min={1} max={Math.max(1, res.maxCandidateDays)} value={days} onChange={(e) => setDays(+e.target.value)} />
-          </div>
-        )}
-
         {type === "issue_pivot" && (
           <>
             <div className="field">
@@ -156,44 +189,60 @@ export function ActionPanel() {
             </div>
           </>
         )}
-
-        <button className="primary" style={{ width: "100%", marginTop: 6 }} onClick={add}>
-          + Add to this week's plan
-        </button>
       </div>
 
-      <h3 style={{ marginTop: 16 }}>Planned This Week ({game.queuedActions.length})</h3>
-      <div className="queue">
-        {game.queuedActions.length === 0 && <p className="muted small">No actions queued. The week will pass quietly.</p>}
-        {game.queuedActions.map((a, i) => (
-          <div className="qitem" key={i}>
-            <span>{describeAction(a)}</span>
-            <span className="x" onClick={() => removeQueued(i)}>✕</span>
-          </div>
-        ))}
+      {/* 7-day week. Each day holds up to 3 actions; "+" drops the configured
+          action above onto that day. The pool runs out before all 21 slots. */}
+      <div className="weekplan">
+        {DAYS.map((d) => {
+          const items = dayItems(d);
+          const full = items.length >= MAX_PER_DAY;
+          const canAdd = used < pool && !full;
+          return (
+            <div className={`day${full ? " full" : ""}`} key={d}>
+              <div className="day-head">
+                <span className="day-name">Day {d}</span>
+                <span className="day-slots">
+                  {Array.from({ length: MAX_PER_DAY }).map((_, k) => (
+                    <span key={k} className={k < items.length ? "dot on" : "dot"} />
+                  ))}
+                </span>
+                <button className="day-add" disabled={!canAdd} onClick={() => addToDay(d)} title={canAdd ? `Add ${type} to Day ${d}` : "No room"}>
+                  <Plus size={13} />
+                </button>
+              </div>
+              <div className="day-actions">
+                {items.length === 0 && <span className="day-empty">no events</span>}
+                {items.map(({ a, i }) => {
+                  const Ico = ICON[a.type];
+                  return (
+                    <span className="plan-chip" key={i} title={a.type === "advertise" ? `${a.adMode} ads · ${money(a.spend ?? 0)}` : a.type}>
+                      <Ico size={12} />
+                      {shortDesc(a)}
+                      <span className="x" onClick={() => removeQueued(i)}><X size={11} /></span>
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="row" style={{ gap: 8, marginTop: 6 }}>
+        <button className="primary" style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+          disabled={used >= pool}
+          onClick={() => { for (const d of DAYS) { if (dayItems(d).length < MAX_PER_DAY) { addToDay(d); break; } } }}>
+          <TypeIcon size={14} /> Add to next open day
+        </button>
       </div>
 
       {preview && (
         <div className="preview">
-          Projected with this plan: Biden {evPreview} EV
+          Projected with this plan: {game.candidates.dem.shortName} {evPreview} EV
           {myDelta !== 0 && <strong>{` (${myDelta > 0 ? "+" : ""}${myDelta} for you)`}</strong>}
         </div>
       )}
     </div>
   );
-}
-
-function describeAction(a: CampaignAction): string {
-  switch (a.type) {
-    case "advertise": return `${a.adMode} ads in ${a.stateId}${a.adMode === "issue" ? ` (${a.issueId})` : ""} — ${money(a.spend ?? 0)}`;
-    case "rally": return `Rally in ${a.stateId} — ${a.days}d`;
-    case "surrogate": return `Surrogate to ${a.stateId}`;
-    case "fundraise": return `Fundraise — ${a.days}d`;
-    case "ground_game": return `Field offices in ${a.stateId}`;
-    case "gotv": return `GOTV in ${a.stateId}`;
-    case "oppo_research": return `Opposition research`;
-    case "debate_prep": return `Debate prep — ${a.days}d`;
-    case "issue_pivot": return `Pivot ${a.issueId} → ${a.newPosition?.toFixed(2)}`;
-    default: return a.type;
-  }
 }

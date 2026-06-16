@@ -16,7 +16,7 @@ export interface BlocArchetype {
   name: string;
   nationalShare: number; // fraction of national electorate (sums to ~1)
   turnoutPropensity: number; // 0..1
-  nationalBidenShare: number; // 2020 two-party Biden share for this bloc
+  nationalDemShare: number; // 2020 two-party Biden share for this bloc
   issueWeights: Partial<Record<IssueId, number>>; // 0..1, how much they care
   idealPositions: Partial<Record<IssueId, number>>; // -1 left .. +1 right
   // How responsive this bloc is to candidate charisma/integrity (trait term).
@@ -29,7 +29,7 @@ export const BLOCS: Record<BlocId, BlocArchetype> = {
     name: "Working-class white voters",
     nationalShare: 0.3,
     turnoutPropensity: 0.62,
-    nationalBidenShare: 0.36,
+    nationalDemShare: 0.36,
     traitSensitivity: 0.55,
     issueWeights: {
       economy: 0.9,
@@ -54,7 +54,7 @@ export const BLOCS: Record<BlocId, BlocArchetype> = {
     name: "College-educated white voters",
     nationalShare: 0.18,
     turnoutPropensity: 0.72,
-    nationalBidenShare: 0.52,
+    nationalDemShare: 0.52,
     traitSensitivity: 0.45,
     issueWeights: {
       economy: 0.7,
@@ -79,7 +79,7 @@ export const BLOCS: Record<BlocId, BlocArchetype> = {
     name: "Suburban women",
     nationalShare: 0.09,
     turnoutPropensity: 0.7,
-    nationalBidenShare: 0.55,
+    nationalDemShare: 0.55,
     traitSensitivity: 0.6,
     issueWeights: {
       covid_response: 0.85,
@@ -102,7 +102,7 @@ export const BLOCS: Record<BlocId, BlocArchetype> = {
     name: "Black voters",
     nationalShare: 0.12,
     turnoutPropensity: 0.6,
-    nationalBidenShare: 0.9,
+    nationalDemShare: 0.9,
     traitSensitivity: 0.4,
     issueWeights: {
       race_policing: 0.9,
@@ -123,7 +123,7 @@ export const BLOCS: Record<BlocId, BlocArchetype> = {
     name: "Hispanic & Latino voters",
     nationalShare: 0.11,
     turnoutPropensity: 0.52,
-    nationalBidenShare: 0.62,
+    nationalDemShare: 0.62,
     traitSensitivity: 0.5,
     issueWeights: {
       economy: 0.85,
@@ -144,7 +144,7 @@ export const BLOCS: Record<BlocId, BlocArchetype> = {
     name: "Asian American & other voters",
     nationalShare: 0.05,
     turnoutPropensity: 0.58,
-    nationalBidenShare: 0.65,
+    nationalDemShare: 0.65,
     traitSensitivity: 0.45,
     issueWeights: {
       economy: 0.8,
@@ -164,7 +164,7 @@ export const BLOCS: Record<BlocId, BlocArchetype> = {
     name: "Seniors (65+)",
     nationalShare: 0.1,
     turnoutPropensity: 0.75,
-    nationalBidenShare: 0.48,
+    nationalDemShare: 0.48,
     traitSensitivity: 0.5,
     issueWeights: {
       covid_response: 0.9,
@@ -185,7 +185,7 @@ export const BLOCS: Record<BlocId, BlocArchetype> = {
     name: "Young voters (18–29)",
     nationalShare: 0.05,
     turnoutPropensity: 0.46,
-    nationalBidenShare: 0.6,
+    nationalDemShare: 0.6,
     traitSensitivity: 0.5,
     issueWeights: {
       climate: 0.85,

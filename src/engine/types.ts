@@ -32,7 +32,11 @@ export type BlocId =
   | "youth";
 
 // The two tickets. Player picks one; the other is AI.
-export type CandidateId = "biden" | "trump";
+export type CandidateId = "dem" | "rep";
+
+// Campaign-event source: scripted real beats for the year, or a random draw
+// from a year-agnostic plausible pool.
+export type EventMode = "historical" | "plausible";
 
 export type Party = "Democratic" | "Republican";
 
@@ -68,6 +72,27 @@ export interface Candidate {
   issuePositions: Record<IssueId, number>;
   // Baseline favorability per bloc, -1..+1. Mutated by ads/events.
   baseFavorability: Partial<Record<BlocId, number>>;
+}
+
+// A selectable running mate. Picked at setup; its bonuses are folded into the
+// ticket's traits / bloc favorability / starting resources at game creation.
+export interface RunningMate {
+  id: string;
+  name: string;
+  // Which presidential nominee this VP runs with.
+  ticket: CandidateId;
+  // One-line newsroom-style description of the pick's strategic value.
+  blurb: string;
+  // The real 2020 running mate (used as each side's default).
+  historical?: boolean;
+  // Added to the ticket's candidate traits (clamped 0..100).
+  traitBonuses?: Partial<CandidateTraits>;
+  // Added to the ticket's baseline bloc favorability.
+  favorability?: Partial<Record<BlocId, number>>;
+  // One-time starting-cash bonus (fundraiser VPs).
+  cashBonus?: number;
+  // Extra candidate-days each week (energetic surrogates).
+  candidateDayBonus?: number;
 }
 
 // A demographic bloc *inside a particular state*. The heart of the scoring model.
@@ -106,7 +131,7 @@ export interface StateContest {
   electoralVotes: number;
   region: Region;
   // Real 2020 two-party Biden share, used only to solve baselineMargin.
-  prior2020BidenShare: number;
+  prior2020DemShare: number;
   // Cost multiplier for ads in this media market (1.0 = national average).
   mediaMarketCost: number;
   // True for the seven genuinely swingable contests (UI emphasis + AI focus).
@@ -124,8 +149,8 @@ export interface StateContest {
 // ── Resources (player + AI each hold one) ────────────────────────────────
 export interface Resources {
   cash: number; // dollars on hand
-  candidateDays: number; // action points for the principal this turn
-  maxCandidateDays: number;
+  actions: number; // action points for the principal this turn
+  maxActions: number;
   staffCapacity: number; // limits simultaneous ground-game states
   nationalMomentum: number; // -100..+100
   mediaNarrative: number; // -100 (hostile) .. +100 (favorable)
@@ -154,7 +179,10 @@ export interface CampaignAction {
   adMode?: AdMode;
   // Dollars committed (ads, fundraising venues, etc.).
   spend?: number;
-  // Candidate-days committed (rallies, debate prep, fundraising galas).
+  // Which day of the 7-day plan this action sits on (1–7). Organizational; the
+  // pool/3-per-day caps are enforced in the UI, and the engine resolves the
+  // week in day order. Legacy `days` is no longer used for cost.
+  day?: number;
   days?: number;
   // For issue_pivot: new position -1..+1.
   newPosition?: number;
@@ -248,6 +276,13 @@ export interface GameState {
   granularity: "week" | "day";
   phase: GamePhase;
   playerCandidate: CandidateId;
+  // Election scenario id (see content/scenarios); absent on pre-scenario saves.
+  scenarioId?: string;
+  // How campaign events are drawn (see content/events). Absent → "historical".
+  eventMode?: EventMode;
+  // Each candidate's current campaign stop (state id of their last rally), for
+  // the map markers. Absent until a candidate has rallied somewhere.
+  locations?: Partial<Record<CandidateId, string>>;
   candidates: Record<CandidateId, Candidate>;
   issues: Record<IssueId, Issue>;
   // Live national salience, starts from issue.baseSalience, shifts via events.
@@ -260,6 +295,9 @@ export interface GameState {
   queuedActions: CampaignAction[];
   causes: CauseEntry[];
   lastRecap: TurnRecapItem[];
+  // Chosen running mate id per ticket (drives the applied bonuses + UI). Optional
+  // for backward compatibility with saves predating VP selection.
+  runningMates?: Record<CandidateId, string>;
   // Set once the game is decided.
   result?: GameResult;
 }
@@ -267,7 +305,7 @@ export interface GameState {
 export interface StateResult {
   stateId: string;
   electoralVotes: number;
-  bidenShare: number; // two-party
+  demShare: number; // two-party
   winner: CandidateId;
   margin: number; // winner's two-party margin in points
 }

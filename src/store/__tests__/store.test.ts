@@ -27,7 +27,7 @@ describe("store integration (the UI play path)", () => {
 
   it("plays a full game from setup to a decided result", () => {
     const store = useGameStore.getState();
-    store.newGame({ seed: "ui-play", playerCandidate: "biden", difficulty: "normal" });
+    store.newGame({ seed: "ui-play", playerCandidate: "dem", difficulty: "normal" });
 
     let guard = 0;
     while (useGameStore.getState().game!.phase !== "result" && guard++ < 40) {
@@ -36,23 +36,23 @@ describe("store integration (the UI play path)", () => {
       const s = useGameStore.getState();
       const g = s.game!;
       if (g.resources[g.playerCandidate].cash > 12_000_000) {
-        s.queueAction({ type: "advertise", candidate: "biden", stateId: "PA", adMode: "positive", spend: 6_000_000 });
+        s.queueAction({ type: "advertise", candidate: "dem", stateId: "PA", adMode: "positive", spend: 6_000_000 });
       }
-      s.queueAction({ type: "rally", candidate: "biden", stateId: "GA", days: 1 });
+      s.queueAction({ type: "rally", candidate: "dem", stateId: "GA", days: 1 });
       s.endTurn();
     }
 
     const end = useGameStore.getState().game!;
     expect(end.phase).toBe("result");
     expect(end.result).toBeDefined();
-    expect(end.result!.electoralVotes.biden + end.result!.electoralVotes.trump).toBe(538);
+    expect(end.result!.electoralVotes.dem + end.result!.electoralVotes.rep).toBe(538);
   });
 
   it("provides a non-empty week-in-review recap after a turn", () => {
     const store = useGameStore.getState();
-    store.newGame({ seed: "recap", playerCandidate: "biden" });
+    store.newGame({ seed: "recap", playerCandidate: "dem" });
     clearPlayerEvents();
-    useGameStore.getState().queueAction({ type: "rally", candidate: "biden", stateId: "WI", days: 1 });
+    useGameStore.getState().queueAction({ type: "rally", candidate: "dem", stateId: "WI", days: 1 });
     useGameStore.getState().endTurn();
     const recap = useGameStore.getState().game!.lastRecap;
     expect(recap.length).toBeGreaterThan(0);
@@ -61,7 +61,7 @@ describe("store integration (the UI play path)", () => {
 
   it("undo restores the prior turn's state", () => {
     const store = useGameStore.getState();
-    store.newGame({ seed: "undo", playerCandidate: "biden" });
+    store.newGame({ seed: "undo", playerCandidate: "dem" });
     clearPlayerEvents();
     const turnBefore = useGameStore.getState().game!.turn;
     useGameStore.getState().endTurn();
@@ -72,7 +72,7 @@ describe("store integration (the UI play path)", () => {
 
   it("exports and re-imports a save without losing state", () => {
     const store = useGameStore.getState();
-    store.newGame({ seed: "export", playerCandidate: "trump" });
+    store.newGame({ seed: "export", playerCandidate: "rep" });
     clearPlayerEvents();
     useGameStore.getState().endTurn();
     const json = useGameStore.getState().exportSave()!;
@@ -83,12 +83,12 @@ describe("store integration (the UI play path)", () => {
     useGameStore.getState().importSave(json);
     const restored = useGameStore.getState().game!;
     expect(restored.turn).toBe(turn);
-    expect(restored.playerCandidate).toBe("trump");
+    expect(restored.playerCandidate).toBe("rep");
   });
 
   it("persists an autosave to (faked) IndexedDB on new game", async () => {
     const store = useGameStore.getState();
-    store.newGame({ seed: "persist", playerCandidate: "biden" });
+    store.newGame({ seed: "persist", playerCandidate: "dem" });
     // Give the fire-and-forget autosave a tick to land.
     await new Promise((r) => setTimeout(r, 20));
     await useGameStore.getState().refreshSaves();

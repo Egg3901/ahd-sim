@@ -2,6 +2,7 @@ import type {
   CandidateId,
   GameResult,
   GameState,
+  StateBloc,
   StateContest,
   StateResult,
 } from "./types";
@@ -11,44 +12,52 @@ import { sigmoid } from "./setup";
 // margin plus everything the campaign has done to it (campaignMargin). This is
 // the whole vote model: legible because campaignMargin is literally the sum of
 // the causes logged against that bloc.
-export function blocBidenShare(baselineMargin: number, campaignMargin: number): number {
+export function blocDemShare(baselineMargin: number, campaignMargin: number): number {
   return sigmoid(baselineMargin + campaignMargin);
 }
 
 export interface ContestTally {
   stateId: string;
-  bidenVotes: number;
-  trumpVotes: number;
+  demVotes: number;
+  repVotes: number;
   totalVotes: number;
-  bidenShare: number; // two-party
+  demShare: number; // two-party
   winner: CandidateId;
 }
 
 // Per-point coupling of signed state momentum (Biden−Trump) into vote margin.
 // Transient: momentum decays each turn, so this term fades — it never bakes
 // into campaignMargin. Zero at neutral, so calibration is untouched.
-const MOMENTUM_COUPLING = 0.0025;
+const MOMENTUM_COUPLING = 0.0017;
+
+// Live two-party Dem support for a bloc *inside its state* — baseline plus the
+// campaign margin plus the state's momentum term. This is what the tally sums,
+// so UI bloc bars should use it (not the static baseline `support`) to stay
+// consistent with the state result.
+export function liveBlocDemShare(state: StateContest, bloc: StateBloc): number {
+  return blocDemShare(bloc.baselineMargin, bloc.campaignMargin + state.momentum * MOMENTUM_COUPLING);
+}
 
 // Tallies one vote-bearing contest (a contest with blocs).
 export function tallyContest(state: StateContest): ContestTally {
-  let bidenVotes = 0;
+  let demVotes = 0;
   let totalVotes = 0;
   const momentumTerm = state.momentum * MOMENTUM_COUPLING;
   for (const bloc of state.blocs) {
     const votes = bloc.size * bloc.turnoutPropensity * bloc.enthusiasm;
-    const share = blocBidenShare(bloc.baselineMargin, bloc.campaignMargin + momentumTerm);
-    bidenVotes += votes * share;
+    const share = blocDemShare(bloc.baselineMargin, bloc.campaignMargin + momentumTerm);
+    demVotes += votes * share;
     totalVotes += votes;
   }
-  const trumpVotes = totalVotes - bidenVotes;
-  const bidenShare = totalVotes > 0 ? bidenVotes / totalVotes : 0.5;
+  const repVotes = totalVotes - demVotes;
+  const demShare = totalVotes > 0 ? demVotes / totalVotes : 0.5;
   return {
     stateId: state.id,
-    bidenVotes,
-    trumpVotes,
+    demVotes,
+    repVotes,
     totalVotes,
-    bidenShare,
-    winner: bidenShare >= 0.5 ? "biden" : "trump",
+    demShare,
+    winner: demShare >= 0.5 ? "dem" : "rep",
   };
 }
 
@@ -60,13 +69,13 @@ export function computeResult(game: GameState): GameResult {
     if (st.blocs.length > 0) tallies.set(st.id, tallyContest(st));
   }
 
-  const ev: Record<CandidateId, number> = { biden: 0, trump: 0 };
-  const popularVote: Record<CandidateId, number> = { biden: 0, trump: 0 };
+  const ev: Record<CandidateId, number> = { dem: 0, rep: 0 };
+  const popularVote: Record<CandidateId, number> = { dem: 0, rep: 0 };
   const stateResults: StateResult[] = [];
 
   for (const st of game.states) {
     let winner: CandidateId;
-    let bidenShare: number;
+    let demShare: number;
 
     if (st.aggregateOf && st.aggregateOf.length > 0) {
       // At-large unit: winner of the combined district vote.
@@ -75,34 +84,34 @@ export function computeResult(game: GameState): GameResult {
       for (const id of st.aggregateOf) {
         const dt = tallies.get(id);
         if (dt) {
-          b += dt.bidenVotes;
-          t += dt.trumpVotes;
+          b += dt.demVotes;
+          t += dt.repVotes;
         }
       }
-      winner = b >= t ? "biden" : "trump";
-      bidenShare = b + t > 0 ? b / (b + t) : 0.5;
+      winner = b >= t ? "dem" : "rep";
+      demShare = b + t > 0 ? b / (b + t) : 0.5;
       // Aggregate units add no popular vote (already counted in districts).
     } else {
       const dt = tallies.get(st.id)!;
       winner = dt.winner;
-      bidenShare = dt.bidenShare;
-      popularVote.biden += dt.bidenVotes;
-      popularVote.trump += dt.trumpVotes;
+      demShare = dt.demShare;
+      popularVote.dem += dt.demVotes;
+      popularVote.rep += dt.repVotes;
     }
 
     ev[winner] += st.electoralVotes;
     stateResults.push({
       stateId: st.id,
       electoralVotes: st.electoralVotes,
-      bidenShare,
+      demShare,
       winner,
-      margin: Math.abs(bidenShare - 0.5) * 2 * 100,
+      margin: Math.abs(demShare - 0.5) * 2 * 100,
     });
   }
 
-  const totalPop = popularVote.biden + popularVote.trump;
+  const totalPop = popularVote.dem + popularVote.rep;
   const winner: GameResult["winner"] =
-    ev.biden >= 270 ? "biden" : ev.trump >= 270 ? "trump" : "tie";
+    ev.dem >= 270 ? "dem" : ev.rep >= 270 ? "rep" : "tie";
 
   // Post-mortem: the player's biggest self-caused swings, by magnitude.
   const postMortem = [...game.causes]
@@ -114,8 +123,8 @@ export function computeResult(game: GameState): GameResult {
     winner,
     popularVote,
     popularShare: {
-      biden: totalPop > 0 ? popularVote.biden / totalPop : 0.5,
-      trump: totalPop > 0 ? popularVote.trump / totalPop : 0.5,
+      dem: totalPop > 0 ? popularVote.dem / totalPop : 0.5,
+      rep: totalPop > 0 ? popularVote.rep / totalPop : 0.5,
     },
     stateResults,
     postMortem,
@@ -127,24 +136,24 @@ export function computeResult(game: GameState): GameResult {
 export interface Projection {
   ev: Record<CandidateId, number>;
   tossupEv: number;
-  contests: { stateId: string; bidenShare: number; lean: CandidateId | "tossup"; ev: number }[];
+  contests: { stateId: string; demShare: number; lean: CandidateId | "tossup"; ev: number }[];
 }
 
 export function projectElection(game: GameState, tossupBand = 3): Projection {
   const result = computeResult(game);
-  const ev: Record<CandidateId, number> = { biden: 0, trump: 0 };
+  const ev: Record<CandidateId, number> = { dem: 0, rep: 0 };
   let tossupEv = 0;
   const contests = result.stateResults.map((sr) => {
-    const pts = (sr.bidenShare - 0.5) * 200; // Biden margin in points
+    const pts = (sr.demShare - 0.5) * 200; // Biden margin in points
     let lean: CandidateId | "tossup";
     if (Math.abs(pts) <= tossupBand) {
       lean = "tossup";
       tossupEv += sr.electoralVotes;
     } else {
-      lean = pts > 0 ? "biden" : "trump";
+      lean = pts > 0 ? "dem" : "rep";
       ev[lean] += sr.electoralVotes;
     }
-    return { stateId: sr.stateId, bidenShare: sr.bidenShare, lean, ev: sr.electoralVotes };
+    return { stateId: sr.stateId, demShare: sr.demShare, lean, ev: sr.electoralVotes };
   });
   return { ev, tossupEv, contests };
 }

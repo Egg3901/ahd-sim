@@ -17,7 +17,7 @@ function decay(game: GameState) {
       bloc.enthusiasm = 1 + (bloc.enthusiasm - 1) * 0.6;
     }
   }
-  for (const c of ["biden", "trump"] as CandidateId[]) {
+  for (const c of ["dem", "rep"] as CandidateId[]) {
     const res = game.resources[c];
     res.nationalMomentum *= 0.75;
     res.mediaNarrative *= 0.8;
@@ -25,7 +25,7 @@ function decay(game: GameState) {
     const base = CANDIDATES[c].traits.debatingSkill;
     game.candidates[c].traits.debatingSkill = base + (game.candidates[c].traits.debatingSkill - base) * 0.4;
     // Refill candidate-days for the new week.
-    res.candidateDays = res.maxCandidateDays;
+    res.actions = res.maxActions;
   }
 }
 
@@ -49,10 +49,10 @@ function buildRecap(game: GameState, turn: number, evBefore: number): TurnRecapI
   }
   recap.sort((a, b) => Math.abs(b.marginDelta ?? 0) - Math.abs(a.marginDelta ?? 0));
 
-  const evAfter = projectElection(game).ev.biden;
+  const evAfter = projectElection(game).ev.dem;
   recap.unshift({
     label: "Projected electoral votes",
-    detail: `Biden ${evAfter} (was ${evBefore})`,
+    detail: `${game.candidates.dem.shortName} ${evAfter} (was ${evBefore})`,
     marginDelta: evAfter - evBefore,
   });
   return recap.slice(0, 12);
@@ -81,7 +81,7 @@ export function advanceTurn(
   const ai = OPPONENT_OF[player];
   const cfg = opts.difficulty ?? DIFFICULTY.normal;
 
-  const evBefore = projectElection(game).ev.biden;
+  const evBefore = projectElection(game).ev.dem;
 
   // 1. Resolve any leftover player events with a sensible default.
   if (opts.autoResolvePlayerEvents !== false) {
@@ -95,11 +95,12 @@ export function advanceTurn(
   // 2. AI resolves its own events.
   resolveAiEvents(game, ai);
 
-  // 3. Apply the player's queued actions, then the AI's plan.
-  for (const action of actions) {
-    if (action.candidate !== player) continue;
-    applyAction(game, action, rng);
-  }
+  // 3. Apply the player's queued actions in day order (Day 1 → Day 7), so the
+  //    week plays out as scheduled, then the AI's plan.
+  const playerActions = actions
+    .filter((a) => a.candidate === player)
+    .sort((a, b) => (a.day ?? 1) - (b.day ?? 1));
+  for (const action of playerActions) applyAction(game, action, rng);
   const aiActions = planAiActions(game, rng, cfg);
   for (const action of aiActions) applyAction(game, action, rng);
 
@@ -131,13 +132,13 @@ function requireEvent(id: string) {
   return e;
 }
 
-// Convenience: queue the opening week's events for a freshly created game.
-export function beginGame(game: GameState, seed: number | string = game.seed): GameState {
+// Opens a freshly created game. The first week is deliberately event-free: the
+// player lands on the dashboard to read the map and set a plan without a
+// decision modal blocking the screen. Campaign events begin after the first
+// "End Week" (advanceTurn queues turn 1's slate onward).
+export function beginGame(game: GameState): GameState {
   const next: GameState = structuredClone(game);
-  const rng = createRng(`begin:${seed}:${next.seed}`);
   next.pendingEvents = [];
-  queueEventsForTurn(next, rng);
-  next.rngState = rng.state();
   next.phase = "intel";
   return next;
 }

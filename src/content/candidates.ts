@@ -3,8 +3,8 @@ import type { Candidate, CandidateId } from "@engine/types";
 // The two tickets. issuePositions: -1 (left) .. +1 (right). Traits 0..100
 // modify action effectiveness and event odds, never the vote directly.
 export const CANDIDATES: Record<CandidateId, Candidate> = {
-  biden: {
-    id: "biden",
+  dem: {
+    id: "dem",
     name: "Joe Biden",
     shortName: "Biden",
     party: "Democratic",
@@ -38,8 +38,8 @@ export const CANDIDATES: Record<CandidateId, Candidate> = {
       seniors: 0.05,
     },
   },
-  trump: {
-    id: "trump",
+  rep: {
+    id: "rep",
     name: "Donald Trump",
     shortName: "Trump",
     party: "Republican",
@@ -74,6 +74,6 @@ export const CANDIDATES: Record<CandidateId, Candidate> = {
 };
 
 export const OPPONENT_OF: Record<CandidateId, CandidateId> = {
-  biden: "trump",
-  trump: "biden",
+  dem: "rep",
+  rep: "dem",
 };

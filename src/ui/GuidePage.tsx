@@ -21,7 +21,7 @@ const ACTION_GUIDE = [
   },
   {
     name: "Rally / Candidate Stop",
-    cost: "1+ candidate days",
+    cost: "1 action",
     target: "Any state",
     effect:
       "Boosts state momentum, national momentum, and local enthusiasm. Gaffe risk rises with low stamina and heavy travel schedule. Charisma amplifies effect.",
@@ -32,12 +32,12 @@ const ACTION_GUIDE = [
     cost: "$250K",
     target: "Any state",
     effect:
-      "Weaker than principal rally but costs no candidate days. Small momentum bump and modest bloc shifts.",
+      "Weaker than principal rally but frees the principal for elsewhere. Small momentum bump and modest bloc shifts.",
     when: "Cover states the candidate can't reach. Stack with rallies for compound effect.",
   },
   {
     name: "Fundraising",
-    cost: "1+ candidate days",
+    cost: "1 action",
     target: "None (national)",
     effect:
       "Haul scales with fundraising trait, national momentum, and random variance. Typical return: $8M–$12M per day for average trait.",
@@ -69,7 +69,7 @@ const ACTION_GUIDE = [
   },
   {
     name: "Debate Prep",
-    cost: "1+ candidate days",
+    cost: "1 action",
     target: "None (buffs next debate)",
     effect:
       "Temporarily raises debating trait (+4 per day). Decays after debate event. Improves debate performance odds.",
@@ -220,7 +220,7 @@ export function GuidePage({ onClose }: { onClose: () => void }) {
               <h3>Resource Limits</h3>
               <ul className="guide-list">
                 <li><strong>Cash:</strong> Spend on ads, surrogates, field offices, GOTV, oppo research. Replenished via fundraising.</li>
-                <li><strong>Candidate days:</strong> Limited per week. Rallies, fundraising, and debate prep consume them. Replenish each turn.</li>
+                <li><strong>Actions:</strong> A weekly pool (7 + half your candidate's energy). Every move — ads, rallies, fundraising, GOTV — costs one action. Plan them across the 7 days, max 3 per day. The pool refills each week.</li>
                 <li><strong>Staff capacity:</strong> Hard cap on field offices. Does not replenish.</li>
                 <li><strong>Momentum:</strong> National and state-level. Drives poll movement and fundraising efficiency. Can be positive or negative.</li>
               </ul>
@@ -231,7 +231,7 @@ export function GuidePage({ onClose }: { onClose: () => void }) {
             <div className="guide-section">
               <h3>Polls & Margin</h3>
               <p className="guide-text">
-                Polls show Biden's two-party share in each state. The margin is Biden − Trump. Positive = Biden leads. The model uses a logit transform: small changes near 50% matter more than changes at the extremes.
+                Polls show the Democrat's two-party share in each state. The margin is Democrat − Republican. Positive = the Democrat leads. The model uses a logit transform: small changes near 50% matter more than changes at the extremes.
               </p>
               <h3>Electoral Votes</h3>
               <p className="guide-text">
