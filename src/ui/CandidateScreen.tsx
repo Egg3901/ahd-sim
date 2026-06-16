@@ -52,7 +52,7 @@ function CandidateCard({
 }
 
 export function CandidateScreen({ onClose }: { onClose: () => void }) {
-  const [selected, setSelected] = useState<CandidateId>("biden");
+  const [selected, setSelected] = useState<CandidateId>("dem");
   const [view, setView] = useState<"candidate" | "runningMate">("candidate");
   const c = CANDIDATES[selected];
   const traits = c.traits;

@@ -23,7 +23,7 @@ export function sigmoid(x: number): number {
 // blocs equals the real 2020 target. Bisection — deterministic, no RNG.
 function solveStateShift(
   blocs: { size: number; turnout: number; nationalLogit: number }[],
-  targetBidenShare: number,
+  targetDemShare: number,
 ): number {
   const weightedShare = (shift: number): number => {
     let num = 0;
@@ -39,7 +39,7 @@ function solveStateShift(
   let hi = 10;
   for (let i = 0; i < 60; i++) {
     const mid = (lo + hi) / 2;
-    if (weightedShare(mid) < targetBidenShare) lo = mid;
+    if (weightedShare(mid) < targetDemShare) lo = mid;
     else hi = mid;
   }
   return (lo + hi) / 2;
@@ -60,24 +60,24 @@ function buildBlocsForState(seed: StateSeed): StateBloc[] {
       blocId: r.id,
       size,
       turnout: arche.turnoutPropensity,
-      nationalLogit: logit(arche.nationalBidenShare),
+      nationalLogit: logit(arche.nationalDemShare),
     };
   });
 
   const shift = solveStateShift(
     prelim.map((p) => ({ size: p.size, turnout: p.turnout, nationalLogit: p.nationalLogit })),
-    seed.prior2020BidenShare,
+    seed.prior2020DemShare,
   );
 
   return prelim.map((p) => {
     const baselineMargin = p.nationalLogit + shift;
-    const bidenSupport = sigmoid(baselineMargin);
+    const demSupport = sigmoid(baselineMargin);
     return {
       blocId: p.blocId,
       size: p.size,
       turnoutPropensity: p.turnout,
       baselineMargin,
-      support: { biden: bidenSupport, trump: 1 - bidenSupport },
+      support: { dem: demSupport, rep: 1 - demSupport },
       campaignMargin: 0,
       enthusiasm: 1,
     };
@@ -93,11 +93,11 @@ export function buildStates(): StateContest[] {
       abbr: seed.abbr,
       electoralVotes: seed.ev,
       region: seed.region,
-      prior2020BidenShare: seed.prior2020BidenShare,
+      prior2020DemShare: seed.prior2020DemShare,
       mediaMarketCost: seed.mediaCost,
       battleground: seed.battleground,
       blocs: isAggregate ? [] : buildBlocsForState(seed),
-      groundGame: { biden: 0, trump: 0 },
+      groundGame: { dem: 0, rep: 0 },
       momentum: 0,
       aggregateOf: seed.aggregateOf,
     };
@@ -110,7 +110,7 @@ function startingResources(candidate: CandidateId, vp: RunningMate): Resources {
   return {
     // Both campaigns enter the fall flush; Biden held a real cash edge. A
     // fundraiser VP adds a one-time war-chest bump.
-    cash: (candidate === "biden" ? 220_000_000 : 180_000_000) + (vp.cashBonus ?? 0),
+    cash: (candidate === "dem" ? 220_000_000 : 180_000_000) + (vp.cashBonus ?? 0),
     candidateDays: maxDays,
     maxCandidateDays: maxDays,
     staffCapacity: 6,
@@ -157,7 +157,7 @@ export function createGame(opts: NewGameOptions = {}): GameState {
   for (const id of ISSUE_IDS) salience[id] = ISSUES[id].baseSalience;
 
   // Resolve running mates: the player's chosen pick, the AI's historical default.
-  const player = opts.playerCandidate ?? "biden";
+  const player = opts.playerCandidate ?? "dem";
   const opponent = OPPONENT_OF[player];
   const candidates = structuredClone(CANDIDATES);
   const vps = {
@@ -180,15 +180,15 @@ export function createGame(opts: NewGameOptions = {}): GameState {
     salience,
     states: buildStates(),
     resources: {
-      biden: startingResources("biden", vps.biden),
-      trump: startingResources("trump", vps.trump),
+      dem: startingResources("dem", vps.dem),
+      rep: startingResources("rep", vps.rep),
     },
     pendingEvents: [],
     firedEventIds: [],
     queuedActions: [],
     causes: [],
     lastRecap: [],
-    runningMates: { biden: vps.biden.id, trump: vps.trump.id },
+    runningMates: { dem: vps.dem.id, rep: vps.rep.id },
   };
 }
 

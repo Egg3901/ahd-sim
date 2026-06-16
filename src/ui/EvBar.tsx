@@ -2,8 +2,8 @@ import type { Projection } from "@engine/index";
 
 // The You/Tossup/Them tally bar, always Dem-left / GOP-right out of 538.
 export function EvBar({ projection }: { projection: Projection }) {
-  const dem = projection.ev.biden;
-  const gop = projection.ev.trump;
+  const dem = projection.ev.dem;
+  const gop = projection.ev.rep;
   const tossup = projection.tossupEv;
   const total = 538;
   const w = (n: number) => `${(n / total) * 100}%`;

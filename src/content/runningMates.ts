@@ -9,11 +9,11 @@ import type { CandidateId, RunningMate } from "@engine/types";
 // cash +6..14M against a 180–220M war chest — so a pick shapes strategy without
 // breaking the 2020 calibration.
 export const RUNNING_MATES: Record<CandidateId, RunningMate[]> = {
-  biden: [
+  dem: [
     {
       id: "harris",
       name: "Kamala Harris",
-      ticket: "biden",
+      ticket: "dem",
       historical: true,
       blurb: "Coalition builder — shores up Black and suburban-women turnout and sharpens the debate stage.",
       traitBonuses: { charisma: 6, debatingSkill: 5 },
@@ -22,7 +22,7 @@ export const RUNNING_MATES: Record<CandidateId, RunningMate[]> = {
     {
       id: "warren",
       name: "Elizabeth Warren",
-      ticket: "biden",
+      ticket: "dem",
       blurb: "Progressive firebrand — electrifies college whites and the youth vote and floods the small-dollar pipeline.",
       traitBonuses: { policyKnowledge: 8, intelligence: 5, fundraisingProwess: 6 },
       favorability: { college_white: 0.08, youth: 0.06 },
@@ -31,7 +31,7 @@ export const RUNNING_MATES: Record<CandidateId, RunningMate[]> = {
     {
       id: "klobuchar",
       name: "Amy Klobuchar",
-      ticket: "biden",
+      ticket: "dem",
       blurb: "Midwestern pragmatist — rebuilds the blue wall with non-college whites and seniors.",
       traitBonuses: { energy: 5, debatePrep: 5 },
       favorability: { noncollege_white: 0.07, seniors: 0.06, suburban_women: 0.04 },
@@ -39,7 +39,7 @@ export const RUNNING_MATES: Record<CandidateId, RunningMate[]> = {
     {
       id: "whitmer",
       name: "Gretchen Whitmer",
-      ticket: "biden",
+      ticket: "dem",
       blurb: "Battleground governor — a tireless surrogate who locks in suburban Michigan and the upper Midwest.",
       traitBonuses: { charisma: 5, energy: 6 },
       favorability: { suburban_women: 0.08, noncollege_white: 0.05 },
@@ -48,17 +48,17 @@ export const RUNNING_MATES: Record<CandidateId, RunningMate[]> = {
     {
       id: "demings",
       name: "Val Demings",
-      ticket: "biden",
+      ticket: "dem",
       blurb: "Former police chief — blunts the law-and-order attack and energizes Black and senior voters.",
       traitBonuses: { debatePrep: 6, debatingSkill: 5 },
       favorability: { black: 0.07, seniors: 0.05 },
     },
   ],
-  trump: [
+  rep: [
     {
       id: "pence",
       name: "Mike Pence",
-      ticket: "trump",
+      ticket: "rep",
       historical: true,
       blurb: "Evangelical anchor — guarantees the base, holds non-college whites and seniors, steadies the debate.",
       traitBonuses: { debatePrep: 6, policyKnowledge: 4 },
@@ -67,7 +67,7 @@ export const RUNNING_MATES: Record<CandidateId, RunningMate[]> = {
     {
       id: "haley",
       name: "Nikki Haley",
-      ticket: "trump",
+      ticket: "rep",
       blurb: "Suburban bridge — wins back suburban women and college whites the top of the ticket bleeds.",
       traitBonuses: { charisma: 6, debatingSkill: 6 },
       favorability: { suburban_women: 0.08, college_white: 0.06, asian_other: 0.04 },
@@ -76,7 +76,7 @@ export const RUNNING_MATES: Record<CandidateId, RunningMate[]> = {
     {
       id: "scott",
       name: "Tim Scott",
-      ticket: "trump",
+      ticket: "rep",
       blurb: "Outreach closer — a magnetic fundraiser who softens the margins with Black and suburban voters.",
       traitBonuses: { charisma: 6, fundraisingProwess: 5 },
       favorability: { black: 0.06, suburban_women: 0.05 },
@@ -85,7 +85,7 @@ export const RUNNING_MATES: Record<CandidateId, RunningMate[]> = {
     {
       id: "cotton",
       name: "Tom Cotton",
-      ticket: "trump",
+      ticket: "rep",
       blurb: "Hardliner — maximizes non-college turnout and runs hot on law and order.",
       traitBonuses: { debatePrep: 5, energy: 5 },
       favorability: { noncollege_white: 0.09, seniors: 0.04 },
@@ -93,7 +93,7 @@ export const RUNNING_MATES: Record<CandidateId, RunningMate[]> = {
     {
       id: "noem",
       name: "Kristi Noem",
-      ticket: "trump",
+      ticket: "rep",
       blurb: "Heartland energy — a relentless campaigner who runs up the score in rural America.",
       traitBonuses: { energy: 8, charisma: 4 },
       favorability: { noncollege_white: 0.07, seniors: 0.04 },

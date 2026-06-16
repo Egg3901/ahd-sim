@@ -1,7 +1,7 @@
 // Candidate portrait URLs (Wikimedia Commons, public domain/official)
 export const CANDIDATE_PORTRAITS: Record<string, string> = {
-  biden: "/images/biden.jpg",
-  trump: "/images/trump.jpg",
+  dem: "/images/dem.jpg",
+  rep: "/images/rep.jpg",
 };
 
 export const RUNNING_MATE_PORTRAITS: Record<string, string> = {

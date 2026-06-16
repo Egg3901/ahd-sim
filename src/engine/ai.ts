@@ -18,8 +18,8 @@ export const DIFFICULTY: Record<"easy" | "normal" | "hard", AiConfig> = {
   hard: { efficiency: 1.0, mistakeRate: 0.05, foresight: 8 },
 };
 
-function aiShareOf(bidenShare: number, ai: CandidateId): number {
-  return ai === "biden" ? bidenShare : 1 - bidenShare;
+function aiShareOf(demShare: number, ai: CandidateId): number {
+  return ai === "dem" ? demShare : 1 - demShare;
 }
 
 // Ranks contests by tipping-point value to the AI: close races worth more EV in
@@ -38,7 +38,7 @@ function rankTargets(game: GameState, ai: CandidateId, cfg: AiConfig): Target[] 
   for (const sr of proj.contests) {
     const st = game.states.find((s) => s.id === sr.stateId);
     if (!st || st.blocs.length === 0) continue;
-    const aiShare = aiShareOf(sr.bidenShare, ai);
+    const aiShare = aiShareOf(sr.demShare, ai);
     const closeness = 1 - Math.abs(aiShare - 0.5) * 2; // 1 = a coin flip
     if (closeness < 0.5) continue; // ignore safe/hopeless states
     // Tipping-point value: EV per dollar of media, weighted by how flippable.

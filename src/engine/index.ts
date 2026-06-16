@@ -8,7 +8,7 @@ export {
   computeResult,
   projectElection,
   tallyContest,
-  blocBidenShare,
+  blocDemShare,
   type Projection,
   type ContestTally,
 } from "./voteModel";

@@ -20,7 +20,7 @@ import { OPPONENT_OF } from "@content/candidates";
 // Sign convention: a positive margin delta favors Biden. We translate a
 // candidate-favoring effect into the right sign here.
 function favorSign(candidate: CandidateId): number {
-  return candidate === "biden" ? 1 : -1;
+  return candidate === "dem" ? 1 : -1;
 }
 
 // Diminishing returns: the more you've already moved a bloc this campaign, the

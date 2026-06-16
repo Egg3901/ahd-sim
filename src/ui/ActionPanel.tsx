@@ -67,10 +67,10 @@ export function ActionPanel() {
     queueAction(action);
   };
 
-  const evPreview = preview?.ev.biden ?? 0;
-  const evLive = live?.ev.biden ?? 0;
+  const evPreview = preview?.ev.dem ?? 0;
+  const evLive = live?.ev.dem ?? 0;
   const evDelta = evPreview - evLive;
-  const playerIsBiden = player === "biden";
+  const playerIsBiden = player === "dem";
   const myDelta = playerIsBiden ? evDelta : -evDelta;
 
   return (

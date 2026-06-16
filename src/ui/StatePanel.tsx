@@ -36,8 +36,8 @@ export function StatePanel() {
   return (
     <div className="card scroll">
       <h3>{st.name} — {st.electoralVotes} EV</h3>
-      <div className="kv"><span className="k">Lean (true model)</span><span style={{ color: shareToColor(tally.bidenShare) }}>{leanLabel(tally.bidenShare)}</span></div>
-      <div className="kv"><span className="k">Biden / Trump</span><span>{pct(tally.bidenShare)} / {pct(1 - tally.bidenShare)}</span></div>
+      <div className="kv"><span className="k">Lean (true model)</span><span style={{ color: shareToColor(tally.demShare) }}>{leanLabel(tally.demShare)}</span></div>
+      <div className="kv"><span className="k">Biden / Trump</span><span>{pct(tally.demShare)} / {pct(1 - tally.demShare)}</span></div>
       {avg !== null && <div className="kv"><span className="k">Poll average</span><span>Biden {pct(avg)}</span></div>}
       <div className="kv"><span className="k">Your ground game</span><span>{pct(st.groundGame[player], 0)}</span></div>
       <div className="kv"><span className="k">Momentum (D−R)</span><span>{st.momentum >= 0 ? "+" : ""}{st.momentum.toFixed(0)}</span></div>
@@ -45,7 +45,7 @@ export function StatePanel() {
       <h3 style={{ marginTop: 14 }}>Demographic Blocs</h3>
       {st.blocs.map((b) => {
         const arche = BLOCS[b.blocId];
-        const d = b.support.biden;
+        const d = b.support.dem;
         return (
           <div className="bloc" key={b.blocId}>
             <span className="name">{arche.name}</span>
@@ -65,7 +65,7 @@ export function StatePanel() {
       {polls.map((p) => (
         <div className="pollrow" key={p.pollster}>
           <span>{p.pollster}</span>
-          <span>Biden {pct(p.bidenShare)} <span className="moe">±{p.marginOfError}</span></span>
+          <span>Biden {pct(p.demShare)} <span className="moe">±{p.marginOfError}</span></span>
         </div>
       ))}
     </div>

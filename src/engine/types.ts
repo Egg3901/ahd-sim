@@ -32,7 +32,7 @@ export type BlocId =
   | "youth";
 
 // The two tickets. Player picks one; the other is AI.
-export type CandidateId = "biden" | "trump";
+export type CandidateId = "dem" | "rep";
 
 export type Party = "Democratic" | "Republican";
 
@@ -127,7 +127,7 @@ export interface StateContest {
   electoralVotes: number;
   region: Region;
   // Real 2020 two-party Biden share, used only to solve baselineMargin.
-  prior2020BidenShare: number;
+  prior2020DemShare: number;
   // Cost multiplier for ads in this media market (1.0 = national average).
   mediaMarketCost: number;
   // True for the seven genuinely swingable contests (UI emphasis + AI focus).
@@ -291,7 +291,7 @@ export interface GameState {
 export interface StateResult {
   stateId: string;
   electoralVotes: number;
-  bidenShare: number; // two-party
+  demShare: number; // two-party
   winner: CandidateId;
   margin: number; // winner's two-party margin in points
 }

@@ -1,7 +1,7 @@
 // Map a two-party Biden share to a red↔blue lean color. Tossups (near 0.5) read
 // as muted purple; safe states saturate toward team colors.
-export function shareToColor(bidenShare: number): string {
-  const margin = (bidenShare - 0.5) * 2; // -1..+1 (Biden positive)
+export function shareToColor(demShare: number): string {
+  const margin = (demShare - 0.5) * 2; // -1..+1 (Biden positive)
   const m = Math.max(-1, Math.min(1, margin));
   // Strength of saturation grows with |margin|; tossups stay pale.
   const strength = Math.min(1, Math.abs(m) / 0.18); // saturates ~9pt margin
@@ -21,8 +21,8 @@ function mix(a: number[], b: number[], t: number): string {
   return `rgb(${r}, ${g}, ${bl})`;
 }
 
-export function leanLabel(bidenShare: number): string {
-  const pts = (bidenShare - 0.5) * 200;
+export function leanLabel(demShare: number): string {
+  const pts = (demShare - 0.5) * 200;
   const a = Math.abs(pts);
   const who = pts >= 0 ? "D" : "R";
   if (a < 1) return "Tossup";

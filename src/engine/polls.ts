@@ -10,7 +10,7 @@ import { tallyContest } from "./voteModel";
 export interface Poll {
   stateId: string;
   pollster: string;
-  bidenShare: number; // reported two-party
+  demShare: number; // reported two-party
   sampleSize: number;
   marginOfError: number; // points
 }
@@ -26,7 +26,7 @@ const POLLSTERS = [
 export function pollState(game: GameState, stateId: string): Poll[] {
   const st = game.states.find((s) => s.id === stateId);
   if (!st || st.blocs.length === 0) return [];
-  const truth = tallyContest(st).bidenShare;
+  const truth = tallyContest(st).demShare;
   return POLLSTERS.map((p, i) => {
     const rng = createRng(`poll:${game.seed}:${game.turn}:${stateId}:${i}`);
     const moe = 1.96 * Math.sqrt((0.25 / p.n)) ; // ~ at 50%
@@ -35,7 +35,7 @@ export function pollState(game: GameState, stateId: string): Poll[] {
     return {
       stateId,
       pollster: p.name,
-      bidenShare: reported,
+      demShare: reported,
       sampleSize: p.n,
       marginOfError: +(moe * 100).toFixed(1),
     };
@@ -46,7 +46,7 @@ export function pollState(game: GameState, stateId: string): Poll[] {
 export function pollAverage(game: GameState, stateId: string): number | null {
   const polls = pollState(game, stateId);
   if (polls.length === 0) return null;
-  return polls.reduce((s, p) => s + p.bidenShare, 0) / polls.length;
+  return polls.reduce((s, p) => s + p.demShare, 0) / polls.length;
 }
 
 // National poll average = electorate-weighted state poll averages.

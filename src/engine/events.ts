@@ -12,7 +12,7 @@ import { OPPONENT_OF } from "@content/candidates";
 import { clamp } from "./actions";
 
 function favorSign(candidate: CandidateId): number {
-  return candidate === "biden" ? 1 : -1;
+  return candidate === "dem" ? 1 : -1;
 }
 
 // Applies one event choice's effects in the answering candidate's favor. Bloc
@@ -112,7 +112,7 @@ function alreadyFired(game: GameState, eventId: string, candidate: CandidateId):
 // stochastic draw, each as a pending decision for BOTH tickets.
 export function queueEventsForTurn(game: GameState, rng: Rng) {
   const queue = (event: GameEvent) => {
-    for (const c of ["biden", "trump"] as CandidateId[]) {
+    for (const c of ["dem", "rep"] as CandidateId[]) {
       if (event.oncePerGame && alreadyFired(game, event.id, c)) continue;
       const exists = game.pendingEvents.some((p) => p.eventId === event.id && p.forCandidate === c);
       if (!exists) game.pendingEvents.push({ eventId: event.id, forCandidate: c });
@@ -130,7 +130,7 @@ export function queueEventsForTurn(game: GameState, rng: Rng) {
   if (rng.chance(0.7)) {
     const pool = EVENTS.filter((e) => {
       if (e.trigger.kind !== "stochastic") return false;
-      if (e.oncePerGame && (alreadyFired(game, e.id, "biden") || alreadyFired(game, e.id, "trump"))) return false;
+      if (e.oncePerGame && (alreadyFired(game, e.id, "dem") || alreadyFired(game, e.id, "rep"))) return false;
       const g = e.gate;
       if (g?.minTurn !== undefined && game.turn < g.minTurn) return false;
       if (g?.maxTurn !== undefined && game.turn > g.maxTurn) return false;

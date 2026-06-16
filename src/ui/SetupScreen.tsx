@@ -10,8 +10,8 @@ import { Vote } from "lucide-react";
 
 export function SetupScreen() {
   const newGame = useGameStore((s) => s.newGame);
-  const [pick, setPick] = useState<CandidateId>("biden");
-  const [mate, setMate] = useState<string>(defaultRunningMate("biden").id);
+  const [pick, setPick] = useState<CandidateId>("dem");
+  const [mate, setMate] = useState<string>(defaultRunningMate("dem").id);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const [seed, setSeed] = useState<string>("2020");
   const [guideOpen, setGuideOpen] = useState(false);
@@ -32,7 +32,7 @@ export function SetupScreen() {
         <div className="pick">
           {(Object.keys(CANDIDATES) as CandidateId[]).map((id) => {
             const c = CANDIDATES[id];
-            const selClass = pick === id ? (id === "biden" ? " sel-d" : " sel-r") : "";
+            const selClass = pick === id ? (id === "dem" ? " sel-d" : " sel-r") : "";
             return (
               <div key={id} className={`candcard${selClass}`} onClick={() => choosePick(id)} style={{ cursor: "pointer" }}>
                 <div className="nm" style={{ color: c.color }}>{c.name}</div>

@@ -8,9 +8,9 @@ import { shareToColor } from "./colors";
 function contestShare(game: GameState, id: string): number {
   const st = game.states.find((s) => s.id === id);
   if (!st) return 0.5;
-  if (st.blocs.length > 0) return tallyContest(st).bidenShare;
+  if (st.blocs.length > 0) return tallyContest(st).demShare;
   const sr = computeResult(game).stateResults.find((s) => s.stateId === id);
-  return sr?.bidenShare ?? 0.5;
+  return sr?.demShare ?? 0.5;
 }
 
 function GeoState({ id, game, onClick, selected }: { id: string; game: GameState; onClick: () => void; selected: boolean }) {

@@ -19,7 +19,7 @@ export function ResultsScreen() {
     const st = game.states.find((s) => s.id === id);
     if (!sr || !st) return null;
     return (
-      <div className="tile" key={id} style={{ background: shareToColor(sr.bidenShare), width: size }} title={`${st.name}: ${sr.winner === "biden" ? "Biden" : "Trump"} +${sr.margin.toFixed(1)}`}>
+      <div className="tile" key={id} style={{ background: shareToColor(sr.demShare), width: size }} title={`${st.name}: ${sr.winner === "dem" ? "Biden" : "Trump"} +${sr.margin.toFixed(1)}`}>
         <span>{st.abbr}</span>
         <span className="ev">{st.electoralVotes}</span>
       </div>
@@ -38,8 +38,8 @@ export function ResultsScreen() {
             <div className="ev" style={{ color: CANDIDATES[result.winner].color }}>{result.electoralVotes[result.winner]}</div>
           )}
           <div className="muted">
-            Biden {result.electoralVotes.biden} — Trump {result.electoralVotes.trump} ·
-            Popular vote: Biden {pct(result.popularShare.biden)} ({money(result.popularVote.biden)} votes)
+            Biden {result.electoralVotes.dem} — Trump {result.electoralVotes.rep} ·
+            Popular vote: Biden {pct(result.popularShare.dem)} ({money(result.popularVote.dem)} votes)
           </div>
           {result.winner === "tie" ? (
             <p className="muted small" style={{ marginTop: 8 }}>

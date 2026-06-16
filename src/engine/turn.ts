@@ -17,7 +17,7 @@ function decay(game: GameState) {
       bloc.enthusiasm = 1 + (bloc.enthusiasm - 1) * 0.6;
     }
   }
-  for (const c of ["biden", "trump"] as CandidateId[]) {
+  for (const c of ["dem", "rep"] as CandidateId[]) {
     const res = game.resources[c];
     res.nationalMomentum *= 0.75;
     res.mediaNarrative *= 0.8;
@@ -49,7 +49,7 @@ function buildRecap(game: GameState, turn: number, evBefore: number): TurnRecapI
   }
   recap.sort((a, b) => Math.abs(b.marginDelta ?? 0) - Math.abs(a.marginDelta ?? 0));
 
-  const evAfter = projectElection(game).ev.biden;
+  const evAfter = projectElection(game).ev.dem;
   recap.unshift({
     label: "Projected electoral votes",
     detail: `Biden ${evAfter} (was ${evBefore})`,
@@ -81,7 +81,7 @@ export function advanceTurn(
   const ai = OPPONENT_OF[player];
   const cfg = opts.difficulty ?? DIFFICULTY.normal;
 
-  const evBefore = projectElection(game).ev.biden;
+  const evBefore = projectElection(game).ev.dem;
 
   // 1. Resolve any leftover player events with a sensible default.
   if (opts.autoResolvePlayerEvents !== false) {
