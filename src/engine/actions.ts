@@ -145,6 +145,10 @@ function applyRally(game: GameState, action: CampaignAction, rng: Rng) {
   if (res.candidateDays < days) return;
   res.candidateDays -= days;
 
+  // The candidate is now campaigning here — drives the map marker.
+  game.locations = game.locations ?? {};
+  game.locations[c] = state.id;
+
   const energy = game.candidates[c].traits.energy;
   const charisma = game.candidates[c].traits.charisma;
   // state.momentum is signed Biden−Trump; nationalMomentum is the ticket's own.

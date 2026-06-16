@@ -277,6 +277,9 @@ export interface GameState {
   scenarioId?: string;
   // How campaign events are drawn (see content/events). Absent → "historical".
   eventMode?: EventMode;
+  // Each candidate's current campaign stop (state id of their last rally), for
+  // the map markers. Absent until a candidate has rallied somewhere.
+  locations?: Partial<Record<CandidateId, string>>;
   candidates: Record<CandidateId, Candidate>;
   issues: Record<IssueId, Issue>;
   // Live national salience, starts from issue.baseSalience, shifts via events.

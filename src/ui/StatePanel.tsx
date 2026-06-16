@@ -3,10 +3,13 @@ import { tallyContest, pollState, pollAverage } from "@engine/index";
 import { BLOCS } from "@content/blocs";
 import { shareToColor, leanLabel } from "./colors";
 import { pct } from "./format";
+import { MapPin } from "lucide-react";
 
 export function StatePanel() {
   const game = useGameStore((s) => s.game)!;
   const selectedId = useGameStore((s) => s.selectedStateId);
+  const queueAction = useGameStore((s) => s.queueAction);
+  const removeQueuedAction = useGameStore((s) => s.removeQueuedAction);
   const st = selectedId ? game.states.find((s) => s.id === selectedId) : null;
 
   if (!st) {
@@ -35,9 +38,27 @@ export function StatePanel() {
   const polls = pollState(game, st.id);
   const avg = pollAverage(game, st.id);
 
+  // "Travel here" queues (or cancels) a one-day campaign rally in this state.
+  const travelIdx = game.queuedActions.findIndex(
+    (a) => a.type === "rally" && a.candidate === player && a.stateId === st.id,
+  );
+  const traveling = travelIdx >= 0;
+  const toggleTravel = () => {
+    if (traveling) removeQueuedAction(travelIdx);
+    else queueAction({ type: "rally", candidate: player, stateId: st.id, days: 1 });
+  };
+
   return (
     <div className="card scroll">
       <h3>{st.name} — {st.electoralVotes} EV</h3>
+      <button
+        className={traveling ? "primary" : "secondary"}
+        onClick={toggleTravel}
+        style={{ width: "100%", margin: "2px 0 12px", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+      >
+        <MapPin size={14} />
+        {traveling ? "Campaign stop planned — tap to cancel" : "Travel here — hold a rally"}
+      </button>
       <div className="kv"><span className="k">Lean (true model)</span><span style={{ color: shareToColor(tally.demShare) }}>{leanLabel(tally.demShare)}</span></div>
       <div className="kv"><span className="k">{dem} / {rep}</span><span>{pct(tally.demShare)} / {pct(1 - tally.demShare)}</span></div>
       {avg !== null && <div className="kv"><span className="k">Poll average</span><span>{dem} {pct(avg)}</span></div>}

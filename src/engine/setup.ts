@@ -211,6 +211,7 @@ export function createGame(opts: NewGameOptions = {}): GameState {
     playerCandidate: player,
     scenarioId: scenario.id,
     eventMode: opts.eventMode ?? "historical",
+    locations: {},
     candidates,
     issues: structuredClone(ISSUES),
     salience,
