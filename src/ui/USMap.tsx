@@ -1,16 +1,41 @@
+import { useState } from "react";
 import { useGameStore } from "@store/gameStore";
 import { GRID, SPLIT_UNITS, GRID_COLS, GRID_ROWS } from "@content/mapLayout";
+import { STATE_PATHS } from "@content/statePaths";
 import { tallyContest, computeResult, type GameState } from "@engine/index";
 import { shareToColor } from "./colors";
 
-// Resolve a contest's current two-party Biden share for coloring. Aggregate
-// units (ME-AL/NE-AL) derive theirs from their districts.
 function contestShare(game: GameState, id: string): number {
   const st = game.states.find((s) => s.id === id);
   if (!st) return 0.5;
   if (st.blocs.length > 0) return tallyContest(st).bidenShare;
   const sr = computeResult(game).stateResults.find((s) => s.stateId === id);
   return sr?.bidenShare ?? 0.5;
+}
+
+function GeoState({ id, game, onClick, selected }: { id: string; game: GameState; onClick: () => void; selected: boolean }) {
+  const st = game.states.find((s) => s.id === id);
+  if (!st) return null;
+  const share = contestShare(game, id);
+  // Split-state districts (ME-1, NE-2, etc.) use the parent state path
+  const parentId = id.split("-")[0];
+  const path = STATE_PATHS[id] ?? STATE_PATHS[parentId];
+  if (!path) return null;
+
+  return (
+    <g
+      onClick={onClick}
+      style={{ cursor: "pointer" }}
+      className={selected ? "geo-selected" : ""}
+    >
+      <path
+        d={path}
+        fill={shareToColor(share)}
+        stroke={selected ? "var(--gold)" : "#1a2744"}
+        strokeWidth={selected ? 2 : 0.5}
+      />
+    </g>
+  );
 }
 
 function Tile({ id, game, size }: { id: string; game: GameState; size?: number }) {
@@ -34,9 +59,63 @@ function Tile({ id, game, size }: { id: string; game: GameState; size?: number }
 
 export function USMap() {
   const game = useGameStore((s) => s.game)!;
+  const [mode, setMode] = useState<"geo" | "square">("square");
+  const select = useGameStore((s) => s.selectState);
+  const selectedId = useGameStore((s) => s.selectedStateId);
+
+  if (mode === "geo") {
+    return (
+      <div className="card mapwrap">
+        <div className="mapcontrols" style={{ justifyContent: "space-between" }}>
+          <h3 style={{ margin: 0, fontSize: 13, textTransform: "uppercase", letterSpacing: 0.8, color: "var(--muted)" }}>Electoral Map</h3>
+          <div className="row" style={{ gap: 4 }}>
+            <button className={`ghost small active`} onClick={() => setMode("geo")}>Geo</button>
+            <button className={`ghost small`} onClick={() => setMode("square")}>Square</button>
+          </div>
+        </div>
+        <svg viewBox="0 0 1000 650" className="geo-map" preserveAspectRatio="xMidYMid meet">
+          {GRID.map((t) => (
+            <GeoState
+              key={t.id}
+              id={t.id}
+              game={game}
+              onClick={() => select(t.id)}
+              selected={selectedId === t.id}
+            />
+          ))}
+          {/* Split states: only render at-large units on geo map */}
+          {SPLIT_UNITS.map((grp) => {
+            const atLarge = grp.ids.find((id) => id.endsWith("-AL"));
+            return atLarge ? (
+              <GeoState
+                key={atLarge}
+                id={atLarge}
+                game={game}
+                onClick={() => select(atLarge)}
+                selected={selectedId === atLarge}
+              />
+            ) : null;
+          })}
+        </svg>
+        <div className="legend">
+          <span>Trump</span>
+          <span className="bar" />
+          <span>Biden</span>
+          <span style={{ marginLeft: 12 }}>◻ gold outline = battleground</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="card mapwrap">
-      <h3>Electoral Map</h3>
+      <div className="mapcontrols" style={{ justifyContent: "space-between" }}>
+        <h3 style={{ margin: 0, fontSize: 13, textTransform: "uppercase", letterSpacing: 0.8, color: "var(--muted)" }}>Electoral Map</h3>
+        <div className="row" style={{ gap: 4 }}>
+          <button className={`ghost small`} onClick={() => setMode("geo")}>Geo</button>
+          <button className={`ghost small active`} onClick={() => setMode("square")}>Square</button>
+        </div>
+      </div>
       <div
         className="tilegrid"
         style={{

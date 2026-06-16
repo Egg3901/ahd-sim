@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useGameStore, type Difficulty } from "@store/gameStore";
 import { CANDIDATES } from "@content/candidates";
+import { GuidePage } from "@ui/GuidePage";
+import { CandidateScreen } from "@ui/CandidateScreen";
 import type { CandidateId } from "@engine/index";
 
 export function SetupScreen() {
@@ -8,6 +10,8 @@ export function SetupScreen() {
   const [pick, setPick] = useState<CandidateId>("biden");
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const [seed, setSeed] = useState<string>("2020");
+  const [guideOpen, setGuideOpen] = useState(false);
+  const [candOpen, setCandOpen] = useState(false);
 
   return (
     <div className="center">
@@ -42,14 +46,20 @@ export function SetupScreen() {
           <input type="text" value={seed} onChange={(e) => setSeed(e.target.value)} />
         </div>
 
-        <button
-          className="primary"
-          style={{ width: "100%", marginTop: 10, padding: 12, fontSize: 15 }}
-          onClick={() => newGame({ seed, playerCandidate: pick, difficulty })}
-        >
-          Begin Campaign as {CANDIDATES[pick].shortName} →
-        </button>
+        <div className="row" style={{ marginTop: 10, gap: 8 }}>
+          <button className="ghost" style={{ flex: 1 }} onClick={() => setGuideOpen(true)}>How to Play</button>
+          <button className="ghost" style={{ flex: 1 }} onClick={() => setCandOpen(true)}>Candidates</button>
+          <button
+            className="primary"
+            style={{ flex: 2, padding: 12, fontSize: 15 }}
+            onClick={() => newGame({ seed, playerCandidate: pick, difficulty })}
+          >
+            Begin Campaign as {CANDIDATES[pick].shortName} →
+          </button>
+        </div>
       </div>
+      {guideOpen && <GuidePage onClose={() => setGuideOpen(false)} />}
+      {candOpen && <CandidateScreen onClose={() => setCandOpen(false)} />}
     </div>
   );
 }

@@ -9,6 +9,8 @@ import { ActionPanel } from "@ui/ActionPanel";
 import { EventModal } from "@ui/EventModal";
 import { RecapModal } from "@ui/RecapModal";
 import { EvBar } from "@ui/EvBar";
+import { GuidePage } from "@ui/GuidePage";
+import { CandidateScreen } from "@ui/CandidateScreen";
 import { CANDIDATES } from "@content/candidates";
 import { money, turnLabel } from "@ui/format";
 
@@ -62,6 +64,8 @@ function GameScreen() {
   const canUndo = useGameStore((s) => s.history.length > 0);
   const live = useGameStore((s) => s.liveProjection)();
   const [recapOpen, setRecapOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
+  const [candOpen, setCandOpen] = useState(false);
 
   const player = game.playerCandidate;
   const res = game.resources[player];
@@ -70,8 +74,6 @@ function GameScreen() {
 
   const handleEndTurn = () => {
     endTurn();
-    // Show the week-in-review first; the new week's events come after the
-    // player dismisses it. (Zustand updates synchronously.)
     const g = useGameStore.getState().game;
     if (g && g.phase !== "result" && g.lastRecap.length > 0) setRecapOpen(true);
   };
@@ -86,6 +88,8 @@ function GameScreen() {
         <div className="stat"><span className="v">{res.candidateDays}/{res.maxCandidateDays}</span><span className="l">Days</span></div>
         <div className="stat"><span className="v">{res.nationalMomentum.toFixed(0)}</span><span className="l">Momentum</span></div>
         <SaveControls />
+        <button className="ghost small" onClick={() => setCandOpen(true)}>Candidates</button>
+        <button className="ghost small" onClick={() => setGuideOpen(true)}>Guide</button>
         <button onClick={undo} disabled={!canUndo}>↶ Undo</button>
         <button className="primary" onClick={handleEndTurn} disabled={hasPendingEvent}>
           {hasPendingEvent ? "Resolve event first" : "End Week →"}
@@ -103,9 +107,10 @@ function GameScreen() {
         </div>
       </div>
 
-      {/* Recap takes precedence; once dismissed, the week's events surface. */}
       {recapOpen && <RecapModal onClose={() => setRecapOpen(false)} />}
       {!recapOpen && hasPendingEvent && <EventModal />}
+      {guideOpen && <GuidePage onClose={() => setGuideOpen(false)} />}
+      {candOpen && <CandidateScreen onClose={() => setCandOpen(false)} />}
     </div>
   );
 }

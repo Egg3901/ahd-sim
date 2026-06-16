@@ -3,17 +3,28 @@ import { useGameStore } from "@store/gameStore";
 import type { ActionType, AdMode, CampaignAction, IssueId } from "@engine/index";
 import { ISSUES, ISSUE_IDS } from "@content/issues";
 import { money } from "./format";
+import {
+  Tv,
+  Megaphone,
+  Handshake,
+  DollarSign,
+  Building2,
+  Vote,
+  Search,
+  GraduationCap,
+  ArrowLeftRight,
+} from "lucide-react";
 
-const ACTIONS: { type: ActionType; label: string; cost: string }[] = [
-  { type: "advertise", label: "Advertising", cost: "$ + market" },
-  { type: "rally", label: "Rally / Stop", cost: "1+ days" },
-  { type: "surrogate", label: "Surrogate", cost: "$250K" },
-  { type: "fundraise", label: "Fundraise", cost: "1+ days" },
-  { type: "ground_game", label: "Field Offices", cost: "$1.5M + staff" },
-  { type: "gotv", label: "GOTV", cost: "$1M" },
-  { type: "oppo_research", label: "Oppo Research", cost: "$2M" },
-  { type: "debate_prep", label: "Debate Prep", cost: "1+ days" },
-  { type: "issue_pivot", label: "Issue Pivot", cost: "free" },
+const ACTIONS: { type: ActionType; label: string; cost: string; Icon: React.ComponentType<{ size?: number | string; className?: string }> }[] = [
+  { type: "advertise", label: "Advertising", cost: "$ + market", Icon: Tv },
+  { type: "rally", label: "Rally / Stop", cost: "1+ days", Icon: Megaphone },
+  { type: "surrogate", label: "Surrogate", cost: "$250K", Icon: Handshake },
+  { type: "fundraise", label: "Fundraise", cost: "1+ days", Icon: DollarSign },
+  { type: "ground_game", label: "Field Offices", cost: "$1.5M + staff", Icon: Building2 },
+  { type: "gotv", label: "GOTV", cost: "$1M", Icon: Vote },
+  { type: "oppo_research", label: "Oppo Research", cost: "$2M", Icon: Search },
+  { type: "debate_prep", label: "Debate Prep", cost: "1+ days", Icon: GraduationCap },
+  { type: "issue_pivot", label: "Issue Pivot", cost: "free", Icon: ArrowLeftRight },
 ];
 
 const NEEDS_STATE: ActionType[] = ["advertise", "rally", "surrogate", "ground_game", "gotv"];
@@ -63,7 +74,7 @@ export function ActionPanel() {
   const myDelta = playerIsBiden ? evDelta : -evDelta;
 
   return (
-    <div className="card scroll">
+    <div className="card">
       <div className="row">
         <h3 style={{ flex: 1 }}>Allocate Resources</h3>
       </div>
@@ -80,6 +91,7 @@ export function ActionPanel() {
             className={`actionbtn${type === a.type ? " sel" : ""}`}
             onClick={() => setType(a.type)}
           >
+            <a.Icon size={18} />
             <span className="t">{a.label}</span>
             <span className="c">{a.cost}</span>
           </button>

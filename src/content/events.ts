@@ -57,7 +57,7 @@ export const EVENTS: GameEvent[] = [
       {
         id: "policy_wonk",
         text: "Go deep on policy detail and dare them to keep up.",
-        requires: { trait: "experience", min: 70 },
+        requires: { trait: "policyKnowledge", min: 70 },
         effects: {
           blocDeltas: [
             { blocId: "college_white", margin: 0.06 },
@@ -634,7 +634,7 @@ export const EVENTS: GameEvent[] = [
       {
         id: "command",
         text: "Command the facts — project total mastery of the issues.",
-        requires: { trait: "experience", min: 65 },
+        requires: { trait: "policyKnowledge", min: 65 },
         effects: {
           blocDeltas: [{ blocId: "college_white", margin: 0.04 }, { blocId: "seniors", margin: 0.02 }],
           salienceDeltas: { healthcare: 0.03 },

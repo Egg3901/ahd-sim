@@ -21,9 +21,9 @@ function decay(game: GameState) {
     const res = game.resources[c];
     res.nationalMomentum *= 0.75;
     res.mediaNarrative *= 0.8;
-    // Debate-prep buff relaxes back toward the candidate's base debating trait.
-    const base = CANDIDATES[c].traits.debating;
-    game.candidates[c].traits.debating = base + (game.candidates[c].traits.debating - base) * 0.4;
+    // Debate-prep buff relaxes back toward the candidate's base debating skill.
+    const base = CANDIDATES[c].traits.debatingSkill;
+    game.candidates[c].traits.debatingSkill = base + (game.candidates[c].traits.debatingSkill - base) * 0.4;
     // Refill candidate-days for the new week.
     res.candidateDays = res.maxCandidateDays;
   }

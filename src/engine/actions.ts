@@ -92,7 +92,7 @@ function applyAdvertise(game: GameState, action: CampaignAction, rng: Rng) {
   const mode: AdMode = action.adMode ?? "positive";
   // $1M of effective spend → a base logit nudge, scaled by media market.
   const effectiveMillions = actualSpend / 1_000_000 / state.mediaMarketCost;
-  const fundraisingBoost = 0.85 + game.candidates[c].traits.fundraising / 400;
+  const fundraisingBoost = 0.85 + game.candidates[c].traits.fundraisingProwess / 400;
 
   if (mode === "issue" && action.issueId) {
     // Issue ads raise that issue's national salience (toward your strong suit).
@@ -145,7 +145,7 @@ function applyRally(game: GameState, action: CampaignAction, rng: Rng) {
   if (res.candidateDays < days) return;
   res.candidateDays -= days;
 
-  const stamina = game.candidates[c].traits.stamina;
+  const energy = game.candidates[c].traits.energy;
   const charisma = game.candidates[c].traits.charisma;
   // state.momentum is signed Biden−Trump; nationalMomentum is the ticket's own.
   state.momentum = clamp(state.momentum + favorSign(c) * days * (6 + charisma / 20), -100, 100);
@@ -159,8 +159,8 @@ function applyRally(game: GameState, action: CampaignAction, rng: Rng) {
     bloc.enthusiasm = Math.min(1.25, bloc.enthusiasm + 0.01 * days);
   }
 
-  // Gaffe risk: more likely with low stamina and heavy travel.
-  const gaffeRisk = Math.max(0.02, (0.18 * days * (100 - stamina)) / 100);
+  // Gaffe risk: more likely with low energy and heavy travel.
+  const gaffeRisk = Math.max(0.02, (0.18 * days * (100 - energy)) / 100);
   if (rng.chance(gaffeRisk)) {
     const penalty = 0.04 + rng.next() * 0.05;
     for (const bloc of state.blocs) {
@@ -196,7 +196,7 @@ function applyFundraise(game: GameState, action: CampaignAction, rng: Rng) {
   const days = Math.max(1, Math.round(action.days ?? 1));
   if (res.candidateDays < days) return;
   res.candidateDays -= days;
-  const trait = game.candidates[c].traits.fundraising;
+  const trait = game.candidates[c].traits.fundraisingProwess;
   const momentumBonus = 1 + Math.max(0, res.nationalMomentum) / 200;
   const haul = days * (8_000_000 + trait * 120_000) * momentumBonus * (0.85 + rng.next() * 0.3);
   res.cash += haul;
@@ -301,11 +301,11 @@ function applyDebatePrep(game: GameState, action: CampaignAction) {
   const days = Math.max(1, Math.round(action.days ?? 1));
   if (res.candidateDays < days) return;
   res.candidateDays -= days;
-  // Temporarily buff debating via a transient trait bump (decays after debate).
-  game.candidates[c].traits.debating = Math.min(100, game.candidates[c].traits.debating + days * 4);
+  // Temporarily buff debating skill via a transient trait bump (decays after debate).
+  game.candidates[c].traits.debatingSkill = Math.min(100, game.candidates[c].traits.debatingSkill + days * 4);
   game.causes.push({
     turn: game.turn,
-    cause: `Debate prep (+${days * 4} debating)`,
+    cause: `Debate prep (+${days * 4} debating skill)`,
     marginDelta: 0,
   });
 }

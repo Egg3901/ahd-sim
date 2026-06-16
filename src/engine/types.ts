@@ -48,12 +48,12 @@ export interface Issue {
 
 export interface CandidateTraits {
   charisma: number; // 0..100
-  stamina: number;
-  leadership: number;
-  integrity: number;
-  experience: number;
-  debating: number;
-  fundraising: number;
+  energy: number; // was stamina
+  debatePrep: number; // was leadership (repurposed)
+  intelligence: number; // was integrity (repurposed)
+  policyKnowledge: number; // was experience (repurposed)
+  debatingSkill: number; // was debating (renamed)
+  fundraisingProwess: number; // was fundraising (renamed)
 }
 
 export interface Candidate {

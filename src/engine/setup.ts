@@ -100,8 +100,8 @@ export function buildStates(): StateContest[] {
 }
 
 function startingResources(candidate: CandidateId): Resources {
-  const stamina = CANDIDATES[candidate].traits.stamina;
-  const maxDays = Math.round(3 + stamina / 25); // ~5–6 candidate-days/week
+  const energy = CANDIDATES[candidate].traits.energy;
+  const maxDays = Math.round(3 + energy / 25); // ~5–6 candidate-days/week
   return {
     // Both campaigns enter the fall flush; Biden held a real cash edge.
     cash: candidate === "biden" ? 220_000_000 : 180_000_000,
