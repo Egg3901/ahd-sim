@@ -1,17 +1,29 @@
+import { useState } from "react";
 import { useGameStore } from "@store/gameStore";
 import { choiceAvailable } from "@engine/index";
 import { EVENTS_BY_ID } from "@content/events";
 import { BLOCS } from "@content/blocs";
 
-// Shows the first pending event for the player and resolves the chosen option.
+// Shows the first pending event for the player. Two steps: pick a choice, see
+// the narrated outcome (the authored resultText), then continue. Effects are
+// applied on Continue so the reveal and the state change stay in sync.
 export function EventModal() {
   const game = useGameStore((s) => s.game)!;
   const resolve = useGameStore((s) => s.resolvePlayerEvent);
+  const [chosenId, setChosenId] = useState<string | null>(null);
 
   const pending = game.pendingEvents.find((p) => p.forCandidate === game.playerCandidate);
   if (!pending) return null;
   const event = EVENTS_BY_ID[pending.eventId];
   if (!event) return null;
+
+  const chosen = chosenId ? event.choices.find((c) => c.id === chosenId) : null;
+
+  const commit = () => {
+    if (!chosen) return;
+    resolve(event.id, chosen.id);
+    setChosenId(null);
+  };
 
   return (
     <div className="overlay">
@@ -22,14 +34,15 @@ export function EventModal() {
         </div>
         <div className="body">
           <p className="prompt">{event.prompt}</p>
-          {event.choices.map((choice) => {
+
+          {!chosen && event.choices.map((choice) => {
             const available = choiceAvailable(game, game.playerCandidate, choice);
             return (
               <button
                 key={choice.id}
                 className="choice"
                 disabled={!available}
-                onClick={() => resolve(event.id, choice.id)}
+                onClick={() => setChosenId(choice.id)}
               >
                 <span className="ct">{choice.text}</span>
                 <span className="deltas">
@@ -47,6 +60,18 @@ export function EventModal() {
               </button>
             );
           })}
+
+          {chosen && (
+            <>
+              <div className="choice" style={{ cursor: "default" }}>
+                <span className="ct">{chosen.text}</span>
+              </div>
+              <p className="resulttext">{chosen.resultText}</p>
+              <button className="primary" style={{ width: "100%" }} onClick={commit}>
+                Continue →
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

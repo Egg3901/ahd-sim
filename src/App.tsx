@@ -70,11 +70,10 @@ function GameScreen() {
 
   const handleEndTurn = () => {
     endTurn();
-    // Open the recap unless the campaign just ended (results screen takes over).
-    setTimeout(() => {
-      const g = useGameStore.getState().game;
-      if (g && g.phase !== "result") setRecapOpen(true);
-    }, 0);
+    // Show the week-in-review first; the new week's events come after the
+    // player dismisses it. (Zustand updates synchronously.)
+    const g = useGameStore.getState().game;
+    if (g && g.phase !== "result" && g.lastRecap.length > 0) setRecapOpen(true);
   };
 
   return (
@@ -104,8 +103,9 @@ function GameScreen() {
         </div>
       </div>
 
-      {hasPendingEvent && <EventModal />}
-      {!hasPendingEvent && recapOpen && <RecapModal onClose={() => setRecapOpen(false)} />}
+      {/* Recap takes precedence; once dismissed, the week's events surface. */}
+      {recapOpen && <RecapModal onClose={() => setRecapOpen(false)} />}
+      {!recapOpen && hasPendingEvent && <EventModal />}
     </div>
   );
 }
