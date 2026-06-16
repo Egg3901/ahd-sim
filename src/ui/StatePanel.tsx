@@ -1,5 +1,5 @@
 import { useGameStore } from "@store/gameStore";
-import { tallyContest, pollState, pollAverage } from "@engine/index";
+import { tallyContest, pollState, pollAverage, liveBlocDemShare } from "@engine/index";
 import { BLOCS } from "@content/blocs";
 import { shareToColor, leanLabel } from "./colors";
 import { pct } from "./format";
@@ -68,7 +68,9 @@ export function StatePanel() {
       <h3 style={{ marginTop: 14 }}>Demographic Blocs</h3>
       {st.blocs.map((b) => {
         const arche = BLOCS[b.blocId];
-        const d = b.support.dem;
+        // Live campaign-adjusted share (baseline + ads/rallies/momentum), so the
+        // bloc bars stay consistent with the state result above.
+        const d = liveBlocDemShare(st, b);
         return (
           <div className="bloc" key={b.blocId}>
             <span className="name">{arche.name}</span>

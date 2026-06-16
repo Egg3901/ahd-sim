@@ -40,7 +40,10 @@ function rankTargets(game: GameState, ai: CandidateId, cfg: AiConfig): Target[] 
     if (!st || st.blocs.length === 0) continue;
     const aiShare = aiShareOf(sr.demShare, ai);
     const closeness = 1 - Math.abs(aiShare - 0.5) * 2; // 1 = a coin flip
-    if (closeness < 0.5) continue; // ignore safe/hopeless states
+    // Only contest genuinely competitive states (within ~10 pts two-party).
+    // A campaign doesn't dump its budget into a state it trails by 11+ (NY) or
+    // 17 (CA) — that over-investment is what was flipping safe states.
+    if (Math.abs(sr.demShare - 0.5) > 0.045) continue;
     // Tipping-point value: EV per dollar of media, weighted by how flippable.
     const priority = (st.electoralVotes * closeness) / st.mediaMarketCost;
     targets.push({

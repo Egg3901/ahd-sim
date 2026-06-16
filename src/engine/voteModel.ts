@@ -2,6 +2,7 @@ import type {
   CandidateId,
   GameResult,
   GameState,
+  StateBloc,
   StateContest,
   StateResult,
 } from "./types";
@@ -27,7 +28,15 @@ export interface ContestTally {
 // Per-point coupling of signed state momentum (Biden−Trump) into vote margin.
 // Transient: momentum decays each turn, so this term fades — it never bakes
 // into campaignMargin. Zero at neutral, so calibration is untouched.
-const MOMENTUM_COUPLING = 0.0025;
+const MOMENTUM_COUPLING = 0.0017;
+
+// Live two-party Dem support for a bloc *inside its state* — baseline plus the
+// campaign margin plus the state's momentum term. This is what the tally sums,
+// so UI bloc bars should use it (not the static baseline `support`) to stay
+// consistent with the state result.
+export function liveBlocDemShare(state: StateContest, bloc: StateBloc): number {
+  return blocDemShare(bloc.baselineMargin, bloc.campaignMargin + state.momentum * MOMENTUM_COUPLING);
+}
 
 // Tallies one vote-bearing contest (a contest with blocs).
 export function tallyContest(state: StateContest): ContestTally {

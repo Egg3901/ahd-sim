@@ -9,6 +9,7 @@ export {
   projectElection,
   tallyContest,
   blocDemShare,
+  liveBlocDemShare,
   type Projection,
   type ContestTally,
 } from "./voteModel";

@@ -25,10 +25,17 @@ function favorSign(candidate: CandidateId): number {
 
 // Diminishing returns: the more you've already moved a bloc this campaign, the
 // less each additional push does. Keeps spend from snowballing infinitely.
-function saturate(currentAbsMargin: number, raw: number): number {
-  const ceiling = 1.4; // soft cap on total campaign-induced logit shift per bloc
-  const room = Math.max(0, 1 - currentAbsMargin / ceiling);
-  return raw * (0.35 + 0.65 * room);
+function saturate(bloc: StateBloc, raw: number): number {
+  // Hard(ish) cap on total campaign-induced logit shift per bloc: as the
+  // accumulated push approaches the ceiling, each additional push fades to zero,
+  // so sustained spend can't snowball a state arbitrarily far over a campaign.
+  const ceiling = 0.7;
+  const room = Math.max(0, 1 - Math.abs(bloc.campaignMargin) / ceiling);
+  // Leans are sticky: a bloc that already leans hard (large baseline margin)
+  // resists persuasion far more than a true tossup — what keeps a safe state
+  // safe. You can't flip California (or New York) with a campaign of ad dumps.
+  const leanResist = 1 / (1 + Math.abs(bloc.baselineMargin) * 1.8);
+  return raw * room * leanResist;
 }
 
 // How well an action lands on a bloc, based on issue alignment & salience.
@@ -90,8 +97,12 @@ function applyAdvertise(game: GameState, action: CampaignAction, rng: Rng) {
   res.cash -= actualSpend;
 
   const mode: AdMode = action.adMode ?? "positive";
-  // $1M of effective spend → a base logit nudge, scaled by media market.
+  // Effective spend, scaled by media market, then run through a saturating curve
+  // so a single enormous buy hits diminishing returns and can't single-handedly
+  // carry a state. adReach asymptotes toward AD_SAT (~6 effective $M-equivalents).
   const effectiveMillions = actualSpend / 1_000_000 / state.mediaMarketCost;
+  const AD_SAT = 6;
+  const adReach = AD_SAT * (1 - Math.exp(-effectiveMillions / AD_SAT));
   const fundraisingBoost = 0.85 + game.candidates[c].traits.fundraisingProwess / 400;
 
   if (mode === "issue" && action.issueId) {
@@ -116,9 +127,9 @@ function applyAdvertise(game: GameState, action: CampaignAction, rng: Rng) {
     // Positive ads land best on persuadable, well-aligned blocs.
     const responsiveness = 0.4 + align * 0.6;
     const share = action.blocId ? 1 : bloc.size / state.blocs.reduce((s, b) => s + b.size, 0);
-    let raw = effectiveMillions * 0.06 * responsiveness * fundraisingBoost;
+    let raw = adReach * 0.06 * responsiveness * fundraisingBoost;
     if (!action.blocId) raw *= share * targetBlocs.length; // spread across the state
-    raw = saturate(Math.abs(bloc.campaignMargin), raw);
+    raw = saturate(bloc, raw);
     // A little variance so repeated ads aren't perfectly predictable.
     raw *= 0.9 + rng.next() * 0.2;
 
@@ -158,7 +169,7 @@ function applyRally(game: GameState, action: CampaignAction, rng: Rng) {
   for (const bloc of state.blocs) {
     const align = issueAlignment(game, c, bloc.blocId);
     let raw = days * 0.05 * (0.5 + align * 0.5) * (0.9 + charisma / 300);
-    raw = saturate(Math.abs(bloc.campaignMargin), raw);
+    raw = saturate(bloc, raw);
     addCause(game, bloc, state, `Rally in ${state.abbr}`, favorSign(c) * raw);
     bloc.enthusiasm = Math.min(1.25, bloc.enthusiasm + 0.01 * days);
   }
@@ -187,7 +198,7 @@ function applySurrogate(game: GameState, action: CampaignAction, rng: Rng) {
   state.momentum = clamp(state.momentum + favorSign(c) * 2, -100, 100);
   for (const bloc of state.blocs) {
     let raw = 0.018 * (0.6 + issueAlignment(game, c, bloc.blocId) * 0.4);
-    raw = saturate(Math.abs(bloc.campaignMargin), raw) * (0.9 + rng.next() * 0.2);
+    raw = saturate(bloc, raw) * (0.9 + rng.next() * 0.2);
     addCause(game, bloc, state, `Surrogate visit to ${state.abbr}`, favorSign(c) * raw);
   }
 }
