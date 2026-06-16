@@ -131,13 +131,13 @@ function requireEvent(id: string) {
   return e;
 }
 
-// Convenience: queue the opening week's events for a freshly created game.
-export function beginGame(game: GameState, seed: number | string = game.seed): GameState {
+// Opens a freshly created game. The first week is deliberately event-free: the
+// player lands on the dashboard to read the map and set a plan without a
+// decision modal blocking the screen. Campaign events begin after the first
+// "End Week" (advanceTurn queues turn 1's slate onward).
+export function beginGame(game: GameState): GameState {
   const next: GameState = structuredClone(game);
-  const rng = createRng(`begin:${seed}:${next.seed}`);
   next.pendingEvents = [];
-  queueEventsForTurn(next, rng);
-  next.rngState = rng.state();
   next.phase = "intel";
   return next;
 }

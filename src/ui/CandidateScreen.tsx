@@ -1,17 +1,9 @@
 import { useState } from "react";
 import { CANDIDATES } from "@content/candidates";
 import { CANDIDATE_PORTRAITS, RUNNING_MATE_PORTRAITS } from "@content/portraits";
+import { RUNNING_MATES } from "@content/runningMates";
+import { TRAIT_LABELS, mateBonusChips } from "@ui/labels";
 import type { CandidateId } from "@engine/index";
-
-const TRAIT_LABELS: Record<string, string> = {
-  charisma: "Charisma",
-  energy: "Energy",
-  debatePrep: "Debate Prep",
-  intelligence: "Intelligence",
-  policyKnowledge: "Policy Knowledge",
-  debatingSkill: "Debating Skill",
-  fundraisingProwess: "Fundraising Prowess",
-};
 
 function StatBar({ label, value }: { label: string; value: number }) {
   const pct = Math.round(value);
@@ -64,6 +56,7 @@ export function CandidateScreen({ onClose }: { onClose: () => void }) {
   const [view, setView] = useState<"candidate" | "runningMate">("candidate");
   const c = CANDIDATES[selected];
   const traits = c.traits;
+  const roster = RUNNING_MATES[selected];
 
   return (
     <div className="overlay" onClick={onClose}>
@@ -89,44 +82,63 @@ export function CandidateScreen({ onClose }: { onClose: () => void }) {
               {c.name}
             </button>
             <button className={view === "runningMate" ? "active" : ""} onClick={() => setView("runningMate")}>
-              {c.runningMate}
+              Running mates
             </button>
           </div>
 
-          <div className="profile-body">
-            <div className="profile-header">
-              <img
-                src={view === "candidate" ? CANDIDATE_PORTRAITS[selected] : RUNNING_MATE_PORTRAITS[c.runningMate]}
-                alt={view === "candidate" ? c.name : c.runningMate}
-                className="pfp-large-img"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-              />
-              <div>
-                <h3>{view === "candidate" ? c.name : c.runningMate}</h3>
-                <p className="muted">{c.party} · {view === "candidate" ? "Presidential nominee" : "Vice Presidential nominee"}</p>
+          {view === "candidate" && (
+            <div className="profile-body">
+              <div className="profile-header">
+                <img
+                  src={CANDIDATE_PORTRAITS[selected]}
+                  alt={c.name}
+                  className="pfp-large-img"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+                <div>
+                  <h3>{c.name}</h3>
+                  <p className="muted">{c.party} · Presidential nominee</p>
+                </div>
               </div>
-            </div>
-
-            {view === "candidate" && (
               <div className="stats-grid">
                 {Object.entries(traits).map(([key, val]) => (
                   <StatBar key={key} label={TRAIT_LABELS[key] ?? key} value={val} />
                 ))}
               </div>
-            )}
+            </div>
+          )}
 
-            {view === "runningMate" && (
-              <div className="stats-grid">
-                <StatBar label="Charisma" value={traits.charisma * 0.85} />
-                <StatBar label="Energy" value={traits.energy * 0.9} />
-                <StatBar label="Debate Prep" value={traits.debatePrep * 0.7} />
-                <StatBar label="Intelligence" value={traits.intelligence * 0.9} />
-                <StatBar label="Policy Knowledge" value={traits.policyKnowledge * 0.6} />
-                <StatBar label="Debating Skill" value={traits.debatingSkill * 0.8} />
-                <StatBar label="Fundraising Prowess" value={traits.fundraisingProwess * 0.75} />
+          {view === "runningMate" && (
+            <div className="profile-body">
+              <p className="muted small" style={{ marginTop: 0 }}>
+                Pick one at setup. Each fold their bonuses into your ticket's traits, bloc appeal,
+                and starting resources. ★ marks the historical 2020 nominee.
+              </p>
+              <div className="vp-list">
+                {roster.map((m) => (
+                  <div className="vp-row" key={m.id}>
+                    <img
+                      src={RUNNING_MATE_PORTRAITS[m.name] ?? ""}
+                      alt={m.name}
+                      className="pfp-img"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="vp-row-name">
+                        {m.name}{m.historical && <span className="vp-star"> ★</span>}
+                      </div>
+                      <p className="vp-blurb" style={{ margin: "2px 0 6px" }}>{m.blurb}</p>
+                      <div className="vp-bonuses">
+                        {mateBonusChips(m).map((label, i) => (
+                          <span key={i} className="chip up">{label}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

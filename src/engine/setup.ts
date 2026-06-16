@@ -1,14 +1,19 @@
 import type {
+  BlocId,
+  Candidate,
   CandidateId,
+  CandidateTraits,
   GameState,
   Resources,
+  RunningMate,
   StateBloc,
   StateContest,
 } from "./types";
 import { BLOCS, BLOC_IDS, logit } from "@content/blocs";
 import { STATE_SEEDS, type StateSeed } from "@content/states";
 import { ISSUES, ISSUE_IDS } from "@content/issues";
-import { CANDIDATES } from "@content/candidates";
+import { CANDIDATES, OPPONENT_OF } from "@content/candidates";
+import { resolveRunningMate, defaultRunningMate } from "@content/runningMates";
 
 export function sigmoid(x: number): number {
   return 1 / (1 + Math.exp(-x));
@@ -99,12 +104,13 @@ export function buildStates(): StateContest[] {
   });
 }
 
-function startingResources(candidate: CandidateId): Resources {
+function startingResources(candidate: CandidateId, vp: RunningMate): Resources {
   const energy = CANDIDATES[candidate].traits.energy;
-  const maxDays = Math.round(3 + energy / 25); // ~5–6 candidate-days/week
+  const maxDays = Math.round(3 + energy / 25) + (vp.candidateDayBonus ?? 0); // ~5–6 candidate-days/week
   return {
-    // Both campaigns enter the fall flush; Biden held a real cash edge.
-    cash: candidate === "biden" ? 220_000_000 : 180_000_000,
+    // Both campaigns enter the fall flush; Biden held a real cash edge. A
+    // fundraiser VP adds a one-time war-chest bump.
+    cash: (candidate === "biden" ? 220_000_000 : 180_000_000) + (vp.cashBonus ?? 0),
     candidateDays: maxDays,
     maxCandidateDays: maxDays,
     staffCapacity: 6,
@@ -113,11 +119,31 @@ function startingResources(candidate: CandidateId): Resources {
   };
 }
 
+// Fold a chosen running mate's bonuses into the ticket: rename the VP, bump
+// traits (clamped 0..100), and add bloc favorability. Mutates the cloned cand.
+function applyRunningMate(cand: Candidate, vp: RunningMate) {
+  cand.runningMate = vp.name;
+  if (vp.traitBonuses) {
+    for (const [k, v] of Object.entries(vp.traitBonuses)) {
+      const key = k as keyof CandidateTraits;
+      cand.traits[key] = Math.max(0, Math.min(100, cand.traits[key] + (v ?? 0)));
+    }
+  }
+  if (vp.favorability) {
+    for (const [b, v] of Object.entries(vp.favorability)) {
+      const key = b as BlocId;
+      cand.baseFavorability[key] = (cand.baseFavorability[key] ?? 0) + (v ?? 0);
+    }
+  }
+}
+
 export interface NewGameOptions {
   seed?: number | string;
   playerCandidate?: CandidateId;
   totalTurns?: number;
   granularity?: "week" | "day";
+  // Chosen running mate id for the player's ticket (see content/runningMates).
+  runningMate?: string;
 }
 
 // Builds a fresh, fully-initialized game state. Deterministic given the seed.
@@ -130,6 +156,17 @@ export function createGame(opts: NewGameOptions = {}): GameState {
   const salience = {} as GameState["salience"];
   for (const id of ISSUE_IDS) salience[id] = ISSUES[id].baseSalience;
 
+  // Resolve running mates: the player's chosen pick, the AI's historical default.
+  const player = opts.playerCandidate ?? "biden";
+  const opponent = OPPONENT_OF[player];
+  const candidates = structuredClone(CANDIDATES);
+  const vps = {
+    [player]: resolveRunningMate(player, opts.runningMate),
+    [opponent]: defaultRunningMate(opponent),
+  } as Record<CandidateId, RunningMate>;
+  applyRunningMate(candidates[player], vps[player]);
+  applyRunningMate(candidates[opponent], vps[opponent]);
+
   return {
     seed,
     rngState: seed,
@@ -137,20 +174,21 @@ export function createGame(opts: NewGameOptions = {}): GameState {
     totalTurns: opts.totalTurns ?? 9, // Sept 1 → Nov 3, weekly
     granularity: opts.granularity ?? "week",
     phase: "intel",
-    playerCandidate: opts.playerCandidate ?? "biden",
-    candidates: structuredClone(CANDIDATES),
+    playerCandidate: player,
+    candidates,
     issues: structuredClone(ISSUES),
     salience,
     states: buildStates(),
     resources: {
-      biden: startingResources("biden"),
-      trump: startingResources("trump"),
+      biden: startingResources("biden", vps.biden),
+      trump: startingResources("trump", vps.trump),
     },
     pendingEvents: [],
     firedEventIds: [],
     queuedActions: [],
     causes: [],
     lastRecap: [],
+    runningMates: { biden: vps.biden.id, trump: vps.trump.id },
   };
 }
 

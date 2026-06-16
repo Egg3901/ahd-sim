@@ -330,6 +330,23 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
 .setup-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .setup-actions .ghost { flex: 1 1 0; min-width: 0; }
 .setup-actions .begin { flex: 1 1 100%; padding: 12px; font-size: 15px; }
+
+/* ── Running-mate picker (setup) ────────────────────────────────────── */
+.vp-roster { display: flex; flex-wrap: wrap; gap: 6px; }
+.vp-card { display: inline-flex; align-items: center; gap: 5px; padding: 7px 11px;
+  font-size: 12px; font-weight: 600; border-radius: var(--radius-pill); flex: 0 0 auto; }
+.vp-card.sel { border-color: var(--gold); background: var(--surface-hover); box-shadow: var(--glow-gold); }
+.vp-name { white-space: nowrap; }
+.vp-star { color: var(--gold); }
+.vp-blurb { font-size: 12.5px; line-height: 1.45; color: var(--ink-300); margin: 9px 0 8px; }
+.vp-bonuses { display: flex; flex-wrap: wrap; gap: 5px; }
+
+/* Roster list in the Candidate Profiles modal */
+.vp-list { display: flex; flex-direction: column; gap: 10px; }
+.vp-row { display: flex; gap: 12px; padding: 12px; border-radius: var(--radius-md);
+  border: 1px solid var(--border); background: var(--panel-2); }
+.vp-row-name { font-weight: 700; font-size: 14px; }
+.vp-star { color: var(--gold); }
 .pick { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
 .candcard { padding: 16px; border-radius: var(--radius-lg); border: 1px solid var(--border);
   background: var(--panel); box-shadow: var(--shadow); transition: all var(--dur-fast) var(--ease); }

@@ -8,7 +8,6 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "../../App";
 import { useGameStore } from "@store/gameStore";
-import { EVENTS_BY_ID } from "@content/events";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -34,14 +33,16 @@ describe("App renders without crashing", () => {
     m.cleanup();
   });
 
-  it("renders the in-game screen (map, panels, opening event) after newGame", () => {
+  it("renders the in-game dashboard (map, panels) with no blocking event on the opening week", () => {
     act(() => { useGameStore.getState().newGame({ seed: "render", playerCandidate: "biden" }); });
     const m = mount();
     const html = m.html();
     expect(html).toContain("Electoral Map");
     expect(html).toContain("Allocate Resources");
-    // The opening week queues the convention event — its modal should render.
-    expect(html).toContain(EVENTS_BY_ID["convention_bounce"].title);
+    // The opening week is deliberately event-free so nothing blocks the dashboard
+    // on load; campaign events begin after the first End Week.
+    const g = useGameStore.getState().game!;
+    expect(g.pendingEvents.filter((p) => p.forCandidate === g.playerCandidate)).toHaveLength(0);
     m.cleanup();
   });
 

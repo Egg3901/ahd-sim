@@ -1,18 +1,26 @@
 import { useState } from "react";
 import { useGameStore, type Difficulty } from "@store/gameStore";
 import { CANDIDATES } from "@content/candidates";
+import { RUNNING_MATES, defaultRunningMate } from "@content/runningMates";
 import { GuidePage } from "@ui/GuidePage";
 import { CandidateScreen } from "@ui/CandidateScreen";
+import { mateBonusChips } from "@ui/labels";
 import type { CandidateId } from "@engine/index";
 import { Vote } from "lucide-react";
 
 export function SetupScreen() {
   const newGame = useGameStore((s) => s.newGame);
   const [pick, setPick] = useState<CandidateId>("biden");
+  const [mate, setMate] = useState<string>(defaultRunningMate("biden").id);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const [seed, setSeed] = useState<string>("2020");
   const [guideOpen, setGuideOpen] = useState(false);
   const [candOpen, setCandOpen] = useState(false);
+
+  // Switching the top of the ticket resets the VP to that side's default.
+  const choosePick = (id: CandidateId) => { setPick(id); setMate(defaultRunningMate(id).id); };
+  const roster = RUNNING_MATES[pick];
+  const selectedMate = roster.find((m) => m.id === mate) ?? roster[0];
 
   return (
     <div className="center">
@@ -26,12 +34,35 @@ export function SetupScreen() {
             const c = CANDIDATES[id];
             const selClass = pick === id ? (id === "biden" ? " sel-d" : " sel-r") : "";
             return (
-              <div key={id} className={`candcard${selClass}`} onClick={() => setPick(id)} style={{ cursor: "pointer" }}>
+              <div key={id} className={`candcard${selClass}`} onClick={() => choosePick(id)} style={{ cursor: "pointer" }}>
                 <div className="nm" style={{ color: c.color }}>{c.name}</div>
-                <div className="rm">{c.party} · {c.runningMate}</div>
+                <div className="rm">{c.party}</div>
               </div>
             );
           })}
+        </div>
+
+        <div className="field" style={{ textAlign: "left" }}>
+          <label>Running mate — shapes your coalition</label>
+          <div className="vp-roster">
+            {roster.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                className={`vp-card${mate === m.id ? " sel" : ""}`}
+                onClick={() => setMate(m.id)}
+              >
+                <span className="vp-name">{m.name}</span>
+                {m.historical && <span className="vp-star" title="Historical 2020 pick">★</span>}
+              </button>
+            ))}
+          </div>
+          <p className="vp-blurb">{selectedMate.blurb}</p>
+          <div className="vp-bonuses">
+            {mateBonusChips(selectedMate).map((label, i) => (
+              <span key={i} className="chip up">{label}</span>
+            ))}
+          </div>
         </div>
 
         <div className="field" style={{ textAlign: "left" }}>
@@ -53,7 +84,7 @@ export function SetupScreen() {
           <button className="ghost" onClick={() => setCandOpen(true)}>Candidates</button>
           <button
             className="primary begin"
-            onClick={() => newGame({ seed, playerCandidate: pick, difficulty })}
+            onClick={() => newGame({ seed, playerCandidate: pick, difficulty, runningMate: mate })}
           >
             Begin Campaign as {CANDIDATES[pick].shortName} →
           </button>

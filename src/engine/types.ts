@@ -70,6 +70,27 @@ export interface Candidate {
   baseFavorability: Partial<Record<BlocId, number>>;
 }
 
+// A selectable running mate. Picked at setup; its bonuses are folded into the
+// ticket's traits / bloc favorability / starting resources at game creation.
+export interface RunningMate {
+  id: string;
+  name: string;
+  // Which presidential nominee this VP runs with.
+  ticket: CandidateId;
+  // One-line newsroom-style description of the pick's strategic value.
+  blurb: string;
+  // The real 2020 running mate (used as each side's default).
+  historical?: boolean;
+  // Added to the ticket's candidate traits (clamped 0..100).
+  traitBonuses?: Partial<CandidateTraits>;
+  // Added to the ticket's baseline bloc favorability.
+  favorability?: Partial<Record<BlocId, number>>;
+  // One-time starting-cash bonus (fundraiser VPs).
+  cashBonus?: number;
+  // Extra candidate-days each week (energetic surrogates).
+  candidateDayBonus?: number;
+}
+
 // A demographic bloc *inside a particular state*. The heart of the scoring model.
 export interface StateBloc {
   blocId: BlocId;
@@ -260,6 +281,9 @@ export interface GameState {
   queuedActions: CampaignAction[];
   causes: CauseEntry[];
   lastRecap: TurnRecapItem[];
+  // Chosen running mate id per ticket (drives the applied bonuses + UI). Optional
+  // for backward compatibility with saves predating VP selection.
+  runningMates?: Record<CandidateId, string>;
   // Set once the game is decided.
   result?: GameResult;
 }
