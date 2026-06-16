@@ -65,7 +65,7 @@ export function USMap() {
 
   if (mode === "geo") {
     return (
-      <div className="card mapwrap">
+      <div className="card mapwrap sheen">
         <div className="mapcontrols" style={{ justifyContent: "space-between" }}>
           <h3 style={{ margin: 0, fontSize: 13, textTransform: "uppercase", letterSpacing: 0.8, color: "var(--muted)" }}>Electoral Map</h3>
           <div className="row" style={{ gap: 4 }}>
@@ -108,7 +108,7 @@ export function USMap() {
   }
 
   return (
-    <div className="card mapwrap">
+    <div className="card mapwrap sheen">
       <div className="mapcontrols" style={{ justifyContent: "space-between" }}>
         <h3 style={{ margin: 0, fontSize: 13, textTransform: "uppercase", letterSpacing: 0.8, color: "var(--muted)" }}>Electoral Map</h3>
         <div className="row" style={{ gap: 4 }}>

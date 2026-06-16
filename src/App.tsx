@@ -13,6 +13,7 @@ import { GuidePage } from "@ui/GuidePage";
 import { CandidateScreen } from "@ui/CandidateScreen";
 import { CANDIDATES } from "@content/candidates";
 import { money, turnLabel } from "@ui/format";
+import { Vote } from "lucide-react";
 
 function SaveControls() {
   const exportSave = useGameStore((s) => s.exportSave);
@@ -79,9 +80,15 @@ function GameScreen() {
   };
 
   return (
-    <div className="app">
+    <div className="app screen" key="game">
       <div className="topbar">
-        <div className="brand">CAMPAIGN <span className="yr">2020</span></div>
+        <div className="brand-lockup">
+          <span className="mark"><Vote size={22} /></span>
+          <div>
+            <div className="brand-name">A HOUSE DIVIDED</div>
+            <div className="brand-yr">CAMPAIGN 2020</div>
+          </div>
+        </div>
         <div className="turnchip">{turnLabel(game.turn, game.totalTurns)} · playing <strong style={{ color: cand.color }}>{cand.shortName}</strong></div>
         {live && <EvBar projection={live} />}
         <div className="stat"><span className="v">{money(res.cash)}</span><span className="l">Cash</span></div>
@@ -120,7 +127,7 @@ export function App() {
   const refreshSaves = useGameStore((s) => s.refreshSaves);
   useEffect(() => { void refreshSaves(); }, [refreshSaves]);
 
-  if (!game) return <div className="app"><SetupScreen /></div>;
-  if (game.phase === "result") return <div className="app"><ResultsScreen /></div>;
+  if (!game) return <div className="app screen" key="setup"><SetupScreen /></div>;
+  if (game.phase === "result") return <div className="app screen" key="result"><ResultsScreen /></div>;
   return <GameScreen />;
 }

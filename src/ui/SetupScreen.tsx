@@ -4,6 +4,7 @@ import { CANDIDATES } from "@content/candidates";
 import { GuidePage } from "@ui/GuidePage";
 import { CandidateScreen } from "@ui/CandidateScreen";
 import type { CandidateId } from "@engine/index";
+import { Vote } from "lucide-react";
 
 export function SetupScreen() {
   const newGame = useGameStore((s) => s.newGame);
@@ -16,7 +17,8 @@ export function SetupScreen() {
   return (
     <div className="center">
       <div className="setup">
-        <div className="title">CAMPAIGN <span className="yr">2020</span></div>
+        <div className="setup-eyebrow"><span className="mark"><Vote size={18} /></span>CAMPAIGN 2020</div>
+        <div className="title">A House Divided</div>
         <p className="sub">September 1st. Sixty-three days to Election Day. You are the campaign manager. Read the map, spend what you have, answer the moments that matter, and get to 270.</p>
 
         <div className="pick">
