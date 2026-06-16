@@ -11,6 +11,8 @@ export default defineConfig({
       "@engine": fileURLToPath(new URL("./src/engine", import.meta.url)),
       "@content": fileURLToPath(new URL("./src/content", import.meta.url)),
       "@ui": fileURLToPath(new URL("./src/ui", import.meta.url)),
+      "@persistence": fileURLToPath(new URL("./src/persistence", import.meta.url)),
+      "@store": fileURLToPath(new URL("./src/store", import.meta.url)),
     },
   },
   test: {
