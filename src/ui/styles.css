@@ -457,7 +457,11 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
   .stat .v { font-size: 13px; }
   .stat .l { font-size: 9px; }
 
-  .main { grid-template-columns: 1fr; gap: 14px; padding: 14px; overflow: auto; }
+  /* Single column: size each row to its content and stack from the top.
+     Without this, the fixed-height grid splits into equal rows and the columns
+     (whose min-height is 0) collapse, so Actions overlaps the bottom of the map. */
+  .main { grid-template-columns: 1fr; gap: 16px; padding: 14px; overflow: auto;
+    grid-auto-rows: max-content; align-content: start; }
   .col { gap: 14px; min-height: 0; }
 
   .tilegrid { gap: 3px; width: 100%; max-width: 100%; }
