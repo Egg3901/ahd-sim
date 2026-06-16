@@ -64,9 +64,9 @@ describe("turn loop", () => {
     let g = game;
     while (g.turn < 4 && g.phase !== "result") g = advanceTurn(g, [], "ff");
     const before = projectElection(g).contests.find((c) => c.stateId === "PA")!.demShare;
-    const pending = g.pendingEvents.find((p) => p.eventId === "debate_1" && p.forCandidate === "dem");
+    const pending = g.pendingEvents.find((p) => p.eventId === "h20_debate1" && p.forCandidate === "dem");
     expect(pending).toBeDefined();
-    const res = resolveEvent(g, "debate_1", "calm_presidential", "dem");
+    const res = resolveEvent(g, "h20_debate1", "calm_presidential", "dem");
     expect(res).not.toBeNull();
     const after = computeResult(g).stateResults.find((s) => s.stateId === "PA")!.demShare;
     expect(after).toBeGreaterThan(before);

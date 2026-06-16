@@ -211,6 +211,10 @@ export interface EventEffect {
 export interface EventChoice {
   id: string;
   text: string;
+  // Asymmetric events: a choice tagged with a side is only offered to that
+  // ticket (e.g. a scandal's subject handles it; the opponent exploits it).
+  // Untagged choices are shown to both (symmetric events like debates).
+  side?: CandidateId;
   // Optional gate (e.g. requires a trait threshold or prior action).
   requires?: { trait?: keyof CandidateTraits; min?: number };
   effects: EventEffect;

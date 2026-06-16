@@ -73,6 +73,7 @@ export function applyEventEffect(
 
 // Whether a choice is available to a candidate (trait gates).
 export function choiceAvailable(game: GameState, candidate: CandidateId, choice: EventChoice): boolean {
+  if (choice.side && choice.side !== candidate) return false; // wrong ticket's option
   if (!choice.requires) return true;
   const { trait, min } = choice.requires;
   if (trait && min !== undefined) {
@@ -160,7 +161,9 @@ export function queueEventsForTurn(game: GameState, rng: Rng) {
 // AI auto-picks the choice that maximizes its net weighted bloc support given
 // current salience (Section 8). Pure + legible.
 export function aiChooseEvent(game: GameState, event: GameEvent, candidate: CandidateId): EventChoice {
-  let best = event.choices[0];
+  // Default to the first choice actually available to this ticket (asymmetric
+  // events offer different options per side).
+  let best = event.choices.find((c) => choiceAvailable(game, candidate, c)) ?? event.choices[0];
   let bestScore = -Infinity;
   for (const choice of event.choices) {
     if (!choiceAvailable(game, candidate, choice)) continue;

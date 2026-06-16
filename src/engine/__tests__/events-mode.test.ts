@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { createGame } from "../setup";
 import { advanceTurn, beginGame } from "../turn";
+import { choiceAvailable } from "../events";
+import { EVENTS_BY_ID } from "@content/events";
 import type { GameState } from "../types";
 
 // Advance to a target turn without auto-resolving the player's events, so we can
@@ -32,6 +34,21 @@ describe("event modes", () => {
 
   it("default (no eventMode) is historical 2020 — the original beats still fire", () => {
     const g = advanceTo(beginGame(createGame({ scenario: "2020", seed: "d" })), 4);
-    expect(g.pendingEvents.map((p) => p.eventId)).toContain("debate_1");
+    expect(g.pendingEvents.map((p) => p.eventId)).toContain("h20_debate1");
+  });
+
+  it("asymmetric events offer each ticket its own non-overlapping choices", () => {
+    const game = createGame({ scenario: "2020" });
+    const ev = EVENTS_BY_ID["h20_unrest"];
+    const dem = ev.choices.filter((c) => choiceAvailable(game, "dem", c)).map((c) => c.id);
+    const rep = ev.choices.filter((c) => choiceAvailable(game, "rep", c)).map((c) => c.id);
+    expect(dem).toEqual(["d_tightrope", "d_justice"]);
+    expect(rep).toEqual(["r_lawandorder", "r_calm"]);
+    expect(dem.some((c) => rep.includes(c))).toBe(false); // the two sides never share an option
+  });
+
+  it("a symmetric event (debate) has no side-tagged choices", () => {
+    // Both tickets face the same debate options (trait gates aside).
+    expect(EVENTS_BY_ID["h20_debate1"].choices.every((c) => !c.side)).toBe(true);
   });
 });

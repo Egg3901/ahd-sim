@@ -17,7 +17,9 @@ export function EventModal() {
   const event = EVENTS_BY_ID[pending.eventId];
   if (!event) return null;
 
-  const chosen = chosenId ? event.choices.find((c) => c.id === chosenId) : null;
+  // Only this ticket's options — the opponent faces a different set entirely.
+  const myChoices = event.choices.filter((c) => !c.side || c.side === game.playerCandidate);
+  const chosen = chosenId ? myChoices.find((c) => c.id === chosenId) : null;
 
   const commit = () => {
     if (!chosen) return;
@@ -35,7 +37,7 @@ export function EventModal() {
         <div className="body">
           <p className="prompt">{event.prompt}</p>
 
-          {!chosen && event.choices.map((choice) => {
+          {!chosen && myChoices.map((choice) => {
             const available = choiceAvailable(game, game.playerCandidate, choice);
             return (
               <button
