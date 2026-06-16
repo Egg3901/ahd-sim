@@ -121,6 +121,7 @@ export function USMap() {
         style={{
           gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`,
           gridTemplateRows: `repeat(${GRID_ROWS}, 1fr)`,
+          aspectRatio: `${GRID_COLS} / ${GRID_ROWS}`,
         }}
       >
         {GRID.map((t) => (
