@@ -24,13 +24,19 @@ export interface ContestTally {
   winner: CandidateId;
 }
 
+// Per-point coupling of signed state momentum (Biden−Trump) into vote margin.
+// Transient: momentum decays each turn, so this term fades — it never bakes
+// into campaignMargin. Zero at neutral, so calibration is untouched.
+const MOMENTUM_COUPLING = 0.0025;
+
 // Tallies one vote-bearing contest (a contest with blocs).
 export function tallyContest(state: StateContest): ContestTally {
   let bidenVotes = 0;
   let totalVotes = 0;
+  const momentumTerm = state.momentum * MOMENTUM_COUPLING;
   for (const bloc of state.blocs) {
     const votes = bloc.size * bloc.turnoutPropensity * bloc.enthusiasm;
-    const share = blocBidenShare(bloc.baselineMargin, bloc.campaignMargin);
+    const share = blocBidenShare(bloc.baselineMargin, bloc.campaignMargin + momentumTerm);
     bidenVotes += votes * share;
     totalVotes += votes;
   }

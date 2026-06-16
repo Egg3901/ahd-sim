@@ -1,0 +1,367 @@
+import type {
+  AdMode,
+  CampaignAction,
+  CandidateId,
+  CauseEntry,
+  GameState,
+  IssueId,
+  StateBloc,
+  StateContest,
+} from "./types";
+import type { Rng } from "./rng";
+import { BLOCS } from "@content/blocs";
+import { OPPONENT_OF } from "@content/candidates";
+
+// All action effects route THROUGH the vote model: they write margin deltas
+// (Biden − Trump) into blocs' campaignMargin, plus enthusiasm / momentum /
+// ground-game / salience side-effects. Each writes a CauseEntry so every poll
+// move is traceable (Pillar C).
+
+// Sign convention: a positive margin delta favors Biden. We translate a
+// candidate-favoring effect into the right sign here.
+function favorSign(candidate: CandidateId): number {
+  return candidate === "biden" ? 1 : -1;
+}
+
+// Diminishing returns: the more you've already moved a bloc this campaign, the
+// less each additional push does. Keeps spend from snowballing infinitely.
+function saturate(currentAbsMargin: number, raw: number): number {
+  const ceiling = 1.4; // soft cap on total campaign-induced logit shift per bloc
+  const room = Math.max(0, 1 - currentAbsMargin / ceiling);
+  return raw * (0.35 + 0.65 * room);
+}
+
+// How well an action lands on a bloc, based on issue alignment & salience.
+// Used to target the right voters with the right message.
+export function issueAlignment(
+  game: GameState,
+  candidate: CandidateId,
+  blocId: string,
+  issueId?: IssueId,
+): number {
+  const arche = BLOCS[blocId as keyof typeof BLOCS];
+  if (!arche) return 0.5;
+  const cand = game.candidates[candidate];
+  const issues: IssueId[] = issueId ? [issueId] : (Object.keys(arche.issueWeights) as IssueId[]);
+  let num = 0;
+  let den = 0;
+  for (const id of issues) {
+    const weight = (arche.issueWeights[id] ?? 0) * (game.salience[id] ?? 0.5);
+    const ideal = arche.idealPositions[id] ?? 0;
+    const pos = cand.issuePositions[id] ?? 0;
+    const align = 1 - Math.abs(pos - ideal) / 2; // 0..1
+    num += weight * align;
+    den += weight;
+  }
+  return den > 0 ? num / den : 0.5;
+}
+
+function addCause(
+  game: GameState,
+  bloc: StateBloc,
+  state: StateContest,
+  cause: string,
+  delta: number,
+) {
+  bloc.campaignMargin += delta;
+  const entry: CauseEntry = {
+    turn: game.turn,
+    stateId: state.id,
+    blocId: bloc.blocId,
+    cause,
+    marginDelta: delta,
+  };
+  game.causes.push(entry);
+}
+
+const findState = (game: GameState, id?: string) =>
+  game.states.find((s) => s.id === id && s.blocs.length > 0);
+
+// ── ADVERTISING ───────────────────────────────────────────────────────────
+// Positive: raise own appeal. Contrast: lower opponent. Issue: raise salience
+// of a chosen issue where you're strong. Cost scales with media-market cost.
+function applyAdvertise(game: GameState, action: CampaignAction, rng: Rng) {
+  const state = findState(game, action.stateId);
+  if (!state) return;
+  const c = action.candidate;
+  const spend = Math.max(0, action.spend ?? 0);
+  const res = game.resources[c];
+  const actualSpend = Math.min(spend, res.cash);
+  res.cash -= actualSpend;
+
+  const mode: AdMode = action.adMode ?? "positive";
+  // $1M of effective spend → a base logit nudge, scaled by media market.
+  const effectiveMillions = actualSpend / 1_000_000 / state.mediaMarketCost;
+  const fundraisingBoost = 0.85 + game.candidates[c].traits.fundraising / 400;
+
+  if (mode === "issue" && action.issueId) {
+    // Issue ads raise that issue's national salience (toward your strong suit).
+    const bump = Math.min(0.12, effectiveMillions * 0.015);
+    game.salience[action.issueId] = Math.min(1, (game.salience[action.issueId] ?? 0.5) + bump);
+    game.causes.push({
+      turn: game.turn,
+      stateId: state.id,
+      cause: `Issue ads raised salience of ${action.issueId}`,
+      marginDelta: 0,
+    });
+    return;
+  }
+
+  const targetBlocs = action.blocId
+    ? state.blocs.filter((b) => b.blocId === action.blocId)
+    : state.blocs;
+
+  for (const bloc of targetBlocs) {
+    const align = issueAlignment(game, c, bloc.blocId);
+    // Positive ads land best on persuadable, well-aligned blocs.
+    const responsiveness = 0.4 + align * 0.6;
+    const share = action.blocId ? 1 : bloc.size / state.blocs.reduce((s, b) => s + b.size, 0);
+    let raw = effectiveMillions * 0.06 * responsiveness * fundraisingBoost;
+    if (!action.blocId) raw *= share * targetBlocs.length; // spread across the state
+    raw = saturate(Math.abs(bloc.campaignMargin), raw);
+    // A little variance so repeated ads aren't perfectly predictable.
+    raw *= 0.9 + rng.next() * 0.2;
+
+    if (mode === "contrast") {
+      // Negative ads push the bloc away from the opponent (toward you), but
+      // risk depressing turnout slightly (the "everyone's bad" effect).
+      addCause(game, bloc, state, `Contrast ads in ${state.abbr}`, favorSign(c) * raw * 0.9);
+      bloc.enthusiasm = Math.max(0.8, bloc.enthusiasm - 0.005);
+    } else {
+      addCause(game, bloc, state, `Positive ads in ${state.abbr}`, favorSign(c) * raw);
+    }
+  }
+}
+
+// ── RALLY (candidate stop) ────────────────────────────────────────────────
+// Spends candidate-days. Momentum + local enthusiasm + turnout. Gaffe risk
+// rises as stamina falls and as the candidate rallies more.
+function applyRally(game: GameState, action: CampaignAction, rng: Rng) {
+  const state = findState(game, action.stateId);
+  if (!state) return;
+  const c = action.candidate;
+  const res = game.resources[c];
+  const days = Math.max(1, Math.round(action.days ?? 1));
+  if (res.candidateDays < days) return;
+  res.candidateDays -= days;
+
+  const stamina = game.candidates[c].traits.stamina;
+  const charisma = game.candidates[c].traits.charisma;
+  // state.momentum is signed Biden−Trump; nationalMomentum is the ticket's own.
+  state.momentum = clamp(state.momentum + favorSign(c) * days * (6 + charisma / 20), -100, 100);
+  res.nationalMomentum = clamp(res.nationalMomentum + days * 1.5, -100, 100);
+
+  for (const bloc of state.blocs) {
+    const align = issueAlignment(game, c, bloc.blocId);
+    let raw = days * 0.05 * (0.5 + align * 0.5) * (0.9 + charisma / 300);
+    raw = saturate(Math.abs(bloc.campaignMargin), raw);
+    addCause(game, bloc, state, `Rally in ${state.abbr}`, favorSign(c) * raw);
+    bloc.enthusiasm = Math.min(1.25, bloc.enthusiasm + 0.01 * days);
+  }
+
+  // Gaffe risk: more likely with low stamina and heavy travel.
+  const gaffeRisk = Math.max(0.02, (0.18 * days * (100 - stamina)) / 100);
+  if (rng.chance(gaffeRisk)) {
+    const penalty = 0.04 + rng.next() * 0.05;
+    for (const bloc of state.blocs) {
+      addCause(game, bloc, state, `Gaffe at ${state.abbr} rally`, -favorSign(c) * penalty);
+    }
+    res.mediaNarrative = clamp(res.mediaNarrative - 8, -100, 100);
+  }
+}
+
+// ── SURROGATE / VP stop ───────────────────────────────────────────────────
+// Covers states the principal can't. Weaker, but costs no principal days.
+function applySurrogate(game: GameState, action: CampaignAction, rng: Rng) {
+  const state = findState(game, action.stateId);
+  if (!state) return;
+  const c = action.candidate;
+  const res = game.resources[c];
+  const cost = 250_000;
+  if (res.cash < cost) return;
+  res.cash -= cost;
+  state.momentum = clamp(state.momentum + favorSign(c) * 2, -100, 100);
+  for (const bloc of state.blocs) {
+    let raw = 0.018 * (0.6 + issueAlignment(game, c, bloc.blocId) * 0.4);
+    raw = saturate(Math.abs(bloc.campaignMargin), raw) * (0.9 + rng.next() * 0.2);
+    addCause(game, bloc, state, `Surrogate visit to ${state.abbr}`, favorSign(c) * raw);
+  }
+}
+
+// ── FUNDRAISING ───────────────────────────────────────────────────────────
+// Spends candidate-days for cash. Fundraising trait + small-dollar enthusiasm.
+function applyFundraise(game: GameState, action: CampaignAction, rng: Rng) {
+  const c = action.candidate;
+  const res = game.resources[c];
+  const days = Math.max(1, Math.round(action.days ?? 1));
+  if (res.candidateDays < days) return;
+  res.candidateDays -= days;
+  const trait = game.candidates[c].traits.fundraising;
+  const momentumBonus = 1 + Math.max(0, res.nationalMomentum) / 200;
+  const haul = days * (8_000_000 + trait * 120_000) * momentumBonus * (0.85 + rng.next() * 0.3);
+  res.cash += haul;
+  game.causes.push({
+    turn: game.turn,
+    cause: `Fundraising haul (+$${(haul / 1_000_000).toFixed(1)}M)`,
+    marginDelta: 0,
+  });
+}
+
+// ── GROUND GAME / FIELD OFFICES ───────────────────────────────────────────
+// Slow to build, sticky. Builds staff-limited persistent GOTV capacity.
+function applyGroundGame(game: GameState, action: CampaignAction) {
+  const state = findState(game, action.stateId);
+  if (!state) return;
+  const c = action.candidate;
+  const res = game.resources[c];
+  const cost = 1_500_000;
+  if (res.cash < cost || res.staffCapacity < 1) return;
+  res.cash -= cost;
+  res.staffCapacity -= 1;
+  state.groundGame[c] = Math.min(1, state.groundGame[c] + 0.2);
+  game.causes.push({
+    turn: game.turn,
+    stateId: state.id,
+    cause: `Built field offices in ${state.abbr}`,
+    marginDelta: 0,
+  });
+}
+
+// ── GOTV ──────────────────────────────────────────────────────────────────
+// Late-game turnout push; only effective where ground game exists.
+function applyGotv(game: GameState, action: CampaignAction) {
+  const state = findState(game, action.stateId);
+  if (!state) return;
+  const c = action.candidate;
+  const res = game.resources[c];
+  const cost = 1_000_000;
+  if (res.cash < cost) return;
+  res.cash -= cost;
+  const ground = state.groundGame[c];
+  if (ground <= 0.01) {
+    // No infrastructure → wasted money (rewards earlier investment).
+    game.causes.push({
+      turn: game.turn,
+      stateId: state.id,
+      cause: `GOTV in ${state.abbr} fell flat (no field operation)`,
+      marginDelta: 0,
+    });
+    return;
+  }
+  // Mobilization advantage → effective two-party margin shift toward you.
+  for (const bloc of state.blocs) {
+    const propensity = 1 - bloc.turnoutPropensity; // more upside for low-turnout blocs
+    const raw = 0.12 * ground * (0.5 + propensity);
+    addCause(game, bloc, state, `GOTV mobilization in ${state.abbr}`, favorSign(c) * raw);
+    bloc.enthusiasm = Math.min(1.3, bloc.enthusiasm + 0.03 * ground);
+  }
+}
+
+// ── OPPOSITION RESEARCH ───────────────────────────────────────────────────
+// Risky: can land a scandal on the opponent, or backfire as "desperate".
+function applyOppoResearch(game: GameState, action: CampaignAction, rng: Rng) {
+  const c = action.candidate;
+  const opp = OPPONENT_OF[c];
+  const res = game.resources[c];
+  const cost = 2_000_000;
+  if (res.cash < cost) return;
+  res.cash -= cost;
+  const success = rng.chance(0.55);
+  const sign = favorSign(c);
+  if (success) {
+    // Hits the opponent across persuadable blocs.
+    for (const st of game.states) {
+      if (st.blocs.length === 0) continue;
+      for (const bloc of st.blocs) {
+        if (bloc.blocId === "college_white" || bloc.blocId === "suburban_women") {
+          addCause(game, bloc, st, `Scandal lands on ${game.candidates[opp].shortName}`, sign * 0.05);
+        }
+      }
+    }
+    res.mediaNarrative = clamp(res.mediaNarrative + 6, -100, 100);
+  } else {
+    // Backfire — looks desperate.
+    res.mediaNarrative = clamp(res.mediaNarrative - 10, -100, 100);
+    for (const st of game.states) {
+      if (st.blocs.length === 0) continue;
+      for (const bloc of st.blocs) {
+        if (bloc.blocId === "suburban_women") {
+          addCause(game, bloc, st, `Oppo dump backfires as "desperate"`, -sign * 0.03);
+        }
+      }
+    }
+  }
+}
+
+// ── DEBATE PREP ───────────────────────────────────────────────────────────
+// Spends days to improve odds in the next scheduled debate event.
+function applyDebatePrep(game: GameState, action: CampaignAction) {
+  const c = action.candidate;
+  const res = game.resources[c];
+  const days = Math.max(1, Math.round(action.days ?? 1));
+  if (res.candidateDays < days) return;
+  res.candidateDays -= days;
+  // Temporarily buff debating via a transient trait bump (decays after debate).
+  game.candidates[c].traits.debating = Math.min(100, game.candidates[c].traits.debating + days * 4);
+  game.causes.push({
+    turn: game.turn,
+    cause: `Debate prep (+${days * 4} debating)`,
+    marginDelta: 0,
+  });
+}
+
+// ── ISSUE PIVOT ───────────────────────────────────────────────────────────
+// Move your own position. Win a bloc, anger another, pay a flip-flopper tax.
+function applyIssuePivot(game: GameState, action: CampaignAction) {
+  const c = action.candidate;
+  if (!action.issueId || action.newPosition === undefined) return;
+  const cand = game.candidates[c];
+  const old = cand.issuePositions[action.issueId];
+  const next = clamp(action.newPosition, -1, 1);
+  const move = next - old;
+  if (Math.abs(move) < 0.01) return;
+  cand.issuePositions[action.issueId] = next;
+
+  // Recompute alignment-driven shift for every bloc that cares about the issue.
+  for (const st of game.states) {
+    if (st.blocs.length === 0) continue;
+    for (const bloc of st.blocs) {
+      const arche = BLOCS[bloc.blocId];
+      const weight = (arche.issueWeights[action.issueId] ?? 0) * (game.salience[action.issueId] ?? 0.5);
+      if (weight < 0.05) continue;
+      const ideal = arche.idealPositions[action.issueId] ?? 0;
+      const before = 1 - Math.abs(old - ideal) / 2;
+      const after = 1 - Math.abs(next - ideal) / 2;
+      const delta = (after - before) * weight * 0.5;
+      addCause(game, bloc, st, `Pivot on ${action.issueId}`, favorSign(c) * delta);
+    }
+  }
+  // Flip-flopper tax with suburban / college voters who prize authenticity.
+  const tax = Math.abs(move) * 0.04;
+  for (const st of game.states) {
+    if (st.blocs.length === 0) continue;
+    for (const bloc of st.blocs) {
+      if (bloc.blocId === "college_white" || bloc.blocId === "suburban_women") {
+        addCause(game, bloc, st, `"Flip-flopper" cost on ${action.issueId}`, -favorSign(c) * tax * 0.3);
+      }
+    }
+  }
+}
+
+export function applyAction(game: GameState, action: CampaignAction, rng: Rng) {
+  switch (action.type) {
+    case "advertise": return applyAdvertise(game, action, rng);
+    case "rally": return applyRally(game, action, rng);
+    case "surrogate": return applySurrogate(game, action, rng);
+    case "fundraise": return applyFundraise(game, action, rng);
+    case "ground_game": return applyGroundGame(game, action);
+    case "gotv": return applyGotv(game, action);
+    case "oppo_research": return applyOppoResearch(game, action, rng);
+    case "debate_prep": return applyDebatePrep(game, action);
+    case "issue_pivot": return applyIssuePivot(game, action);
+  }
+}
+
+export function clamp(x: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(hi, x));
+}
