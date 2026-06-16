@@ -53,6 +53,12 @@ export function StatePanel() {
     else if (canTravel) queueAction({ type: "rally", candidate: player, stateId: st.id, day: nextDay });
   };
 
+  // Everything you've scheduled in this state this week.
+  const plannedHere = game.queuedActions.filter((a) => a.stateId === st.id && a.candidate === player);
+  const plannedSummary = Object.entries(
+    plannedHere.reduce<Record<string, number>>((m, a) => ({ ...m, [a.type]: (m[a.type] ?? 0) + 1 }), {}),
+  ).map(([t, n]) => `${n}× ${t.replace("_", " ")}`).join(" · ");
+
   return (
     <div className="card scroll">
       <h3>{st.name} — {st.electoralVotes} EV</h3>
@@ -65,6 +71,9 @@ export function StatePanel() {
         <MapPin size={14} />
         {traveling ? "Campaign stop planned — tap to cancel" : canTravel ? "Travel here — hold a rally" : "No actions left this week"}
       </button>
+      {plannedSummary && (
+        <div className="kv"><span className="k">Planned here</span><span style={{ color: "var(--gold)" }}>{plannedSummary}</span></div>
+      )}
       <div className="kv"><span className="k">Lean (true model)</span><span style={{ color: shareToColor(tally.demShare) }}>{leanLabel(tally.demShare)}</span></div>
       <div className="kv"><span className="k">{dem} / {rep}</span><span>{pct(tally.demShare)} / {pct(1 - tally.demShare)}</span></div>
       {avg !== null && <div className="kv"><span className="k">Poll average</span><span>{dem} {pct(avg)}</span></div>}

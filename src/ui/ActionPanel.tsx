@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useGameStore } from "@store/gameStore";
 import type { ActionType, AdMode, CampaignAction, IssueId } from "@engine/index";
 import { ISSUES, ISSUE_IDS } from "@content/issues";
@@ -35,7 +35,7 @@ const ACTIONS: { type: ActionType; label: string; cost: string }[] = [
   { type: "advertise", label: "Advertising", cost: "$ + market" },
   { type: "rally", label: "Rally / Stop", cost: "candidate" },
   { type: "surrogate", label: "Surrogate", cost: "$250K" },
-  { type: "fundraise", label: "Fundraise", cost: "+ cash" },
+  { type: "fundraise", label: "Fundraise", cost: "+$ (big states)" },
   { type: "ground_game", label: "Field Offices", cost: "$1.5M" },
   { type: "gotv", label: "GOTV", cost: "$1M" },
   { type: "oppo_research", label: "Oppo Research", cost: "$2M" },
@@ -43,7 +43,7 @@ const ACTIONS: { type: ActionType; label: string; cost: string }[] = [
   { type: "issue_pivot", label: "Issue Pivot", cost: "free" },
 ];
 
-const NEEDS_STATE: ActionType[] = ["advertise", "rally", "surrogate", "ground_game", "gotv"];
+const NEEDS_STATE: ActionType[] = ["advertise", "rally", "surrogate", "ground_game", "gotv", "fundraise"];
 const DAYS = [1, 2, 3, 4, 5, 6, 7];
 const MAX_PER_DAY = 3;
 
@@ -72,9 +72,16 @@ export function ActionPanel() {
   const player = game.playerCandidate;
   const res = game.resources[player];
   const states = game.states.filter((s) => s.blocs.length > 0);
+  const selectedStateId = useGameStore((s) => s.selectedStateId);
 
   const [type, setType] = useState<ActionType>("advertise");
   const [stateId, setStateId] = useState<string>("PA");
+
+  // Selecting a state on the map targets it here — so the next action you add
+  // (or the day "+") defaults to the state you're looking at.
+  useEffect(() => {
+    if (selectedStateId && states.some((s) => s.id === selectedStateId)) setStateId(selectedStateId);
+  }, [selectedStateId]); // eslint-disable-line react-hooks/exhaustive-deps
   const [adMode, setAdMode] = useState<AdMode>("positive");
   const [issueId, setIssueId] = useState<IssueId>("economy");
   const [spendM, setSpendM] = useState<number>(8);

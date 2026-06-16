@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useGameStore } from "@store/gameStore";
 import { GRID, SPLIT_UNITS, GRID_COLS, GRID_ROWS } from "@content/mapLayout";
+import { STATE_PATHS } from "@content/statePaths";
 import type { Projection } from "@engine/index";
 import { EvBar } from "./EvBar";
 import { money, pct } from "./format";
@@ -28,6 +29,7 @@ export function ResultsScreen() {
   );
 
   const [revealed, setRevealed] = useState(() => (prefersReduced() ? calls.length : 0));
+  const [mapMode, setMapMode] = useState<"geo" | "square">("geo");
   const done = revealed >= calls.length;
 
   useEffect(() => {
@@ -117,21 +119,48 @@ export function ResultsScreen() {
         <div className="card">
           <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
             <h3 style={{ margin: 0 }}>{done ? "Final Map" : "Election Night"}</h3>
-            {!done && <button className="ghost small" onClick={() => setRevealed(calls.length)}>Skip ⏭</button>}
+            <div className="row" style={{ gap: 6 }}>
+              <button className={`ghost small${mapMode === "geo" ? " active" : ""}`} onClick={() => setMapMode("geo")}>Geo</button>
+              <button className={`ghost small${mapMode === "square" ? " active" : ""}`} onClick={() => setMapMode("square")}>Square</button>
+              {!done && <button className="ghost small" onClick={() => setRevealed(calls.length)}>Skip ⏭</button>}
+            </div>
           </div>
-          <div className="tilegrid" style={{ gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`, gridTemplateRows: `repeat(${GRID_ROWS}, 1fr)`, aspectRatio: `${GRID_COLS} / ${GRID_ROWS}`, maxWidth: 560, margin: "10px auto 0" }}>
-            {GRID.map((t) => (
-              <div key={t.id} style={{ gridColumn: t.col + 1, gridRow: t.row + 1 }}>{tile(t.id)}</div>
-            ))}
-          </div>
-          <div className="splitstrip" style={{ justifyContent: "center", marginTop: 10 }}>
-            {SPLIT_UNITS.map((g) => (
-              <div className="splitgroup" key={g.label}>
-                <span className="lab">{g.label}</span>
-                <div className="row">{g.ids.map((id) => tile(id, 34))}</div>
+
+          {mapMode === "geo" ? (
+            <svg viewBox="0 0 1000 650" className="geo-map" preserveAspectRatio="xMidYMid meet" style={{ maxWidth: 640, margin: "10px auto 0" }}>
+              {[...GRID.map((t) => t.id), ...SPLIT_UNITS.map((g) => g.ids.find((id) => id.endsWith("-AL"))).filter(Boolean) as string[]].map((id) => {
+                const sr = byState.get(id);
+                const path = STATE_PATHS[id] ?? STATE_PATHS[id.split("-")[0]];
+                if (!sr || !path) return null;
+                const called = calledIds.has(id);
+                const st = game.states.find((s) => s.id === id);
+                return (
+                  <path key={id} d={path}
+                    fill={called ? cands[sr.winner].color : "#1b2740"}
+                    stroke="#0b1120" strokeWidth={0.6}
+                    style={{ transition: "fill 0.35s var(--ease)" }}>
+                    <title>{st?.name}{called ? `: ${sr.winner === "dem" ? dem : rep} +${sr.margin.toFixed(1)}` : ""}</title>
+                  </path>
+                );
+              })}
+            </svg>
+          ) : (
+            <>
+              <div className="tilegrid" style={{ gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`, gridTemplateRows: `repeat(${GRID_ROWS}, 1fr)`, aspectRatio: `${GRID_COLS} / ${GRID_ROWS}`, maxWidth: 560, margin: "10px auto 0" }}>
+                {GRID.map((t) => (
+                  <div key={t.id} style={{ gridColumn: t.col + 1, gridRow: t.row + 1 }}>{tile(t.id)}</div>
+                ))}
               </div>
-            ))}
-          </div>
+              <div className="splitstrip" style={{ justifyContent: "center", marginTop: 10 }}>
+                {SPLIT_UNITS.map((g) => (
+                  <div className="splitgroup" key={g.label}>
+                    <span className="lab">{g.label}</span>
+                    <div className="row">{g.ids.map((id) => tile(id, 34))}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         {done && (

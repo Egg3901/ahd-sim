@@ -210,11 +210,16 @@ function applyFundraise(game: GameState, action: CampaignAction, rng: Rng) {
   const res = game.resources[c];
   const trait = game.candidates[c].traits.fundraisingProwess;
   const momentumBonus = 1 + Math.max(0, res.nationalMomentum) / 200;
-  const haul = (8_000_000 + trait * 120_000) * momentumBonus * (0.85 + rng.next() * 0.3);
+  // A big-state fundraiser (CA, NY, TX) hauls far more than a small one — the
+  // donor base scales with the state. National (no state) is the 1.0× baseline.
+  const st = findState(game, action.stateId);
+  const sizeMult = st ? 0.6 + Math.min(1.1, st.electoralVotes / 28) : 1;
+  const haul = (8_000_000 + trait * 120_000) * momentumBonus * sizeMult * (0.85 + rng.next() * 0.3);
   res.cash += haul;
   game.causes.push({
     turn: game.turn,
-    cause: `Fundraising haul (+$${(haul / 1_000_000).toFixed(1)}M)`,
+    stateId: st?.id,
+    cause: st ? `${st.abbr} fundraiser (+$${(haul / 1_000_000).toFixed(1)}M)` : `Fundraising haul (+$${(haul / 1_000_000).toFixed(1)}M)`,
     marginDelta: 0,
   });
 }

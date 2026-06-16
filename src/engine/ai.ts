@@ -83,7 +83,9 @@ export function planAiActions(game: GameState, rng: Rng, cfg: AiConfig): Campaig
 
   // Reserve a fundraising slot when cash is thin, and a ground-game/GOTV anchor.
   if (res.cash < 60_000_000 && budget > 2) {
-    actions.push({ type: "fundraise", candidate: ai });
+    // Fundraise in the biggest available target — big-state hauls are larger.
+    const richest = [...targets].sort((a, b) => b.ev - a.ev)[0];
+    actions.push({ type: "fundraise", candidate: ai, stateId: richest.stateId });
     budget -= 1;
   }
   if (turnsLeft > 3 && res.staffCapacity > 0 && budget > 0) {
@@ -95,12 +97,13 @@ export function planAiActions(game: GameState, rng: Rng, cfg: AiConfig): Campaig
   // runs out — so the budget spreads across the map instead of all into one ad.
   const queue: CampaignAction[] = [];
   for (const t of targets) {
+    // Rally first so the principal's stop (and the map marker) is reliably set.
+    queue.push({ type: "rally", candidate: ai, stateId: t.stateId });
     const spend = (adBudget * t.priority) / prioritySum;
     if (spend >= 200_000) {
       const mode = t.aiShare < 0.49 ? "contrast" : "positive";
       queue.push({ type: "advertise", candidate: ai, stateId: t.stateId, adMode: mode, spend });
     }
-    queue.push({ type: "rally", candidate: ai, stateId: t.stateId });
   }
   if (turnsLeft <= 2) {
     for (const t of targets.slice(0, 3)) {
