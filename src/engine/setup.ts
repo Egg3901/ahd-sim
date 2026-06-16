@@ -115,13 +115,16 @@ export function buildStates(
 }
 
 function startingResources(candidate: CandidateId, vp: RunningMate, baseEnergy: number): Resources {
-  const maxDays = Math.round(3 + baseEnergy / 25) + (vp.candidateDayBonus ?? 0); // ~5–6 candidate-days/week
+  // Weekly action pool: a base 7 plus half the candidate's energy (on a 0–10
+  // scale, rounded up), plus any energetic-VP bonus. Spread across a 7-day plan,
+  // max 3 per day. Energy 55→10, 72→11.
+  const maxActions = 7 + Math.ceil(baseEnergy / 20) + (vp.candidateDayBonus ?? 0);
   return {
     // The Democratic ticket enters with a cash edge (true of 2020/2016/2024). A
     // fundraiser VP adds a one-time war-chest bump.
     cash: (candidate === "dem" ? 220_000_000 : 180_000_000) + (vp.cashBonus ?? 0),
-    candidateDays: maxDays,
-    maxCandidateDays: maxDays,
+    actions: maxActions,
+    maxActions: maxActions,
     staffCapacity: 6,
     nationalMomentum: 0,
     mediaNarrative: 0,

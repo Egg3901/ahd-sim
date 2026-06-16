@@ -152,9 +152,6 @@ function applyRally(game: GameState, action: CampaignAction, rng: Rng) {
   if (!state) return;
   const c = action.candidate;
   const res = game.resources[c];
-  const days = Math.max(1, Math.round(action.days ?? 1));
-  if (res.candidateDays < days) return;
-  res.candidateDays -= days;
 
   // The candidate is now campaigning here — drives the map marker.
   game.locations = game.locations ?? {};
@@ -163,19 +160,19 @@ function applyRally(game: GameState, action: CampaignAction, rng: Rng) {
   const energy = game.candidates[c].traits.energy;
   const charisma = game.candidates[c].traits.charisma;
   // state.momentum is signed Biden−Trump; nationalMomentum is the ticket's own.
-  state.momentum = clamp(state.momentum + favorSign(c) * days * (6 + charisma / 20), -100, 100);
-  res.nationalMomentum = clamp(res.nationalMomentum + days * 1.5, -100, 100);
+  state.momentum = clamp(state.momentum + favorSign(c) * (6 + charisma / 20), -100, 100);
+  res.nationalMomentum = clamp(res.nationalMomentum + 1.5, -100, 100);
 
   for (const bloc of state.blocs) {
     const align = issueAlignment(game, c, bloc.blocId);
-    let raw = days * 0.05 * (0.5 + align * 0.5) * (0.9 + charisma / 300);
+    let raw = 0.05 * (0.5 + align * 0.5) * (0.9 + charisma / 300);
     raw = saturate(bloc, raw);
     addCause(game, bloc, state, `Rally in ${state.abbr}`, favorSign(c) * raw);
-    bloc.enthusiasm = Math.min(1.25, bloc.enthusiasm + 0.01 * days);
+    bloc.enthusiasm = Math.min(1.25, bloc.enthusiasm + 0.01);
   }
 
-  // Gaffe risk: more likely with low energy and heavy travel.
-  const gaffeRisk = Math.max(0.02, (0.18 * days * (100 - energy)) / 100);
+  // Gaffe risk: more likely with low energy.
+  const gaffeRisk = Math.max(0.02, (0.18 * (100 - energy)) / 100);
   if (rng.chance(gaffeRisk)) {
     const penalty = 0.04 + rng.next() * 0.05;
     for (const bloc of state.blocs) {
@@ -208,12 +205,9 @@ function applySurrogate(game: GameState, action: CampaignAction, rng: Rng) {
 function applyFundraise(game: GameState, action: CampaignAction, rng: Rng) {
   const c = action.candidate;
   const res = game.resources[c];
-  const days = Math.max(1, Math.round(action.days ?? 1));
-  if (res.candidateDays < days) return;
-  res.candidateDays -= days;
   const trait = game.candidates[c].traits.fundraisingProwess;
   const momentumBonus = 1 + Math.max(0, res.nationalMomentum) / 200;
-  const haul = days * (8_000_000 + trait * 120_000) * momentumBonus * (0.85 + rng.next() * 0.3);
+  const haul = (8_000_000 + trait * 120_000) * momentumBonus * (0.85 + rng.next() * 0.3);
   res.cash += haul;
   game.causes.push({
     turn: game.turn,
@@ -312,15 +306,11 @@ function applyOppoResearch(game: GameState, action: CampaignAction, rng: Rng) {
 // Spends days to improve odds in the next scheduled debate event.
 function applyDebatePrep(game: GameState, action: CampaignAction) {
   const c = action.candidate;
-  const res = game.resources[c];
-  const days = Math.max(1, Math.round(action.days ?? 1));
-  if (res.candidateDays < days) return;
-  res.candidateDays -= days;
   // Temporarily buff debating skill via a transient trait bump (decays after debate).
-  game.candidates[c].traits.debatingSkill = Math.min(100, game.candidates[c].traits.debatingSkill + days * 4);
+  game.candidates[c].traits.debatingSkill = Math.min(100, game.candidates[c].traits.debatingSkill + 4);
   game.causes.push({
     turn: game.turn,
-    cause: `Debate prep (+${days * 4} debating skill)`,
+    cause: `Debate prep (+4 debating skill)`,
     marginDelta: 0,
   });
 }
@@ -364,6 +354,12 @@ function applyIssuePivot(game: GameState, action: CampaignAction) {
 }
 
 export function applyAction(game: GameState, action: CampaignAction, rng: Rng) {
+  // Every action costs exactly one slot from the weekly pool (the 7-day plan).
+  // Out of slots → the action can't run. Cash costs (ads, etc.) are charged on
+  // top inside the individual handlers.
+  const res = game.resources[action.candidate];
+  if (res.actions < 1) return;
+  res.actions -= 1;
   switch (action.type) {
     case "advertise": return applyAdvertise(game, action, rng);
     case "rally": return applyRally(game, action, rng);

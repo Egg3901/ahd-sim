@@ -41,7 +41,8 @@ describe("App renders without crashing", () => {
     const m = mount();
     const html = m.html();
     expect(html).toContain("Electoral Map");
-    expect(html).toContain("Allocate Resources");
+    expect(html).toContain("Week Plan");
+    expect(html).toContain("Day 7"); // the 7-day planner is present
     // The opening week is deliberately event-free so nothing blocks the dashboard
     // on load; campaign events begin after the first End Week.
     const g = useGameStore.getState().game!;

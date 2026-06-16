@@ -149,8 +149,8 @@ export interface StateContest {
 // ── Resources (player + AI each hold one) ────────────────────────────────
 export interface Resources {
   cash: number; // dollars on hand
-  candidateDays: number; // action points for the principal this turn
-  maxCandidateDays: number;
+  actions: number; // action points for the principal this turn
+  maxActions: number;
   staffCapacity: number; // limits simultaneous ground-game states
   nationalMomentum: number; // -100..+100
   mediaNarrative: number; // -100 (hostile) .. +100 (favorable)
@@ -179,7 +179,10 @@ export interface CampaignAction {
   adMode?: AdMode;
   // Dollars committed (ads, fundraising venues, etc.).
   spend?: number;
-  // Candidate-days committed (rallies, debate prep, fundraising galas).
+  // Which day of the 7-day plan this action sits on (1–7). Organizational; the
+  // pool/3-per-day caps are enforced in the UI, and the engine resolves the
+  // week in day order. Legacy `days` is no longer used for cost.
+  day?: number;
   days?: number;
   // For issue_pivot: new position -1..+1.
   newPosition?: number;

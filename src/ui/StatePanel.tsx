@@ -38,14 +38,19 @@ export function StatePanel() {
   const polls = pollState(game, st.id);
   const avg = pollAverage(game, st.id);
 
-  // "Travel here" queues (or cancels) a one-day campaign rally in this state.
+  // "Travel here" schedules (or cancels) a campaign rally in this state, dropped
+  // on the next open day of the 7-day plan. Costs one action from the pool.
+  const res = game.resources[player];
   const travelIdx = game.queuedActions.findIndex(
     (a) => a.type === "rally" && a.candidate === player && a.stateId === st.id,
   );
   const traveling = travelIdx >= 0;
+  const dayCount = (d: number) => game.queuedActions.filter((a) => (a.day ?? 1) === d).length;
+  const nextDay = [1, 2, 3, 4, 5, 6, 7].find((d) => dayCount(d) < 3);
+  const canTravel = game.queuedActions.length < res.maxActions && nextDay !== undefined;
   const toggleTravel = () => {
     if (traveling) removeQueuedAction(travelIdx);
-    else queueAction({ type: "rally", candidate: player, stateId: st.id, days: 1 });
+    else if (canTravel) queueAction({ type: "rally", candidate: player, stateId: st.id, day: nextDay });
   };
 
   return (
@@ -54,10 +59,11 @@ export function StatePanel() {
       <button
         className={traveling ? "primary" : "secondary"}
         onClick={toggleTravel}
+        disabled={!traveling && !canTravel}
         style={{ width: "100%", margin: "2px 0 12px", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}
       >
         <MapPin size={14} />
-        {traveling ? "Campaign stop planned — tap to cancel" : "Travel here — hold a rally"}
+        {traveling ? "Campaign stop planned — tap to cancel" : canTravel ? "Travel here — hold a rally" : "No actions left this week"}
       </button>
       <div className="kv"><span className="k">Lean (true model)</span><span style={{ color: shareToColor(tally.demShare) }}>{leanLabel(tally.demShare)}</span></div>
       <div className="kv"><span className="k">{dem} / {rep}</span><span>{pct(tally.demShare)} / {pct(1 - tally.demShare)}</span></div>

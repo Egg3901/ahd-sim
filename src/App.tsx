@@ -112,7 +112,7 @@ function GameScreen() {
         <div className="turnchip">{turnLabel(game.turn, game.totalTurns)} · playing <strong style={{ color: cand.color }}>{cand.shortName}–{cand.runningMate.split(" ").slice(-1)[0]}</strong></div>
         {live && <EvBar projection={live} />}
         <div className="stat"><span className="v">{money(res.cash)}</span><span className="l">Cash</span></div>
-        <div className="stat"><span className="v">{res.candidateDays}/{res.maxCandidateDays}</span><span className="l">Days</span></div>
+        <div className="stat"><span className="v">{res.actions}/{res.maxActions}</span><span className="l">Actions</span></div>
         <div className="stat"><span className="v">{res.nationalMomentum.toFixed(0)}</span><span className="l">Momentum</span></div>
         <SaveControls />
         <button className="ghost small" onClick={() => setCandOpen(true)}>Candidates</button>

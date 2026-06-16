@@ -25,7 +25,7 @@ function decay(game: GameState) {
     const base = CANDIDATES[c].traits.debatingSkill;
     game.candidates[c].traits.debatingSkill = base + (game.candidates[c].traits.debatingSkill - base) * 0.4;
     // Refill candidate-days for the new week.
-    res.candidateDays = res.maxCandidateDays;
+    res.actions = res.maxActions;
   }
 }
 

@@ -73,45 +73,47 @@ export function planAiActions(game: GameState, rng: Rng, cfg: AiConfig): Campaig
     [targets[i], targets[j]] = [targets[j], targets[i]];
   }
 
-  // Keep a reserve; spend the rest of the ad budget this turn proportional to
-  // priority across the target states.
+  // Every action costs one slot from the weekly pool — the AI plays within the
+  // same budget the player does (energy-derived). Build a prioritized plan and
+  // take as many as the pool allows.
+  let budget = res.actions;
+  const turnsLeft = game.totalTurns - game.turn;
   const adBudget = res.cash * 0.45 * cfg.efficiency;
   const prioritySum = targets.reduce((s, t) => s + t.priority, 0) || 1;
+
+  // Reserve a fundraising slot when cash is thin, and a ground-game/GOTV anchor.
+  if (res.cash < 60_000_000 && budget > 2) {
+    actions.push({ type: "fundraise", candidate: ai });
+    budget -= 1;
+  }
+  if (turnsLeft > 3 && res.staffCapacity > 0 && budget > 0) {
+    actions.push({ type: "ground_game", candidate: ai, stateId: targets[0].stateId });
+    budget -= 1;
+  }
+
+  // Interleave an ad and a rally per target, in priority order, until the pool
+  // runs out — so the budget spreads across the map instead of all into one ad.
+  const queue: CampaignAction[] = [];
   for (const t of targets) {
     const spend = (adBudget * t.priority) / prioritySum;
-    if (spend < 200_000) continue;
-    // Behind → contrast; ahead/tied → positive.
-    const mode = t.aiShare < 0.49 ? "contrast" : "positive";
-    actions.push({ type: "advertise", candidate: ai, stateId: t.stateId, adMode: mode, spend });
-  }
-
-  // Rallies: send the principal to the closest 1–2 targets.
-  let days = res.candidateDays;
-  const turnsLeft = game.totalTurns - game.turn;
-  // Bank some days for fundraising if cash is thin.
-  if (res.cash < 60_000_000 && days > 1) {
-    actions.push({ type: "fundraise", candidate: ai, days: 1 });
-    days -= 1;
-  }
-  for (const t of targets) {
-    if (days <= 0) break;
-    const d = Math.min(days, t.priority > prioritySum / targets.length ? 2 : 1);
-    actions.push({ type: "rally", candidate: ai, stateId: t.stateId, days: d });
-    days -= d;
-  }
-
-  // Ground game early; GOTV late.
-  if (turnsLeft > 3 && res.staffCapacity > 0) {
-    const top = targets[0];
-    actions.push({ type: "ground_game", candidate: ai, stateId: top.stateId });
+    if (spend >= 200_000) {
+      const mode = t.aiShare < 0.49 ? "contrast" : "positive";
+      queue.push({ type: "advertise", candidate: ai, stateId: t.stateId, adMode: mode, spend });
+    }
+    queue.push({ type: "rally", candidate: ai, stateId: t.stateId });
   }
   if (turnsLeft <= 2) {
     for (const t of targets.slice(0, 3)) {
       const st = game.states.find((s) => s.id === t.stateId);
       if (st && st.groundGame[ai] > 0.05) {
-        actions.push({ type: "gotv", candidate: ai, stateId: t.stateId });
+        queue.push({ type: "gotv", candidate: ai, stateId: t.stateId });
       }
     }
+  }
+  for (const a of queue) {
+    if (budget <= 0) break;
+    actions.push(a);
+    budget -= 1;
   }
 
   return actions;
