@@ -121,6 +121,8 @@ body {
   50% { box-shadow: inset 0 0 0 1.5px var(--gold), 0 0 12px rgba(245, 185, 66, 0.45); }
 }
 @keyframes ahd-queue-in { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
+@keyframes ahd-call { from { transform: scale(0.55); opacity: 0; } 60% { transform: scale(1.12); } to { transform: scale(1); opacity: 1; } }
+.tile.called { animation: ahd-call 0.32s var(--ease); }
 
 .screen { animation: ahd-screen-in var(--dur-slide) var(--ease); min-height: 100%; }
 
