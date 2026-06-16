@@ -17,6 +17,7 @@ export function SetupScreen() {
   const ticket = pick === "dem" ? scenario.dem : scenario.rep;
   const [mate, setMate] = useState<string>(defaultRunningMate(scenario.dem.runningMates).id);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
+  const [eventMode, setEventMode] = useState<"historical" | "plausible">("historical");
   const [seed, setSeed] = useState<string>("1789");
   const [guideOpen, setGuideOpen] = useState(false);
   const [candOpen, setCandOpen] = useState(false);
@@ -103,6 +104,23 @@ export function SetupScreen() {
         </div>
 
         <div className="field" style={{ textAlign: "left" }}>
+          <label>Events</label>
+          <div className="vp-roster">
+            <button type="button" className={`vp-card${eventMode === "historical" ? " sel" : ""}`} onClick={() => setEventMode("historical")}>
+              <span className="vp-name">Historical</span>
+            </button>
+            <button type="button" className={`vp-card${eventMode === "plausible" ? " sel" : ""}`} onClick={() => setEventMode("plausible")}>
+              <span className="vp-name">Random / plausible</span>
+            </button>
+          </div>
+          <p className="vp-blurb">
+            {eventMode === "historical"
+              ? `The real beats of ${scenario.year}, in order — debates, scandals, and October surprises true to the year.`
+              : "A shuffled deck of plausible campaign moments — different every playthrough, tied to no particular history."}
+          </p>
+        </div>
+
+        <div className="field" style={{ textAlign: "left" }}>
           <label>Difficulty (AI opponent strength)</label>
           <select value={difficulty} onChange={(e) => setDifficulty(e.target.value as Difficulty)}>
             <option value="easy">Easy — sloppy, under-spending opponent</option>
@@ -121,7 +139,7 @@ export function SetupScreen() {
           <button className="ghost" onClick={() => setCandOpen(true)}>Candidates</button>
           <button
             className="primary begin"
-            onClick={() => newGame({ seed, scenario: scenarioId, playerCandidate: pick, difficulty, runningMate: mate })}
+            onClick={() => newGame({ seed, scenario: scenarioId, playerCandidate: pick, difficulty, runningMate: mate, eventMode })}
           >
             Begin {scenario.year} as {ticket.shortName} →
           </button>

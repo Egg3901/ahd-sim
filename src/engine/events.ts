@@ -7,7 +7,7 @@ import type {
   PendingEvent,
 } from "./types";
 import type { Rng } from "./rng";
-import { EVENTS, EVENTS_BY_ID } from "@content/events";
+import { GENERIC_EVENTS, GENERIC_DEBATES, HISTORICAL_EVENTS, EVENTS_BY_ID } from "@content/events";
 import { OPPONENT_OF } from "@content/candidates";
 import { clamp } from "./actions";
 
@@ -110,6 +110,10 @@ function alreadyFired(game: GameState, eventId: string, candidate: CandidateId):
 
 // Queues this turn's events: every scheduled event due now, plus up to one
 // stochastic draw, each as a pending decision for BOTH tickets.
+//
+// Event mode shapes the scheduled beats: "historical" fires the scenario's real
+// deck (that year's debates, scandals, October surprises); "plausible" fires
+// only generic debates. The year-agnostic stochastic pool is drawn in both.
 export function queueEventsForTurn(game: GameState, rng: Rng) {
   const queue = (event: GameEvent) => {
     for (const c of ["dem", "rep"] as CandidateId[]) {
@@ -119,16 +123,19 @@ export function queueEventsForTurn(game: GameState, rng: Rng) {
     }
   };
 
-  // Scheduled events tied to the calendar.
-  for (const event of EVENTS) {
+  // Scheduled beats tied to the calendar.
+  const scheduledDeck = (game.eventMode ?? "historical") === "historical"
+    ? HISTORICAL_EVENTS[game.scenarioId ?? "2020"] ?? HISTORICAL_EVENTS["2020"]
+    : GENERIC_DEBATES;
+  for (const event of scheduledDeck) {
     if (event.trigger.kind === "scheduled" && event.trigger.turn === game.turn) {
       queue(event);
     }
   }
 
-  // Stochastic draw — ~70% chance of a wildcard each turn, gated by game state.
+  // Stochastic draw — ~70% chance of a year-agnostic wildcard, gated by state.
   if (rng.chance(0.7)) {
-    const pool = EVENTS.filter((e) => {
+    const pool = GENERIC_EVENTS.filter((e) => {
       if (e.trigger.kind !== "stochastic") return false;
       if (e.oncePerGame && (alreadyFired(game, e.id, "dem") || alreadyFired(game, e.id, "rep"))) return false;
       const g = e.gate;

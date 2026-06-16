@@ -3,6 +3,7 @@ import type {
   Candidate,
   CandidateId,
   CandidateTraits,
+  EventMode,
   GameState,
   Resources,
   RunningMate,
@@ -170,6 +171,8 @@ export interface NewGameOptions {
   runningMate?: string;
   // Election scenario id (see content/scenarios); defaults to "2020".
   scenario?: string;
+  // Event source; defaults to "historical".
+  eventMode?: EventMode;
 }
 
 // Builds a fresh, fully-initialized game state. Deterministic given the seed.
@@ -207,6 +210,7 @@ export function createGame(opts: NewGameOptions = {}): GameState {
     phase: "intel",
     playerCandidate: player,
     scenarioId: scenario.id,
+    eventMode: opts.eventMode ?? "historical",
     candidates,
     issues: structuredClone(ISSUES),
     salience,

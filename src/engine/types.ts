@@ -34,6 +34,10 @@ export type BlocId =
 // The two tickets. Player picks one; the other is AI.
 export type CandidateId = "dem" | "rep";
 
+// Campaign-event source: scripted real beats for the year, or a random draw
+// from a year-agnostic plausible pool.
+export type EventMode = "historical" | "plausible";
+
 export type Party = "Democratic" | "Republican";
 
 export interface Issue {
@@ -271,6 +275,8 @@ export interface GameState {
   playerCandidate: CandidateId;
   // Election scenario id (see content/scenarios); absent on pre-scenario saves.
   scenarioId?: string;
+  // How campaign events are drawn (see content/events). Absent → "historical".
+  eventMode?: EventMode;
   candidates: Record<CandidateId, Candidate>;
   issues: Record<IssueId, Issue>;
   // Live national salience, starts from issue.baseSalience, shifts via events.
