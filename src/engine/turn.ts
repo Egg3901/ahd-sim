@@ -95,11 +95,12 @@ export function advanceTurn(
   // 2. AI resolves its own events.
   resolveAiEvents(game, ai);
 
-  // 3. Apply the player's queued actions, then the AI's plan.
-  for (const action of actions) {
-    if (action.candidate !== player) continue;
-    applyAction(game, action, rng);
-  }
+  // 3. Apply the player's queued actions in day order (Day 1 → Day 7), so the
+  //    week plays out as scheduled, then the AI's plan.
+  const playerActions = actions
+    .filter((a) => a.candidate === player)
+    .sort((a, b) => (a.day ?? 1) - (b.day ?? 1));
+  for (const action of playerActions) applyAction(game, action, rng);
   const aiActions = planAiActions(game, rng, cfg);
   for (const action of aiActions) applyAction(game, action, rng);
 

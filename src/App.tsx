@@ -11,6 +11,7 @@ import { RecapModal } from "@ui/RecapModal";
 import { EvBar } from "@ui/EvBar";
 import { GuidePage } from "@ui/GuidePage";
 import { CandidateScreen } from "@ui/CandidateScreen";
+import { NewsTicker } from "@ui/NewsTicker";
 import { getScenario } from "@content/scenarios";
 import { money, turnLabel } from "@ui/format";
 import { Vote, X } from "lucide-react";
@@ -122,6 +123,8 @@ function GameScreen() {
           {hasPendingEvent ? "Resolve event first" : "End Week →"}
         </button>
       </div>
+
+      <NewsTicker />
 
       <div className="main">
         <div className="col">
