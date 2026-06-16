@@ -134,11 +134,13 @@ button {
   padding: 8px 14px;
   font-size: 13px;
   font-weight: 500;
-  line-height: 1.1;
-  white-space: nowrap;
+  line-height: 1.15;
   transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
     transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
+/* Short inline control buttons stay on one line; block buttons (.choice,
+   .actionbtn, full-width CTAs) wrap their labels by default. */
+.topbar button, button.small { white-space: nowrap; }
 button:hover:not(:disabled) { background: var(--surface-hover); border-color: var(--border-hover); }
 button:active:not(:disabled) { transform: scale(0.97); }
 button:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -157,13 +159,14 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
 
 /* ── Header (glass broadcast lockup) ────────────────────────────────── */
 .topbar {
-  display: flex; align-items: center; gap: 18px;
+  display: flex; align-items: center; gap: 14px 18px; flex-wrap: wrap;
   padding: 11px 22px; border-bottom: 1px solid var(--border);
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   position: sticky; top: 0; z-index: 30;
 }
+.topbar .turnchip { min-width: 0; }
 
 /* Brand lockup: gold Vote glyph · wordmark · gold year line */
 .brand-lockup { display: flex; align-items: center; gap: 11px; flex-shrink: 0; line-height: 1.05; }
@@ -177,7 +180,7 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
 
 .turnchip { color: var(--muted); font-size: 13px; }
 
-.evbar { flex: 1; display: flex; align-items: center; gap: 10px; max-width: 640px; }
+.evbar { flex: 1 1 320px; display: flex; align-items: center; gap: 10px; max-width: 640px; min-width: 0; }
 .evbar .track {
   flex: 1; height: 26px; border-radius: var(--radius-sm); overflow: hidden; display: flex;
   border: 1px solid var(--border); background: var(--well);
@@ -324,6 +327,9 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
 .setup .title { font-size: 40px; font-weight: 800; letter-spacing: 1px; }
 .setup .title .yr { color: var(--gold); }
 .setup .sub { color: var(--muted); margin: 10px auto 24px; max-width: 460px; line-height: 1.5; }
+.setup-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.setup-actions .ghost { flex: 1 1 0; min-width: 0; }
+.setup-actions .begin { flex: 1 1 100%; padding: 12px; font-size: 15px; }
 .pick { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
 .candcard { padding: 16px; border-radius: var(--radius-lg); border: 1px solid var(--border);
   background: var(--panel); box-shadow: var(--shadow); transition: all var(--dur-fast) var(--ease); }

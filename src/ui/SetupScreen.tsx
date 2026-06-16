@@ -48,12 +48,11 @@ export function SetupScreen() {
           <input type="text" value={seed} onChange={(e) => setSeed(e.target.value)} />
         </div>
 
-        <div className="row" style={{ marginTop: 10, gap: 8 }}>
-          <button className="ghost" style={{ flex: 1 }} onClick={() => setGuideOpen(true)}>How to Play</button>
-          <button className="ghost" style={{ flex: 1 }} onClick={() => setCandOpen(true)}>Candidates</button>
+        <div className="setup-actions">
+          <button className="ghost" onClick={() => setGuideOpen(true)}>How to Play</button>
+          <button className="ghost" onClick={() => setCandOpen(true)}>Candidates</button>
           <button
-            className="primary"
-            style={{ flex: 2, padding: 12, fontSize: 15 }}
+            className="primary begin"
             onClick={() => newGame({ seed, playerCandidate: pick, difficulty })}
           >
             Begin Campaign as {CANDIDATES[pick].shortName} →
