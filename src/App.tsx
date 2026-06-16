@@ -11,8 +11,24 @@ import { RecapModal } from "@ui/RecapModal";
 import { EvBar } from "@ui/EvBar";
 import { GuidePage } from "@ui/GuidePage";
 import { CandidateScreen } from "@ui/CandidateScreen";
+import { getScenario } from "@content/scenarios";
 import { money, turnLabel } from "@ui/format";
-import { Vote } from "lucide-react";
+import { Vote, X } from "lucide-react";
+
+// True when the viewport is in the single-column mobile layout. Re-renders on
+// viewport changes so State Detail can switch between inline and bottom-sheet.
+function useIsMobile(): boolean {
+  const hasMM = typeof window !== "undefined" && typeof window.matchMedia === "function";
+  const [mobile, setMobile] = useState(() => hasMM && window.matchMedia("(max-width: 768px)").matches);
+  useEffect(() => {
+    if (!hasMM) return;
+    const mq = window.matchMedia("(max-width: 768px)");
+    const fn = () => setMobile(mq.matches);
+    mq.addEventListener("change", fn);
+    return () => mq.removeEventListener("change", fn);
+  }, [hasMM]);
+  return mobile;
+}
 
 function SaveControls() {
   const exportSave = useGameStore((s) => s.exportSave);
@@ -67,9 +83,14 @@ function GameScreen() {
   const [guideOpen, setGuideOpen] = useState(false);
   const [candOpen, setCandOpen] = useState(false);
 
+  const isMobile = useIsMobile();
+  const selectedStateId = useGameStore((s) => s.selectedStateId);
+  const selectState = useGameStore((s) => s.selectState);
+
   const player = game.playerCandidate;
   const res = game.resources[player];
   const cand = game.candidates[player];
+  const year = getScenario(game.scenarioId).year;
   const hasPendingEvent = game.pendingEvents.some((p) => p.forCandidate === player);
 
   const handleEndTurn = () => {
@@ -85,7 +106,7 @@ function GameScreen() {
           <span className="mark"><Vote size={22} /></span>
           <div>
             <div className="brand-name">A HOUSE DIVIDED</div>
-            <div className="brand-yr">CAMPAIGN 2020</div>
+            <div className="brand-yr">CAMPAIGN {year}</div>
           </div>
         </div>
         <div className="turnchip">{turnLabel(game.turn, game.totalTurns)} · playing <strong style={{ color: cand.color }}>{cand.shortName}–{cand.runningMate.split(" ").slice(-1)[0]}</strong></div>
@@ -108,10 +129,22 @@ function GameScreen() {
           <IntelPanel />
         </div>
         <div className="col">
-          <StatePanel />
+          {/* On mobile, State Detail is a tap-to-open bottom sheet (below), not a
+              persistent card that pushes the map and actions around. */}
+          {!isMobile && <StatePanel />}
           <ActionPanel />
         </div>
       </div>
+
+      {isMobile && selectedStateId && (
+        <div className="sheet-scrim" onClick={() => selectState(null)}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-handle" />
+            <button className="sheet-close" onClick={() => selectState(null)} aria-label="Close"><X size={18} /></button>
+            <StatePanel />
+          </div>
+        </div>
+      )}
 
       {recapOpen && <RecapModal onClose={() => setRecapOpen(false)} />}
       {!recapOpen && hasPendingEvent && <EventModal />}
