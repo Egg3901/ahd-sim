@@ -15,6 +15,7 @@ const prefersReduced = () =>
 export function ResultsScreen() {
   const game = useGameStore((s) => s.game)!;
   const newGame = useGameStore((s) => s.newGame);
+  const difficulty = useGameStore((s) => s.difficulty);
   const result = game.result!;
   const cands = game.candidates;
   const dem = cands.dem.shortName;
@@ -188,7 +189,7 @@ export function ResultsScreen() {
                 📊 Race Stats
               </button>
               <button className="primary" style={{ flex: 1, padding: 12 }}
-                onClick={() => newGame({ seed: String(Date.now()), playerCandidate: game.playerCandidate, scenario: game.scenarioId, eventMode: game.eventMode })}>
+                onClick={() => newGame({ seed: String(Date.now()), playerCandidate: game.playerCandidate, scenario: game.scenarioId, eventMode: game.eventMode, difficulty })}>
                 Run it back — New Campaign →
               </button>
             </div>

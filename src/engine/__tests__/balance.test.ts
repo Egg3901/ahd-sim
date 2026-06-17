@@ -204,6 +204,23 @@ it("debate_prep and policy_prep raise readiness; readiness 50 is neutral", () =>
   expect(debateReadiness(g, "dem")).toBeGreaterThan(r0);
 });
 
+// ── Difficulty handicap gives the human a fighting chance ───────────────────
+it("easier difficulty hands the player more resources and a friendlier map", () => {
+  const easy = createGame({ seed: "h", scenario: "2024", playerCandidate: "dem", difficulty: "easy" });
+  const hard = createGame({ seed: "h", scenario: "2024", playerCandidate: "dem", difficulty: "hard" });
+  // More war chest and more weekly slots on easy…
+  expect(easy.resources.dem.cash).toBeGreaterThan(hard.resources.dem.cash);
+  expect(easy.resources.dem.maxActions).toBeGreaterThan(hard.resources.dem.maxActions);
+  // …and a friendlier starting map (favorable national environment).
+  const demEV = (g: GameState) => computeResult(g).electoralVotes.dem;
+  expect(demEV(easy)).toBeGreaterThan(demEV(hard));
+  // The opponent is never handed the player's edge.
+  expect(easy.resources.rep.cash).toBe(hard.resources.rep.cash);
+  // Hard leaves the baseline historically calibrated (no environment shift).
+  const neutral = createGame({ seed: "h", scenario: "2024", playerCandidate: "dem" });
+  expect(demEV(hard)).toBe(demEV(neutral));
+});
+
 // ── Weekly action pool is a hard cap ───────────────────────────────────────
 it("actions beyond the weekly pool don't apply", () => {
   const g = createGame({ seed: "pool" });

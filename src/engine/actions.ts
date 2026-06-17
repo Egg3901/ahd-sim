@@ -87,7 +87,7 @@ const findState = (game: GameState, id?: string) =>
 // ── ADVERTISING ───────────────────────────────────────────────────────────
 // Positive: raise own appeal. Contrast: lower opponent. Issue: raise salience
 // of a chosen issue where you're strong. Cost scales with media-market cost.
-function applyAdvertise(game: GameState, action: CampaignAction, rng: Rng) {
+function applyAdvertise(game: GameState, action: CampaignAction, rng: Rng, mult = 1) {
   const state = findState(game, action.stateId);
   if (!state) return;
   const c = action.candidate;
@@ -132,6 +132,7 @@ function applyAdvertise(game: GameState, action: CampaignAction, rng: Rng) {
     raw = saturate(bloc, raw);
     // A little variance so repeated ads aren't perfectly predictable.
     raw *= 0.9 + rng.next() * 0.2;
+    raw *= mult; // player difficulty handicap
 
     if (mode === "contrast") {
       // Negative ads move a bloc less than a positive buy and depress turnout
@@ -150,7 +151,7 @@ function applyAdvertise(game: GameState, action: CampaignAction, rng: Rng) {
 // ── RALLY (candidate stop) ────────────────────────────────────────────────
 // Spends candidate-days. Momentum + local enthusiasm + turnout. Gaffe risk
 // rises as stamina falls and as the candidate rallies more.
-function applyRally(game: GameState, action: CampaignAction, rng: Rng) {
+function applyRally(game: GameState, action: CampaignAction, rng: Rng, mult = 1) {
   const state = findState(game, action.stateId);
   if (!state) return;
   const c = action.candidate;
@@ -169,7 +170,7 @@ function applyRally(game: GameState, action: CampaignAction, rng: Rng) {
   for (const bloc of state.blocs) {
     const align = issueAlignment(game, c, bloc.blocId);
     let raw = 0.05 * (0.5 + align * 0.5) * (0.9 + charisma / 300);
-    raw = saturate(bloc, raw);
+    raw = saturate(bloc, raw) * mult;
     addCause(game, bloc, state, `Rally in ${state.abbr}`, favorSign(c) * raw);
     bloc.enthusiasm = Math.min(1.25, bloc.enthusiasm + 0.01);
   }
@@ -187,7 +188,7 @@ function applyRally(game: GameState, action: CampaignAction, rng: Rng) {
 
 // ── SURROGATE / VP stop ───────────────────────────────────────────────────
 // Covers states the principal can't. Weaker, but costs no principal days.
-function applySurrogate(game: GameState, action: CampaignAction, rng: Rng) {
+function applySurrogate(game: GameState, action: CampaignAction, rng: Rng, mult = 1) {
   const state = findState(game, action.stateId);
   if (!state) return;
   const c = action.candidate;
@@ -198,7 +199,7 @@ function applySurrogate(game: GameState, action: CampaignAction, rng: Rng) {
   state.momentum = clamp(state.momentum + favorSign(c) * 2, -100, 100);
   for (const bloc of state.blocs) {
     let raw = 0.018 * (0.6 + issueAlignment(game, c, bloc.blocId) * 0.4);
-    raw = saturate(bloc, raw) * (0.9 + rng.next() * 0.2);
+    raw = saturate(bloc, raw) * (0.9 + rng.next() * 0.2) * mult;
     addCause(game, bloc, state, `Surrogate visit to ${state.abbr}`, favorSign(c) * raw);
   }
 }
@@ -246,7 +247,7 @@ function applyGroundGame(game: GameState, action: CampaignAction) {
 
 // ── GOTV ──────────────────────────────────────────────────────────────────
 // Late-game turnout push; only effective where ground game exists.
-function applyGotv(game: GameState, action: CampaignAction) {
+function applyGotv(game: GameState, action: CampaignAction, mult = 1) {
   const state = findState(game, action.stateId);
   if (!state) return;
   const c = action.candidate;
@@ -271,7 +272,7 @@ function applyGotv(game: GameState, action: CampaignAction) {
   // late-game GOTV spam on a field-built state is a flat, uncapped margin print).
   for (const bloc of state.blocs) {
     const propensity = 1 - bloc.turnoutPropensity; // more upside for low-turnout blocs
-    const raw = saturate(bloc, 0.12 * ground * (0.5 + propensity));
+    const raw = saturate(bloc, 0.12 * ground * (0.5 + propensity)) * mult;
     addCause(game, bloc, state, `GOTV mobilization in ${state.abbr}`, favorSign(c) * raw);
     bloc.enthusiasm = Math.min(1.3, bloc.enthusiasm + 0.03 * ground);
   }
@@ -279,7 +280,7 @@ function applyGotv(game: GameState, action: CampaignAction) {
 
 // ── OPPOSITION RESEARCH ───────────────────────────────────────────────────
 // Risky: can land a scandal on the opponent, or backfire as "desperate".
-function applyOppoResearch(game: GameState, action: CampaignAction, rng: Rng) {
+function applyOppoResearch(game: GameState, action: CampaignAction, rng: Rng, mult = 1) {
   const c = action.candidate;
   const opp = OPPONENT_OF[c];
   const res = game.resources[c];
@@ -298,7 +299,7 @@ function applyOppoResearch(game: GameState, action: CampaignAction, rng: Rng) {
       if (st.blocs.length === 0) continue;
       for (const bloc of st.blocs) {
         if (bloc.blocId === "college_white" || bloc.blocId === "suburban_women") {
-          addCause(game, bloc, st, `Scandal lands on ${game.candidates[opp].shortName}`, sign * saturate(bloc, 0.05));
+          addCause(game, bloc, st, `Scandal lands on ${game.candidates[opp].shortName}`, sign * saturate(bloc, 0.05) * mult);
         }
       }
     }
@@ -345,7 +346,7 @@ function applyPolicyPrep(game: GameState, action: CampaignAction) {
 
 // ── ISSUE PIVOT ───────────────────────────────────────────────────────────
 // Move your own position. Win a bloc, anger another, pay a flip-flopper tax.
-function applyIssuePivot(game: GameState, action: CampaignAction) {
+function applyIssuePivot(game: GameState, action: CampaignAction, mult = 1) {
   const c = action.candidate;
   if (!action.issueId || action.newPosition === undefined) return;
   const cand = game.candidates[c];
@@ -365,7 +366,7 @@ function applyIssuePivot(game: GameState, action: CampaignAction) {
       const ideal = arche.idealPositions[action.issueId] ?? 0;
       const before = 1 - Math.abs(old - ideal) / 2;
       const after = 1 - Math.abs(next - ideal) / 2;
-      const delta = (after - before) * weight * 0.5;
+      const delta = (after - before) * weight * 0.5 * mult;
       addCause(game, bloc, st, `Pivot on ${action.issueId}`, favorSign(c) * delta);
     }
   }
@@ -388,17 +389,20 @@ export function applyAction(game: GameState, action: CampaignAction, rng: Rng) {
   const res = game.resources[action.candidate];
   if (res.actions < 1) return;
   res.actions -= 1;
+  // The player's campaigning is amplified by the difficulty handicap (1.0 for
+  // the AI and on hard); it scales persuasion only, not cash/infra/prep.
+  const mult = action.candidate === game.playerCandidate ? (game.playerEdge ?? 1) : 1;
   switch (action.type) {
-    case "advertise": return applyAdvertise(game, action, rng);
-    case "rally": return applyRally(game, action, rng);
-    case "surrogate": return applySurrogate(game, action, rng);
+    case "advertise": return applyAdvertise(game, action, rng, mult);
+    case "rally": return applyRally(game, action, rng, mult);
+    case "surrogate": return applySurrogate(game, action, rng, mult);
     case "fundraise": return applyFundraise(game, action, rng);
     case "ground_game": return applyGroundGame(game, action);
-    case "gotv": return applyGotv(game, action);
-    case "oppo_research": return applyOppoResearch(game, action, rng);
+    case "gotv": return applyGotv(game, action, mult);
+    case "oppo_research": return applyOppoResearch(game, action, rng, mult);
     case "debate_prep": return applyDebatePrep(game, action);
     case "policy_prep": return applyPolicyPrep(game, action);
-    case "issue_pivot": return applyIssuePivot(game, action);
+    case "issue_pivot": return applyIssuePivot(game, action, mult);
   }
 }
 

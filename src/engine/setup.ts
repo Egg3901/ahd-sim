@@ -114,15 +114,46 @@ export function buildStates(
   });
 }
 
-function startingResources(candidate: CandidateId, vp: RunningMate, baseEnergy: number): Resources {
+// Player-side handicap by difficulty: extra weekly action-slots and starting
+// cash, so a skilled human can fight an adverse map on easier settings. Applied
+// only to the player's ticket; the AI keeps its baseline. Zero on hard — that's
+// the pure-challenge setting — and untouched difficulty (calibration, tests)
+// resolves to "normal".
+export interface PlayerHandicap { actions: number; cash: number; persuasion: number; environment: number; }
+const HANDICAP: Record<"easy" | "normal" | "hard", PlayerHandicap> = {
+  // `persuasion` multiplies how far the player's own campaigning moves the map.
+  // `environment` is a one-time pro-player shift to every bloc's baseline (logit;
+  // ~0.04 ≈ 1pt two-party) — a favorable national climate that brings otherwise
+  // out-of-reach states into play, so a skilled human can win even an adverse
+  // year. Normal/hard leave the baseline historically calibrated (environment 0).
+  easy: { actions: 4, cash: 90_000_000, persuasion: 1.4, environment: 0.24 },
+  normal: { actions: 1, cash: 25_000_000, persuasion: 1.15, environment: 0 },
+  hard: { actions: 0, cash: 0, persuasion: 1.0, environment: 0 },
+};
+
+// Tilts every bloc's baseline toward the player by `env` logits — the easy-mode
+// "favorable climate" that puts more of the map within reach. No-op when env=0.
+function withEnvironment(states: StateContest[], player: CandidateId, env: number): StateContest[] {
+  if (!env) return states;
+  const sign = player === "dem" ? 1 : -1;
+  for (const st of states) for (const bloc of st.blocs) bloc.baselineMargin += sign * env;
+  return states;
+}
+
+function startingResources(
+  candidate: CandidateId,
+  vp: RunningMate,
+  baseEnergy: number,
+  handicap: PlayerHandicap = { actions: 0, cash: 0, persuasion: 1, environment: 0 },
+): Resources {
   // Weekly action pool: a base 7 plus half the candidate's energy (on a 0–10
-  // scale, rounded up), plus any energetic-VP bonus. Spread across a 7-day plan,
-  // max 3 per day. Energy 55→10, 72→11.
-  const maxActions = 7 + Math.ceil(baseEnergy / 20) + (vp.candidateDayBonus ?? 0);
+  // scale, rounded up), plus any energetic-VP bonus, plus the player handicap.
+  // Spread across a 7-day plan. Energy 55→10, 72→11.
+  const maxActions = 7 + Math.ceil(baseEnergy / 20) + (vp.candidateDayBonus ?? 0) + handicap.actions;
   return {
     // The Democratic ticket enters with a cash edge (true of 2020/2016/2024). A
     // fundraiser VP adds a one-time war-chest bump.
-    cash: (candidate === "dem" ? 220_000_000 : 180_000_000) + (vp.cashBonus ?? 0),
+    cash: (candidate === "dem" ? 220_000_000 : 180_000_000) + (vp.cashBonus ?? 0) + handicap.cash,
     actions: maxActions,
     maxActions: maxActions,
     staffCapacity: 6,
@@ -177,6 +208,8 @@ export interface NewGameOptions {
   scenario?: string;
   // Event source; defaults to "historical".
   eventMode?: EventMode;
+  // Difficulty — also sizes the player's resource handicap. Defaults to "normal".
+  difficulty?: "easy" | "normal" | "hard";
 }
 
 // Builds a fresh, fully-initialized game state. Deterministic given the seed.
@@ -195,6 +228,7 @@ export function createGame(opts: NewGameOptions = {}): GameState {
   const salience = {} as GameState["salience"];
   for (const id of ISSUE_IDS) salience[id] = scenario.issueSalience?.[id] ?? ISSUES[id].baseSalience;
   const player = opts.playerCandidate ?? "dem";
+  const handicap = HANDICAP[opts.difficulty ?? "normal"];
   const tickets: Record<CandidateId, ScenarioTicket> = { dem: scenario.dem, rep: scenario.rep };
   const candidates: Record<CandidateId, Candidate> = {
     dem: buildCandidate("dem", scenario.dem),
@@ -217,14 +251,15 @@ export function createGame(opts: NewGameOptions = {}): GameState {
     playerCandidate: player,
     scenarioId: scenario.id,
     eventMode: opts.eventMode ?? "historical",
+    playerEdge: handicap.persuasion,
     locations: {},
     candidates,
     issues: structuredClone(ISSUES),
     salience,
-    states: buildStates(scenario.statePriors, scenario.evOverrides),
+    states: withEnvironment(buildStates(scenario.statePriors, scenario.evOverrides), player, handicap.environment),
     resources: {
-      dem: startingResources("dem", vps.dem, scenario.dem.traits.energy),
-      rep: startingResources("rep", vps.rep, scenario.rep.traits.energy),
+      dem: startingResources("dem", vps.dem, scenario.dem.traits.energy, player === "dem" ? handicap : undefined),
+      rep: startingResources("rep", vps.rep, scenario.rep.traits.energy, player === "rep" ? handicap : undefined),
     },
     pendingEvents: [],
     firedEventIds: [],

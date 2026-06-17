@@ -310,6 +310,9 @@ export interface GameState {
   scenarioId?: string;
   // How campaign events are drawn (see content/events). Absent → "historical".
   eventMode?: EventMode;
+  // Difficulty handicap: multiplies how far the *player's* own campaigning moves
+  // the map (1.0 = no edge). Set at creation; absent on old saves → treat as 1.
+  playerEdge?: number;
   // Each candidate's current campaign stop (state id of their last rally), for
   // the map markers. Absent until a candidate has rallied somewhere.
   locations?: Partial<Record<CandidateId, string>>;

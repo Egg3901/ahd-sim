@@ -40,9 +40,9 @@ const DIFFICULTIES: {
   blurb: string;
   Icon: typeof Flag;
 }[] = [
-  { id: "easy", name: "Easy", blurb: "A sloppy, under-spending opponent.", Icon: Flag },
-  { id: "normal", name: "Normal", blurb: "A competent, disciplined campaign.", Icon: Swords },
-  { id: "hard", name: "Hard", blurb: "Ruthless tipping-point targeting.", Icon: Crosshair },
+  { id: "easy", name: "Easy", blurb: "Favorable climate, a bigger war chest, and a sloppy opponent — you can win any year.", Icon: Flag },
+  { id: "normal", name: "Normal", blurb: "A fair fight on the real map, against a disciplined campaign.", Icon: Swords },
+  { id: "hard", name: "Hard", blurb: "The historical map, no help, a ruthless opponent. History is brutal.", Icon: Crosshair },
 ];
 
 export function SetupScreen() {
