@@ -2,7 +2,7 @@ import type { CampaignAction, CandidateId, GameState, TurnRecapItem } from "./ty
 import { createRng } from "./rng";
 import { applyAction } from "./actions";
 import { planAiActions, type AiConfig, DIFFICULTY } from "./ai";
-import { queueEventsForTurn, resolveAiEvents, aiChooseEvent, resolveEvent } from "./events";
+import { queueEventsForTurn, resolveAiEvents, aiChooseEvent, resolveEvent, resolveDebate } from "./events";
 import { projectElection, computeResult } from "./voteModel";
 import { nationalPoll } from "./polls";
 import { OPPONENT_OF, CANDIDATES } from "@content/candidates";
@@ -109,8 +109,19 @@ export function advanceTurn(
 
   const evBefore = projectElection(game).ev.dem;
 
-  // 1. Resolve any leftover player events with a sensible default.
+  // 1. Resolve any leftover player events with a sensible default. Debates are
+  //    resolved head-to-head (both sides at once) so the scorecard momentum
+  //    swing applies even when the player skips the decision.
   if (opts.autoResolvePlayerEvents !== false) {
+    const pendingDebateIds = [
+      ...new Set(
+        game.pendingEvents
+          .filter((p) => p.forCandidate === player && requireEvent(p.eventId).isDebate)
+          .map((p) => p.eventId),
+      ),
+    ];
+    for (const id of pendingDebateIds) resolveDebate(game, requireEvent(id), {});
+
     const leftover = game.pendingEvents.filter((p) => p.forCandidate === player);
     for (const p of leftover) {
       const choice = aiChooseEvent(game, requireEvent(p.eventId), player);

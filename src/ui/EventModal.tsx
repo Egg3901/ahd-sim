@@ -64,7 +64,7 @@ export function EventModal() {
                 key={choice.id}
                 className="choice"
                 disabled={!available}
-                onClick={() => setChosenId(choice.id)}
+                onClick={() => (event.isDebate ? resolve(event.id, choice.id) : setChosenId(choice.id))}
               >
                 <span className="ct">{choice.text}</span>
                 <span className="deltas">

@@ -1,12 +1,13 @@
 import type {
   CandidateId,
+  DebateResult,
   EventChoice,
   EventEffect,
   GameEvent,
   GameState,
   PendingEvent,
 } from "./types";
-import type { Rng } from "./rng";
+import { createRng, type Rng } from "./rng";
 import { GENERIC_EVENTS, GENERIC_DEBATES, HISTORICAL_EVENTS, EVENTS_BY_ID } from "@content/events";
 import { OPPONENT_OF } from "@content/candidates";
 import { clamp } from "./actions";
@@ -148,6 +149,61 @@ export function resolveEvent(
 
 function alreadyFired(game: GameState, eventId: string, candidate: CandidateId): boolean {
   return game.firedEventIds.includes(`${eventId}:${candidate}`);
+}
+
+// A candidate's 0..100 showing on debate night: readiness (talent + prep) plus
+// how strong the tack they chose played (its authored narrative + momentum),
+// plus a dollop of unscripted luck. This is the number on the scorecard.
+function debatePerformanceScore(game: GameState, candidate: CandidateId, choice: EventChoice, luck: number): number {
+  const readiness = debateReadiness(game, candidate); // 0..100
+  const showing = (choice.effects.narrative ?? 0) + (choice.effects.momentum ?? 0); // ~ -15..+17
+  return clamp(50 + (readiness - 50) * 0.6 + showing * 1.6 + luck, 0, 100);
+}
+
+// Resolves a debate head-to-head: both tickets answer (the player's pick passed
+// in, any missing side auto-chosen), each is scored, and the margin drives a
+// momentum swing on top of the choices' own effects. A blowout (margin ≥ 20) is
+// a meltdown — a heavy momentum hit and a bruised narrative for the loser.
+// Deterministic for a given (seed, turn, event).
+export function resolveDebate(
+  game: GameState,
+  event: GameEvent,
+  choiceFor: Partial<Record<CandidateId, string>>,
+): DebateResult {
+  const rng = createRng(`debate:${game.seed}:${game.turn}:${event.id}`);
+  const scores = {} as Record<CandidateId, number>;
+  const choiceText = {} as Record<CandidateId, string>;
+  const resultText = {} as Record<CandidateId, string>;
+
+  for (const c of ["dem", "rep"] as CandidateId[]) {
+    const chosenId = choiceFor[c] ?? aiChooseEvent(game, event, c).id;
+    const choice =
+      event.choices.find((x) => x.id === chosenId && choiceAvailable(game, c, x)) ??
+      event.choices.find((x) => choiceAvailable(game, c, x)) ??
+      event.choices[0];
+    const luck = rng.next() * 16 - 8; // ±8 unscripted
+    scores[c] = Math.round(debatePerformanceScore(game, c, choice, luck));
+    choiceText[c] = choice.text;
+    resultText[c] = choice.resultText;
+    resolveEvent(game, event.id, choice.id, c); // applies scaled effects + clears pending
+  }
+
+  const margin = Math.abs(scores.dem - scores.rep);
+  const winner: CandidateId | "tie" = scores.dem === scores.rep ? "tie" : scores.dem > scores.rep ? "dem" : "rep";
+  const meltdown = margin >= 20;
+  let momentumSwing = clamp(margin * 0.6, 0, 20);
+  if (meltdown) momentumSwing = Math.min(26, momentumSwing * 1.4);
+
+  if (winner !== "tie") {
+    const loser = OPPONENT_OF[winner];
+    const w = game.resources[winner];
+    const l = game.resources[loser];
+    w.nationalMomentum = clamp(w.nationalMomentum + momentumSwing, -100, 100);
+    l.nationalMomentum = clamp(l.nationalMomentum - momentumSwing, -100, 100);
+    if (meltdown) l.mediaNarrative = clamp(l.mediaNarrative - 8, -100, 100);
+  }
+
+  return { eventId: event.id, title: event.title, scores, choiceText, resultText, winner, margin, meltdown, momentumSwing };
 }
 
 // Queues this turn's events: every scheduled event due now, plus up to one

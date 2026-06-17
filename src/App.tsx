@@ -7,6 +7,7 @@ import { StatePanel } from "@ui/StatePanel";
 import { IntelPanel } from "@ui/IntelPanel";
 import { ActionPanel } from "@ui/ActionPanel";
 import { EventModal } from "@ui/EventModal";
+import { DebateScorecard } from "@ui/DebateScorecard";
 import { RecapModal } from "@ui/RecapModal";
 import { EvBar } from "@ui/EvBar";
 import { GuidePage } from "@ui/GuidePage";
@@ -90,6 +91,7 @@ function GameScreen() {
   const selectedStateId = useGameStore((s) => s.selectedStateId);
   const selectState = useGameStore((s) => s.selectState);
 
+  const debateOpen = useGameStore((s) => s.lastDebate) !== null;
   const player = game.playerCandidate;
   const res = game.resources[player];
   const cand = game.candidates[player];
@@ -154,7 +156,8 @@ function GameScreen() {
       )}
 
       {recapOpen && <RecapModal onClose={() => setRecapOpen(false)} />}
-      {!recapOpen && hasPendingEvent && <EventModal />}
+      {!recapOpen && !debateOpen && hasPendingEvent && <EventModal />}
+      {debateOpen && <DebateScorecard />}
       {guideOpen && <GuidePage onClose={() => setGuideOpen(false)} />}
       {candOpen && <CandidateScreen scenarioId={game.scenarioId} onClose={() => setCandOpen(false)} />}
       {statsOpen && <StatsScreen onClose={() => setStatsOpen(false)} />}

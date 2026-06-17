@@ -335,6 +335,20 @@ export interface GameState {
   result?: GameResult;
 }
 
+// The head-to-head outcome of a debate: both sides scored 0..100, a winner,
+// and the momentum swing applied (a lopsided loss is a "meltdown").
+export interface DebateResult {
+  eventId: string;
+  title: string;
+  scores: Record<CandidateId, number>;
+  choiceText: Record<CandidateId, string>;
+  resultText: Record<CandidateId, string>;
+  winner: CandidateId | "tie";
+  margin: number;
+  meltdown: boolean;
+  momentumSwing: number; // +winner / −loser
+}
+
 export interface StateResult {
   stateId: string;
   electoralVotes: number;

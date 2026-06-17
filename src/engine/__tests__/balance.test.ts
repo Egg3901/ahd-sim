@@ -5,7 +5,7 @@ import { applyAction } from "../actions";
 import { createRng } from "../rng";
 import { DIFFICULTY } from "../ai";
 import { projectElection, computeResult, tallyContest } from "../voteModel";
-import { resolveEvent, debateReadiness } from "../events";
+import { resolveEvent, debateReadiness, resolveDebate } from "../events";
 import type { CampaignAction, GameState } from "../types";
 import { SCENARIO_IDS } from "@content/scenarios";
 import { EVENTS_BY_ID } from "@content/events";
@@ -172,6 +172,27 @@ it("a prepared debater gets more out of the same debate than an unprepared one",
   const low = netShift({ debatePrep: 20, policyKnowledge: 20, debatingSkill: 40 });
   const high = netShift({ debatePrep: 95, policyKnowledge: 95, debatingSkill: 90 });
   expect(high).toBeGreaterThan(low * 1.5); // readiness materially amplifies the win
+});
+
+it("a debate is scored head-to-head; a blowout is a meltdown that swings momentum", () => {
+  const g = createGame({ seed: "scorecard", scenario: "2024", playerCandidate: "dem" });
+  const event = EVENTS_BY_ID["h24_debate"];
+  // Stack the deck: dem maximally prepared, rep totally unprepared.
+  Object.assign(g.candidates.dem.traits, { debatePrep: 100, policyKnowledge: 100, debatingSkill: 95 });
+  Object.assign(g.candidates.rep.traits, { debatePrep: 5, policyKnowledge: 5, debatingSkill: 20 });
+  g.pendingEvents.push({ eventId: event.id, forCandidate: "dem" }, { eventId: event.id, forCandidate: "rep" });
+  const before = { dem: g.resources.dem.nationalMomentum, rep: g.resources.rep.nationalMomentum };
+  const r = resolveDebate(g, event, { dem: event.choices[0].id });
+
+  expect(r.winner).toBe("dem");
+  expect(r.scores.dem).toBeGreaterThan(r.scores.rep);
+  expect(r.meltdown).toBe(true); // a lopsided gap
+  expect(r.momentumSwing).toBeGreaterThan(0);
+  // Winner gains momentum, loser loses it.
+  expect(g.resources.dem.nationalMomentum).toBeGreaterThan(before.dem);
+  expect(g.resources.rep.nationalMomentum).toBeLessThan(before.rep);
+  // The debate is consumed for both tickets.
+  expect(g.pendingEvents.filter((p) => p.eventId === event.id)).toHaveLength(0);
 });
 
 it("debate_prep and policy_prep raise readiness; readiness 50 is neutral", () => {

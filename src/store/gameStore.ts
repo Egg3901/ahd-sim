@@ -4,16 +4,19 @@ import {
   beginGame,
   advanceTurn,
   resolveEvent,
+  resolveDebate,
   applyAction,
   projectElection,
   createRng,
   DIFFICULTY,
   type GameState,
   type CampaignAction,
+  type DebateResult,
   type NewGameOptions,
   type Projection,
   type CandidateId,
 } from "@engine/index";
+import { EVENTS_BY_ID } from "@content/events";
 import { localProvider } from "@persistence/local";
 import type { SaveMeta, SaveRecord } from "@persistence/types";
 
@@ -33,6 +36,7 @@ interface GameStore {
   difficulty: Difficulty;
   selectedStateId: string | null;
   lastEventResult: EventResult | null;
+  lastDebate: DebateResult | null;
   saves: SaveMeta[];
 
   newGame: (opts: NewGameOptions & { difficulty?: Difficulty }) => void;
@@ -44,6 +48,7 @@ interface GameStore {
   clearQueue: () => void;
 
   resolvePlayerEvent: (eventId: string, choiceId: string) => void;
+  dismissDebate: () => void;
   endTurn: () => void;
   undo: () => void;
 
@@ -90,6 +95,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   difficulty: "normal",
   selectedStateId: null,
   lastEventResult: null,
+  lastDebate: null,
   saves: [],
 
   newGame: (opts) => {
@@ -102,6 +108,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       difficulty,
       selectedStateId: null,
       lastEventResult: null,
+      lastDebate: null,
     });
   },
 
@@ -136,6 +143,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const game = get().game;
     if (!game) return;
     const next = structuredClone(game);
+    const event = EVENTS_BY_ID[eventId];
+    if (event?.isDebate) {
+      // Debate night: resolve both tickets at once, score it, surface the card.
+      const debate = resolveDebate(next, event, { [next.playerCandidate]: choiceId });
+      set({
+        game: next,
+        lastDebate: debate,
+        lastEventResult: { title: event.title, text: debate.resultText[next.playerCandidate] },
+      });
+      return;
+    }
     const result = resolveEvent(next, eventId, choiceId, next.playerCandidate);
     set({
       game: next,
@@ -144,6 +162,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         : get().lastEventResult,
     });
   },
+  dismissDebate: () => set({ lastDebate: null }),
 
   endTurn: () => {
     const game = get().game;
@@ -153,7 +172,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       difficulty: DIFFICULTY[get().difficulty],
     });
     autosave(next);
-    set({ game: next, history, lastEventResult: null });
+    set({ game: next, history, lastEventResult: null, lastDebate: null });
   },
 
   undo: () => {
