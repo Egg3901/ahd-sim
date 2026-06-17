@@ -288,13 +288,17 @@ function applyOppoResearch(game: GameState, action: CampaignAction, rng: Rng) {
   res.cash -= cost;
   const success = rng.chance(0.55);
   const sign = favorSign(c);
+  // National in reach (it hits persuadable blocs everywhere), but each hit runs
+  // through the saturating curve: repeat oppo dumps diminish, and a bloc that
+  // already leans hard resists — so a string of scandals can't snowball a
+  // safe state the way an uncapped national shift could.
   if (success) {
     // Hits the opponent across persuadable blocs.
     for (const st of game.states) {
       if (st.blocs.length === 0) continue;
       for (const bloc of st.blocs) {
         if (bloc.blocId === "college_white" || bloc.blocId === "suburban_women") {
-          addCause(game, bloc, st, `Scandal lands on ${game.candidates[opp].shortName}`, sign * 0.05);
+          addCause(game, bloc, st, `Scandal lands on ${game.candidates[opp].shortName}`, sign * saturate(bloc, 0.05));
         }
       }
     }
@@ -306,7 +310,7 @@ function applyOppoResearch(game: GameState, action: CampaignAction, rng: Rng) {
       if (st.blocs.length === 0) continue;
       for (const bloc of st.blocs) {
         if (bloc.blocId === "suburban_women") {
-          addCause(game, bloc, st, `Oppo dump backfires as "desperate"`, -sign * 0.03);
+          addCause(game, bloc, st, `Oppo dump backfires as "desperate"`, -sign * saturate(bloc, 0.03));
         }
       }
     }
