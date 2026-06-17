@@ -47,8 +47,8 @@ export const GENERIC_DEBATES: GameEvent[] = [
 
 // ── 2024 · Harris v. Trump ────────────────────────────────────────────────
 export const HIST_2024: GameEvent[] = [
-  { id: "h24_switch", title: "A New Nominee, A Convention Surge", subject: "both", oncePerGame: true,
-    prompt: "A late, dramatic switch at the top of the Democratic ticket has remade the race overnight — small-dollar money and volunteers are pouring in.",
+  { id: "h24_switch", title: "Biden Steps Aside; Harris Takes the Ticket", subject: "both", oncePerGame: true,
+    prompt: "Joe Biden's withdrawal in July handed Kamala Harris the nomination and remade the race overnight — record small-dollar money and a flood of volunteers. Democrats are energized but untested; the Trump campaign is recalibrating against an opponent it didn't expect.",
     trigger: { kind: "scheduled", turn: 0 },
     choices: [
       { id: "d_joy", side: "dem", text: "Ride the wave — a joyful, forward-looking blitz.",
@@ -64,8 +64,8 @@ export const HIST_2024: GameEvent[] = [
         effects: { blocDeltas: [{ blocId: "noncollege_white", margin: 0.04 }, { blocId: "hispanic", margin: 0.04 }, { blocId: "youth", margin: -0.01 }], salienceDeltas: { economy: 0.05 }, momentum: 3, narrative: 2 },
         resultText: "Discipline on the economy steadies you — even as your rallies miss the red meat." },
     ] },
-  { id: "h24_border", title: "A Small Town in the Spotlight", subject: "both", oncePerGame: true,
-    prompt: "A viral, unfounded rumor about immigrants in a Midwestern town explodes online and gets repeated on the debate stage. Immigration is suddenly the only story.",
+  { id: "h24_border", title: "Springfield in the Spotlight", subject: "both", oncePerGame: true,
+    prompt: "A false rumor that Haitian immigrants in Springfield, Ohio are eating residents' pets rockets across social media — and gets repeated from the debate stage. Immigration is suddenly the only story.",
     trigger: { kind: "scheduled", turn: 1 },
     choices: [
       { id: "d_factcheck", side: "dem", text: "Fact-check hard and pivot to a real border plan.",
@@ -81,8 +81,8 @@ export const HIST_2024: GameEvent[] = [
         effects: { blocDeltas: [{ blocId: "suburban_women", margin: 0.04 }, { blocId: "hispanic", margin: 0.02 }, { blocId: "noncollege_white", margin: -0.02 }], salienceDeltas: { economy: 0.04 }, momentum: 1, narrative: 2 },
         resultText: "The restraint keeps the suburbs in reach — and your base wonders why you went soft." },
     ] },
-  { id: "h24_debate", title: "The Prime-Time Debate", subject: "both", isDebate: true, oncePerGame: true,
-    prompt: "A single, high-stakes prime-time debate. The whole campaign has been waiting for this matchup. Set the terms.",
+  { id: "h24_debate", title: "The Philadelphia Debate (ABC)", subject: "both", isDebate: true, oncePerGame: true,
+    prompt: "The first and only Harris–Trump debate, prime-time on ABC out of Philadelphia. The whole campaign has waited for this matchup. Set the terms.",
     trigger: { kind: "scheduled", turn: 2 },
     choices: [
       { id: "bait", text: "Bait the temper — get under your opponent's skin on crowd sizes and grievance.",
@@ -92,8 +92,8 @@ export const HIST_2024: GameEvent[] = [
         effects: { blocDeltas: [{ blocId: "noncollege_white", margin: 0.05 }, { blocId: "hispanic", margin: 0.03 }, { blocId: "youth", margin: -0.01 }], salienceDeltas: { economy: 0.05 }, momentum: 4, narrative: 2 },
         resultText: "Disciplined and on-message — you win the voters who only care about their wallet." },
     ] },
-  { id: "h24_security", title: "A Security Scare", subject: "rep", oncePerGame: true,
-    prompt: "A frightening security incident targeting the Republican nominee rattles the country and freezes the campaign for forty-eight hours. The tone of the race is up for grabs.",
+  { id: "h24_security", title: "An Assassination Attempt on Trump", subject: "rep", oncePerGame: true,
+    prompt: "A gunman opens fire at a Trump rally. He survives — bloodied, fist raised — and the country freezes for forty-eight hours. The tone of the race is suddenly up for grabs.",
     trigger: { kind: "scheduled", turn: 3 },
     choices: [
       { id: "r_defiance", side: "rep", text: "Project defiance and resolve — fist in the air, never back down.",
@@ -110,7 +110,7 @@ export const HIST_2024: GameEvent[] = [
         resultText: "You keep your coalition focused — but the optics of campaigning through it draw some criticism." },
     ] },
   { id: "h24_closing", title: "The Closing Argument: Prices vs. Rights", subject: "both", oncePerGame: true,
-    prompt: "The race narrows to two questions: can you afford your life, and who do you trust with your rights? You can only headline one.",
+    prompt: "The race narrows to two questions: can you afford your life, and who decides your rights after the fall of Roe? You can only headline one.",
     trigger: { kind: "scheduled", turn: 5 },
     choices: [
       { id: "d_rights", side: "dem", text: "Make it about rights and democracy.",
