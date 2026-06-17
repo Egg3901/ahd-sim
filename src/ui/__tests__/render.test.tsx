@@ -27,12 +27,13 @@ function mount(): { html: () => string; cleanup: () => void } {
 describe("App renders without crashing", () => {
   beforeEach(reset);
 
-  it("renders the setup screen with the scenario picker on first load", () => {
+  it("renders the setup wizard with the scenario picker on first load", () => {
     const m = mount();
     const html = m.html();
     expect(html).toContain("A House Divided");
-    expect(html).toContain("Begin"); // "Begin <year> as <name> →"
-    expect(html).toContain("Gore v. Bush"); // scenario picker is present
+    expect(html).toContain("The Election"); // step 1 of the setup wizard
+    expect(html).toContain("Next"); // advances through the wizard steps
+    expect(html).toContain("Gore v. Bush"); // scenario picker is present on step 1
     m.cleanup();
   });
 

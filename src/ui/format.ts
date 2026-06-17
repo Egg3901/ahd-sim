@@ -9,6 +9,15 @@ export function pct(n: number, digits = 1): string {
   return `${(n * 100).toFixed(digits)}%`;
 }
 
+// The model electorate is an abstract scaled-down sample (~100K "votes"
+// nationwide). For the broadcast verdict we scale it up to a believable
+// national two-party turnout (~155M) and comma-group it so it reads like a
+// real election-night chyron rather than "$52K".
+const NATIONAL_VOTE_SCALE = 1550;
+export function votes(modelVotes: number): string {
+  return Math.round(modelVotes * NATIONAL_VOTE_SCALE).toLocaleString("en-US");
+}
+
 export function signed(n: number, digits = 2): string {
   return `${n >= 0 ? "+" : ""}${n.toFixed(digits)}`;
 }

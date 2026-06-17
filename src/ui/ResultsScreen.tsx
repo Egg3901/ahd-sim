@@ -4,7 +4,7 @@ import { GRID, SPLIT_UNITS, GRID_COLS, GRID_ROWS } from "@content/mapLayout";
 import { STATE_PATHS } from "@content/statePaths";
 import type { Projection } from "@engine/index";
 import { EvBar } from "./EvBar";
-import { money, pct } from "./format";
+import { pct, votes } from "./format";
 
 const prefersReduced = () =>
   typeof window === "undefined" ||
@@ -96,8 +96,9 @@ export function ResultsScreen() {
                 <div className="ev" style={{ color: cands[result.winner].color }}>{result.electoralVotes[result.winner]}</div>
               )}
               <div className="muted">
-                {dem} {result.electoralVotes.dem} — {rep} {result.electoralVotes.rep} ·
-                Popular vote: {dem} {pct(result.popularShare.dem)} ({money(result.popularVote.dem)} votes)
+                {dem} {result.electoralVotes.dem} — {rep} {result.electoralVotes.rep} · Popular vote:{" "}
+                {dem} {pct(result.popularShare.dem)} ({votes(result.popularVote.dem)}) — {rep}{" "}
+                {pct(result.popularShare.rep)} ({votes(result.popularVote.rep)})
               </div>
               {result.winner === "tie" ? (
                 <p className="muted small" style={{ marginTop: 8 }}>
