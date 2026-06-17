@@ -11,6 +11,7 @@ import { RecapModal } from "@ui/RecapModal";
 import { EvBar } from "@ui/EvBar";
 import { GuidePage } from "@ui/GuidePage";
 import { CandidateScreen } from "@ui/CandidateScreen";
+import { StatsScreen } from "@ui/StatsScreen";
 import { NewsTicker } from "@ui/NewsTicker";
 import { getScenario } from "@content/scenarios";
 import { money, turnLabel } from "@ui/format";
@@ -83,6 +84,7 @@ function GameScreen() {
   const [recapOpen, setRecapOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [candOpen, setCandOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
 
   const isMobile = useIsMobile();
   const selectedStateId = useGameStore((s) => s.selectedStateId);
@@ -117,6 +119,7 @@ function GameScreen() {
         <div className="stat"><span className="v" style={{ color: plannedActions >= res.maxActions ? "var(--gold)" : undefined }}>{res.maxActions - plannedActions}/{res.maxActions}</span><span className="l">Actions left</span></div>
         <div className="stat"><span className="v">{res.nationalMomentum.toFixed(0)}</span><span className="l">Momentum</span></div>
         <SaveControls />
+        <button className="ghost small" onClick={() => setStatsOpen(true)}>Stats</button>
         <button className="ghost small" onClick={() => setCandOpen(true)}>Candidates</button>
         <button className="ghost small" onClick={() => setGuideOpen(true)}>Guide</button>
         <button onClick={undo} disabled={!canUndo}>↶ Undo</button>
@@ -154,6 +157,7 @@ function GameScreen() {
       {!recapOpen && hasPendingEvent && <EventModal />}
       {guideOpen && <GuidePage onClose={() => setGuideOpen(false)} />}
       {candOpen && <CandidateScreen scenarioId={game.scenarioId} onClose={() => setCandOpen(false)} />}
+      {statsOpen && <StatsScreen onClose={() => setStatsOpen(false)} />}
     </div>
   );
 }

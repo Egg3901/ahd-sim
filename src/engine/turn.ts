@@ -4,7 +4,25 @@ import { applyAction } from "./actions";
 import { planAiActions, type AiConfig, DIFFICULTY } from "./ai";
 import { queueEventsForTurn, resolveAiEvents, aiChooseEvent, resolveEvent } from "./events";
 import { projectElection, computeResult } from "./voteModel";
+import { nationalPoll } from "./polls";
 import { OPPONENT_OF, CANDIDATES } from "@content/candidates";
+
+// Appends a trend sample for the current state to game.timeline. Called once at
+// game start (the opening baseline) and once at the end of every advanced week.
+function recordTimelinePoint(game: GameState) {
+  const proj = projectElection(game);
+  (game.timeline ??= []).push({
+    turn: game.turn,
+    demPoll: nationalPoll(game),
+    demEV: proj.ev.dem,
+    repEV: proj.ev.rep,
+    tossupEV: proj.tossupEv,
+    demMomentum: game.resources.dem.nationalMomentum,
+    repMomentum: game.resources.rep.nationalMomentum,
+    demCash: game.resources.dem.cash,
+    repCash: game.resources.rep.cash,
+  });
+}
 
 // Decays the transient, turn-scoped quantities. Ground game is sticky (no
 // decay) — that's what makes early field investment pay off.
@@ -122,6 +140,7 @@ export function advanceTurn(
     queueEventsForTurn(game, rng);
     game.phase = "intel";
   }
+  recordTimelinePoint(game); // this week's close
   return game;
 }
 
@@ -140,5 +159,7 @@ export function beginGame(game: GameState): GameState {
   const next: GameState = structuredClone(game);
   next.pendingEvents = [];
   next.phase = "intel";
+  next.timeline = [];
+  recordTimelinePoint(next); // opening baseline (turn 0)
   return next;
 }

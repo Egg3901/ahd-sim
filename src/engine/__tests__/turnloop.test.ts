@@ -24,6 +24,23 @@ describe("turn loop", () => {
     expect(game.turn).toBe(0);
   });
 
+  it("records a timeline point for the opening week and every advanced week", () => {
+    const game = createGame({ seed: "timeline", playerCandidate: "dem" });
+    const opened = beginGame(game);
+    // beginGame seeds the turn-0 baseline.
+    expect(opened.timeline).toHaveLength(1);
+    expect(opened.timeline![0].turn).toBe(0);
+
+    const end = playToEnd(game, () => []);
+    // One baseline + one per played week (= totalTurns).
+    expect(end.timeline!.length).toBe(end.totalTurns + 1);
+    const last = end.timeline![end.timeline!.length - 1];
+    expect(last.turn).toBe(end.totalTurns);
+    expect(last.demEV + last.repEV + last.tossupEV).toBe(538);
+    // Poll average is a probability share.
+    for (const p of end.timeline!) expect(p.demPoll).toBeGreaterThan(0);
+  });
+
   it("runs a full neutral campaign to a decided result", () => {
     const end = playToEnd(createGame({ seed: "neutral-run" }), () => []);
     expect(end.phase).toBe("result");

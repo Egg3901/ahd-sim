@@ -4,6 +4,7 @@ import { GRID, SPLIT_UNITS, GRID_COLS, GRID_ROWS } from "@content/mapLayout";
 import { STATE_PATHS } from "@content/statePaths";
 import type { Projection } from "@engine/index";
 import { EvBar } from "./EvBar";
+import { StatsScreen } from "./StatsScreen";
 import { pct, votes } from "./format";
 
 const prefersReduced = () =>
@@ -30,6 +31,7 @@ export function ResultsScreen() {
 
   const [revealed, setRevealed] = useState(() => (prefersReduced() ? calls.length : 0));
   const [mapMode, setMapMode] = useState<"geo" | "square">("geo");
+  const [statsOpen, setStatsOpen] = useState(false);
   const done = revealed >= calls.length;
 
   useEffect(() => {
@@ -181,13 +183,19 @@ export function ResultsScreen() {
               ))}
             </div>
 
-            <button className="primary" style={{ width: "100%", padding: 12, marginTop: 4 }}
-              onClick={() => newGame({ seed: String(Date.now()), playerCandidate: game.playerCandidate, scenario: game.scenarioId, eventMode: game.eventMode })}>
-              Run it back — New Campaign →
-            </button>
+            <div className="row" style={{ gap: 8, marginTop: 4 }}>
+              <button className="ghost" style={{ flex: "0 0 auto", padding: "12px 18px" }} onClick={() => setStatsOpen(true)}>
+                📊 Race Stats
+              </button>
+              <button className="primary" style={{ flex: 1, padding: 12 }}
+                onClick={() => newGame({ seed: String(Date.now()), playerCandidate: game.playerCandidate, scenario: game.scenarioId, eventMode: game.eventMode })}>
+                Run it back — New Campaign →
+              </button>
+            </div>
           </>
         )}
       </div>
+      {statsOpen && <StatsScreen onClose={() => setStatsOpen(false)} />}
     </div>
   );
 }

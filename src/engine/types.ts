@@ -274,6 +274,22 @@ export interface TurnRecapItem {
   stateId?: string;
 }
 
+// One sample of the national picture at the end of a week, accumulated across
+// the campaign so the UI can chart polling/EV trends. Recorded by the engine
+// (beginGame seeds turn 0; advanceTurn appends each completed week), so it
+// rewinds correctly with undo and survives into the final result.
+export interface TurnPoint {
+  turn: number; // 0 = opening baseline, then 1..totalTurns
+  demPoll: number; // national poll average, Dem two-party share (0..1)
+  demEV: number;
+  repEV: number;
+  tossupEV: number;
+  demMomentum: number;
+  repMomentum: number;
+  demCash: number;
+  repCash: number;
+}
+
 export interface GameState {
   seed: number;
   rngState: number;
@@ -304,6 +320,9 @@ export interface GameState {
   // Chosen running mate id per ticket (drives the applied bonuses + UI). Optional
   // for backward compatibility with saves predating VP selection.
   runningMates?: Record<CandidateId, string>;
+  // Per-week trend log (national poll, EV split, momentum, cash). Optional for
+  // backward compatibility with saves predating the stats screen.
+  timeline?: TurnPoint[];
   // Set once the game is decided.
   result?: GameResult;
 }
