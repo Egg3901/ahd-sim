@@ -160,6 +160,7 @@ function buildCandidate(slot: CandidateId, t: ScenarioTicket): Candidate {
     color: t.color,
     runningMate: defaultRunningMate(t.runningMates).name,
     traits: { ...t.traits },
+    baseTraits: { ...t.traits },
     issuePositions: { ...t.issuePositions },
     baseFavorability: { ...t.baseFavorability },
   };

@@ -15,6 +15,40 @@ function favorSign(candidate: CandidateId): number {
   return candidate === "dem" ? 1 : -1;
 }
 
+// Debate readiness, 0..100: innate debating talent plus the two prep tracks
+// (debate prep = stagecraft, policy command = substance). 50 is "average" and
+// leaves a debate playing exactly as authored.
+export function debateReadiness(game: GameState, candidate: CandidateId): number {
+  const t = game.candidates[candidate].traits;
+  return 0.4 * t.debatingSkill + 0.3 * t.debatePrep + 0.3 * t.policyKnowledge;
+}
+
+// Turns readiness into multipliers: a well-prepared debater amplifies the
+// upside of their chosen tack and blunts its downside; an unprepared one does
+// the reverse. Centered so readiness 50 ⇒ (1, 1) (no change vs the authored
+// effect, which keeps calibration untouched).
+function debateMultipliers(readiness: number): { gain: number; cost: number } {
+  const edge = clamp((readiness - 50) / 50, -1, 1); // -1..+1
+  return { gain: clamp(1 + edge * 0.4, 0.6, 1.4), cost: clamp(1 - edge * 0.4, 0.6, 1.4) };
+}
+
+// Scales a debate choice's effect by performance: favorable components by
+// `gain`, costs (negative components) by `cost`. Non-performance bits (cash,
+// salience — the topic, not the win) pass through unchanged.
+function scaleDebateEffect(effect: EventEffect, gain: number, cost: number): EventEffect {
+  const m = (v: number) => (v >= 0 ? v * gain : v * cost);
+  return {
+    ...effect,
+    blocDeltas: effect.blocDeltas?.map((bd) => ({
+      ...bd,
+      ...(bd.margin !== undefined ? { margin: m(bd.margin) } : {}),
+      ...(bd.enthusiasm !== undefined ? { enthusiasm: m(bd.enthusiasm) } : {}),
+    })),
+    ...(effect.momentum !== undefined ? { momentum: m(effect.momentum) } : {}),
+    ...(effect.narrative !== undefined ? { narrative: m(effect.narrative) } : {}),
+  };
+}
+
 // Applies one event choice's effects in the answering candidate's favor. Bloc
 // deltas are nationwide (events move the country, not a single state); salience
 // shifts are national and candidate-agnostic.
@@ -95,7 +129,14 @@ export function resolveEvent(
   if (!choice) return null;
   if (!choiceAvailable(game, beneficiary, choice)) return null;
 
-  applyEventEffect(game, choice.effects, beneficiary, `${event.title}: ${choice.text}`);
+  // Debates resolve through the performance model: readiness (talent + prep)
+  // amplifies the win and softens the cost. Everything else applies as authored.
+  let effect = choice.effects;
+  if (event.isDebate) {
+    const { gain, cost } = debateMultipliers(debateReadiness(game, beneficiary));
+    effect = scaleDebateEffect(effect, gain, cost);
+  }
+  applyEventEffect(game, effect, beneficiary, `${event.title}: ${choice.text}`);
   if (!game.firedEventIds.includes(`${eventId}:${beneficiary}`)) {
     game.firedEventIds.push(`${eventId}:${beneficiary}`);
   }

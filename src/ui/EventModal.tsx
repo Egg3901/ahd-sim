@@ -1,8 +1,16 @@
 import { useState } from "react";
 import { useGameStore } from "@store/gameStore";
-import { choiceAvailable } from "@engine/index";
+import { choiceAvailable, debateReadiness } from "@engine/index";
 import { EVENTS_BY_ID } from "@content/events";
 import { BLOCS } from "@content/blocs";
+
+// Maps a debate-readiness score (0..100) to a label + how the night will play.
+function readinessTier(r: number): { label: string; tone: "up" | "down" | "flat"; note: string } {
+  if (r >= 72) return { label: "Well prepared", tone: "up", note: "Your prep amplifies a strong night and blunts the risk." };
+  if (r >= 56) return { label: "Ready", tone: "flat", note: "A solid, on-script performance." };
+  if (r >= 44) return { label: "Average", tone: "flat", note: "No edge from the podium — it plays as written." };
+  return { label: "Underprepared", tone: "down", note: "Shaky command — the upside shrinks and mistakes cost more." };
+}
 
 // Shows the first pending event for the player. Two steps: pick a choice, see
 // the narrated outcome (the authored resultText), then continue. Effects are
@@ -36,6 +44,18 @@ export function EventModal() {
         </div>
         <div className="body">
           <p className="prompt">{event.prompt}</p>
+
+          {event.isDebate && (() => {
+            const r = debateReadiness(game, game.playerCandidate);
+            const tier = readinessTier(r);
+            return (
+              <div className="readiness">
+                <span className="readiness-k">Debate readiness</span>
+                <span className={`readiness-v ${tier.tone}`}>{tier.label}</span>
+                <span className="readiness-note">{tier.note}</span>
+              </div>
+            );
+          })()}
 
           {!chosen && myChoices.map((choice) => {
             const available = choiceAvailable(game, game.playerCandidate, choice);

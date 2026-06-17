@@ -1,7 +1,42 @@
-import type { CampaignAction, CandidateId, GameState } from "./types";
+import type { CampaignAction, CandidateId, GameState, IssueId } from "./types";
 import type { Rng } from "./rng";
 import { projectElection } from "./voteModel";
+import { issueAlignment } from "./actions";
 import { OPPONENT_OF } from "@content/candidates";
+import { HISTORICAL_EVENTS, GENERIC_DEBATES } from "@content/events";
+import { BLOCS } from "@content/blocs";
+import { ISSUE_IDS } from "@content/issues";
+
+// Is a scheduled debate coming within the next `turns` weeks? Lets the AI prep
+// ahead of showtime instead of being caught flat-footed on the big stage.
+function debateWithin(game: GameState, turns: number): boolean {
+  const historical = (game.eventMode ?? "historical") === "historical";
+  const deck = historical
+    ? HISTORICAL_EVENTS[game.scenarioId ?? "2020"] ?? HISTORICAL_EVENTS["2020"]
+    : GENERIC_DEBATES;
+  return deck.some(
+    (e) => e.isDebate && e.trigger.kind === "scheduled" && e.trigger.turn > game.turn && e.trigger.turn <= game.turn + turns,
+  );
+}
+
+// The issue whose higher salience would most help the AI: its own coalition's
+// alignment advantage, weighted by how much room that issue has left to climb.
+function bestIssueForAi(game: GameState, ai: CandidateId): IssueId | null {
+  let best: IssueId | null = null;
+  let bestScore = 0.05;
+  for (const issueId of ISSUE_IDS) {
+    const headroom = 1 - (game.salience[issueId] ?? 0.5);
+    if (headroom < 0.12) continue;
+    let adv = 0;
+    for (const blocId of Object.keys(BLOCS)) adv += issueAlignment(game, ai, blocId, issueId) - 0.5;
+    const score = adv * headroom;
+    if (score > bestScore) {
+      bestScore = score;
+      best = issueId;
+    }
+  }
+  return best;
+}
 
 export interface AiConfig {
   // 0..1 budget-efficiency multiplier; higher = spends more, smarter.
@@ -113,6 +148,24 @@ export function planAiActions(game: GameState, rng: Rng, cfg: AiConfig): Campaig
   if (turnsLeft > 3 && res.staffCapacity > 0 && budget > 0) {
     actions.push({ type: "ground_game", candidate: ai, stateId: targets[0].stateId });
     budget -= 1;
+  }
+  // Prep for a debate that's within two weeks: top up the weaker of the two
+  // tracks (stagecraft vs substance), unless already sharp. Disciplined AIs
+  // prep more reliably.
+  if (debateWithin(game, 2) && budget > 1) {
+    const t = game.candidates[ai].traits;
+    if (Math.min(t.debatePrep, t.policyKnowledge) < 86 && rng.chance(0.5 + cfg.efficiency * 0.45)) {
+      actions.push({ type: t.debatePrep <= t.policyKnowledge ? "debate_prep" : "policy_prep", candidate: ai });
+      budget -= 1;
+    }
+  }
+  // With slots to spare, drive the conversation onto the AI's best issue.
+  if (budget > 1 && res.cash > 6_000_000 && rng.chance(0.25 + cfg.efficiency * 0.25)) {
+    const issueId = bestIssueForAi(game, ai);
+    if (issueId) {
+      actions.push({ type: "advertise", candidate: ai, stateId: targets[0].stateId, adMode: "issue", issueId, spend: 6_000_000 });
+      budget -= 1;
+    }
   }
 
   // Interleave an ad and a rally per target, in priority order, until the pool

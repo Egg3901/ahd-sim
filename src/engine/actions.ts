@@ -318,14 +318,27 @@ function applyOppoResearch(game: GameState, action: CampaignAction, rng: Rng) {
 }
 
 // ── DEBATE PREP ───────────────────────────────────────────────────────────
-// Spends days to improve odds in the next scheduled debate event.
+// Mock debates and message discipline. Raises debate readiness, which lifts the
+// payoff (and limits the damage) of the next debate event. Decays gently.
 function applyDebatePrep(game: GameState, action: CampaignAction) {
   const c = action.candidate;
-  // Temporarily buff debating skill via a transient trait bump (decays after debate).
-  game.candidates[c].traits.debatingSkill = Math.min(100, game.candidates[c].traits.debatingSkill + 4);
+  game.candidates[c].traits.debatePrep = Math.min(100, game.candidates[c].traits.debatePrep + 8);
   game.causes.push({
     turn: game.turn,
-    cause: `Debate prep (+4 debating skill)`,
+    cause: `Debate prep (+8 debate readiness)`,
+    marginDelta: 0,
+  });
+}
+
+// ── POLICY PREP ───────────────────────────────────────────────────────────
+// Briefing books and white papers. Raises policy command — substance that also
+// pays off on the debate stage and unlocks wonk-gated answers.
+function applyPolicyPrep(game: GameState, action: CampaignAction) {
+  const c = action.candidate;
+  game.candidates[c].traits.policyKnowledge = Math.min(100, game.candidates[c].traits.policyKnowledge + 8);
+  game.causes.push({
+    turn: game.turn,
+    cause: `Policy prep (+8 policy command)`,
     marginDelta: 0,
   });
 }
@@ -384,6 +397,7 @@ export function applyAction(game: GameState, action: CampaignAction, rng: Rng) {
     case "gotv": return applyGotv(game, action);
     case "oppo_research": return applyOppoResearch(game, action, rng);
     case "debate_prep": return applyDebatePrep(game, action);
+    case "policy_prep": return applyPolicyPrep(game, action);
     case "issue_pivot": return applyIssuePivot(game, action);
   }
 }

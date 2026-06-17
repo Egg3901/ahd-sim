@@ -12,6 +12,7 @@ import {
   Vote,
   Search,
   GraduationCap,
+  BookOpen,
   ArrowLeftRight,
   Plus,
   X,
@@ -28,6 +29,7 @@ const ICON: Record<ActionType, IconComp> = {
   gotv: Vote,
   oppo_research: Search,
   debate_prep: GraduationCap,
+  policy_prep: BookOpen,
   issue_pivot: ArrowLeftRight,
 };
 
@@ -40,6 +42,7 @@ const ACTIONS: { type: ActionType; label: string; cost: string }[] = [
   { type: "gotv", label: "GOTV", cost: "$1M" },
   { type: "oppo_research", label: "Oppo Research", cost: "$2M" },
   { type: "debate_prep", label: "Debate Prep", cost: "prep" },
+  { type: "policy_prep", label: "Policy Prep", cost: "prep" },
   { type: "issue_pivot", label: "Issue Pivot", cost: "free" },
 ];
 
@@ -57,6 +60,7 @@ function shortDesc(a: CampaignAction): string {
     case "fundraise": return "Fundraise";
     case "oppo_research": return "Oppo research";
     case "debate_prep": return "Debate prep";
+    case "policy_prep": return "Policy prep";
     case "issue_pivot": return `Pivot ${a.issueId}`;
     default: return a.type;
   }

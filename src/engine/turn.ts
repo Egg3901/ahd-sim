@@ -42,9 +42,14 @@ function decay(game: GameState) {
     const res = game.resources[c];
     res.nationalMomentum *= 0.75;
     res.mediaNarrative *= 0.8;
-    // Debate-prep buff relaxes back toward the candidate's base debating skill.
-    const base = CANDIDATES[c].traits.debatingSkill;
-    game.candidates[c].traits.debatingSkill = base + (game.candidates[c].traits.debatingSkill - base) * 0.4;
+    // Prep buffs (debate / policy) relax back toward the candidate's real
+    // starting traits — gently (35%/week), so prepping a week or two before a
+    // debate still pays off at showtime.
+    const cand = game.candidates[c];
+    const base = cand.baseTraits ?? CANDIDATES[c].traits;
+    for (const k of ["debatePrep", "policyKnowledge", "debatingSkill"] as const) {
+      cand.traits[k] = base[k] + (cand.traits[k] - base[k]) * 0.65;
+    }
     // Refill candidate-days for the new week.
     res.actions = res.maxActions;
   }

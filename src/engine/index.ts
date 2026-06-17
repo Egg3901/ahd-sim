@@ -21,6 +21,7 @@ export {
   queueEventsForTurn,
   aiChooseEvent,
   resolveAiEvents,
+  debateReadiness,
 } from "./events";
 export { planAiActions, DIFFICULTY, type AiConfig } from "./ai";
 export { advanceTurn, beginGame, type AdvanceOptions } from "./turn";

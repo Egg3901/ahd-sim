@@ -68,6 +68,10 @@ export interface Candidate {
   runningMate: string;
   color: string;
   traits: CandidateTraits;
+  // Immutable snapshot of the starting traits. Transient prep buffs (debate /
+  // policy prep) relax back toward these each week — so decay targets the
+  // candidate's real baseline, not the neutral content default.
+  baseTraits?: CandidateTraits;
   // Issue stance, left(-1) ↔ right(+1). Mutable via Issue Pivot action.
   issuePositions: Record<IssueId, number>;
   // Baseline favorability per bloc, -1..+1. Mutated by ads/events.
@@ -166,6 +170,7 @@ export type ActionType =
   | "gotv"
   | "oppo_research"
   | "debate_prep"
+  | "policy_prep"
   | "issue_pivot";
 
 export type AdMode = "positive" | "contrast" | "issue";

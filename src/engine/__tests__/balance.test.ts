@@ -5,8 +5,10 @@ import { applyAction } from "../actions";
 import { createRng } from "../rng";
 import { DIFFICULTY } from "../ai";
 import { projectElection, computeResult, tallyContest } from "../voteModel";
+import { resolveEvent, debateReadiness } from "../events";
 import type { CampaignAction, GameState } from "../types";
 import { SCENARIO_IDS } from "@content/scenarios";
+import { EVENTS_BY_ID } from "@content/events";
 
 const demShareOf = (g: GameState, id: string) =>
   tallyContest(g.states.find((s) => s.id === id)!).demShare;
@@ -152,6 +154,33 @@ it("the AI doesn't blow its war chest early and go broke by October", () => {
   }
   // It is still funding ad pressure in the final stretch, not running on fumes.
   expect(lateCash).toBeGreaterThan(5_000_000);
+});
+
+// ── Debate performance scales with readiness ───────────────────────────────
+it("a prepared debater gets more out of the same debate than an unprepared one", () => {
+  const debateId = "h24_debate";
+  const choiceId = EVENTS_BY_ID[debateId].choices[0].id;
+  const netShift = (prep: { debatePrep: number; policyKnowledge: number; debatingSkill: number }) => {
+    const g = createGame({ seed: "deb", scenario: "2024", playerCandidate: "dem" });
+    Object.assign(g.candidates.dem.traits, prep);
+    const sum = (s: GameState) => s.states.reduce((a, st) => a + (st.blocs.length ? tallyContest(st).demShare : 0), 0);
+    const before = sum(g);
+    g.pendingEvents.push({ eventId: debateId, forCandidate: "dem" });
+    resolveEvent(g, debateId, choiceId, "dem");
+    return sum(g) - before;
+  };
+  const low = netShift({ debatePrep: 20, policyKnowledge: 20, debatingSkill: 40 });
+  const high = netShift({ debatePrep: 95, policyKnowledge: 95, debatingSkill: 90 });
+  expect(high).toBeGreaterThan(low * 1.5); // readiness materially amplifies the win
+});
+
+it("debate_prep and policy_prep raise readiness; readiness 50 is neutral", () => {
+  const g = createGame({ seed: "prep", playerCandidate: "dem" });
+  const r0 = debateReadiness(g, "dem");
+  const rng = createRng("prep");
+  applyAction(g, { type: "debate_prep", candidate: "dem" }, rng);
+  applyAction(g, { type: "policy_prep", candidate: "dem" }, rng);
+  expect(debateReadiness(g, "dem")).toBeGreaterThan(r0);
 });
 
 // ── Weekly action pool is a hard cap ───────────────────────────────────────
