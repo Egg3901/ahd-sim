@@ -130,8 +130,8 @@ export const HIST_2024: GameEvent[] = [
 
 // ── 2020 · Biden v. Trump (asymmetric flagship deck) ────────────────────────
 export const HIST_2020: GameEvent[] = [
-  { id: "h20_convention", title: "The Conventions Close", subject: "both", oncePerGame: true,
-    prompt: "Both conventions are done — yours went half-virtual, the balloons never dropped. You've got a modest bounce and a locked base. Where do you point the campaign now?",
+  { id: "h20_convention", title: "Two Conventions, One Pandemic", subject: "both", oncePerGame: true,
+    prompt: "The conventions are done — Biden's beamed in from a near-empty hall in Wilmington, Trump's staged on the White House South Lawn. Modest bounces, locked-in bases. Where do you point the campaign now?",
     trigger: { kind: "scheduled", turn: 0 },
     choices: [
       { id: "d_sunbelt", side: "dem", text: "Expand into the Sun Belt — chase Arizona, Georgia, North Carolina.",
@@ -147,8 +147,8 @@ export const HIST_2020: GameEvent[] = [
         effects: { blocDeltas: [{ blocId: "suburban_women", margin: 0.05 }, { blocId: "college_white", margin: 0.04 }, { blocId: "noncollege_white", margin: -0.03 }], momentum: 1, narrative: 2 },
         resultText: "You reach for the middle — and the base grumbles that you've gone soft." },
     ] },
-  { id: "h20_unrest", title: "Unrest in a Battleground City", subject: "both", oncePerGame: true,
-    prompt: "After another police shooting, protests and some rioting break out in a Midwestern swing state. The split-screen of marchers and burning storefronts runs on every channel. Your move.",
+  { id: "h20_unrest", title: "Unrest in Kenosha", subject: "both", oncePerGame: true,
+    prompt: "After the police shooting of Jacob Blake, protests and some rioting break out in Kenosha, Wisconsin. The split-screen of marchers and burning storefronts runs on every channel in a state you have to win. Your move.",
     trigger: { kind: "scheduled", turn: 1 },
     choices: [
       { id: "d_tightrope", side: "dem", text: "Condemn the violence and back reform — walk the tightrope.",
@@ -164,8 +164,8 @@ export const HIST_2020: GameEvent[] = [
         effects: { blocDeltas: [{ blocId: "suburban_women", margin: 0.04 }, { blocId: "college_white", margin: 0.03 }, { blocId: "noncollege_white", margin: -0.03 }], momentum: 1, narrative: 3 },
         resultText: "The grace note reassures the suburbs — but your base wanted a fighter." },
     ] },
-  { id: "h20_covid", title: "The Autumn COVID Wave", subject: "both", oncePerGame: true,
-    prompt: "Cases surge as the weather turns — and the president himself tests positive and is hospitalized. The pandemic is the only story for a week. How do you handle it?",
+  { id: "h20_covid", title: "Trump Hospitalized with COVID", subject: "both", oncePerGame: true,
+    prompt: "Cases surge as the weather turns — and Trump himself tests positive and is flown to Walter Reed. The pandemic is the only story for a week. How do you handle it?",
     trigger: { kind: "scheduled", turn: 2 },
     choices: [
       { id: "d_science", side: "dem", text: "Lead on masks and science — model the responsible path.",
@@ -181,8 +181,8 @@ export const HIST_2020: GameEvent[] = [
         effects: { blocDeltas: [{ blocId: "seniors", margin: 0.04 }, { blocId: "noncollege_white", margin: 0.03 }, { blocId: "suburban_women", margin: 0.02 }], salienceDeltas: { economy: 0.04 }, momentum: 2, narrative: 1 },
         resultText: "A forward-looking pitch steadies the seniors — though it doesn't fire up the rallies." },
     ] },
-  { id: "h20_scotus", title: "A Supreme Court Seat Opens", subject: "both", oncePerGame: true,
-    prompt: "A liberal-lion justice dies six weeks out, and the Court is suddenly the center of the race. Small-dollar money floods both sides overnight.",
+  { id: "h20_scotus", title: "Ruth Bader Ginsburg Dies", subject: "both", oncePerGame: true,
+    prompt: "Justice Ruth Bader Ginsburg dies six weeks out, and the Supreme Court is suddenly the center of the race — with a fight over filling the seat before Election Day. Small-dollar money floods both sides overnight.",
     trigger: { kind: "scheduled", turn: 3 },
     choices: [
       { id: "d_healthcare", side: "dem", text: "Make it about healthcare — the ACA is on the line.",
@@ -199,7 +199,7 @@ export const HIST_2020: GameEvent[] = [
         resultText: "Disciplined and broad — though the base wanted you to relish the brawl." },
     ] },
   { id: "h20_debate1", title: "First Debate (Cleveland)", subject: "both", isDebate: true, oncePerGame: true,
-    prompt: "Ninety minutes of chaos and interruptions. The whole country is watching the most-anticipated debate of the race. How do you carry yourself on the biggest stage?",
+    prompt: "Ninety minutes of chaos and interruptions in Cleveland — \"Will you shut up, man?\" Biden and Trump talk over each other for the most-anticipated debate of the race. How do you carry yourself on the biggest stage?",
     trigger: { kind: "scheduled", turn: 4 },
     choices: [
       { id: "calm_presidential", text: "Stay calm and presidential — talk to the camera, not your opponent.",
@@ -213,7 +213,7 @@ export const HIST_2020: GameEvent[] = [
         resultText: "Command of the substance wins the fact-checkers — a touch clinical for some." },
     ] },
   { id: "h20_vpdebate", title: "Vice-Presidential Debate (Salt Lake City)", subject: "both", isDebate: true, oncePerGame: true,
-    prompt: "A calmer undercard — two running mates behind plexiglass. No knockout to be had, but a steady night reassures, and a sharp one bleeds.",
+    prompt: "A calmer undercard in Salt Lake City — two running mates behind plexiglass, and a fly that lands on one of them long enough to steal the night. No knockout to be had, but a steady showing reassures, and a sharp one bleeds.",
     trigger: { kind: "scheduled", turn: 5 },
     choices: [
       { id: "disciplined", text: "Stay disciplined and reassuring.",
@@ -241,7 +241,7 @@ export const HIST_2020: GameEvent[] = [
         resultText: "You change the subject to your strongest ground — and cede the good economic headline." },
     ] },
   { id: "h20_finaldebate", title: "Final Debate (Nashville)", subject: "both", isDebate: true, oncePerGame: true,
-    prompt: "The last debate, with mute buttons this time. The undecideds who are left are watching for one reason to break. Make your closing case.",
+    prompt: "The last Biden–Trump debate in Nashville, with mute buttons this time to keep it civil. The undecideds who are left are watching for one reason to break. Make your closing case.",
     trigger: { kind: "scheduled", turn: 7 },
     choices: [
       { id: "unity", text: "Close on unity and turning the page.",
@@ -256,7 +256,7 @@ export const HIST_2020: GameEvent[] = [
 // ── 2016 · Clinton v. Trump ───────────────────────────────────────────────
 export const HIST_2016: GameEvent[] = [
   { id: "h16_deplorables", title: "The 'Basket of Deplorables'", subject: "dem", oncePerGame: true,
-    prompt: "A blunt line from a closed-door fundraiser — half of the other side's supporters dismissed in a single phrase — leaks and is everywhere by morning.",
+    prompt: "Hillary Clinton's line from a closed-door fundraiser — half of Trump's supporters dropped into a \"basket of deplorables\" — leaks and is everywhere by morning.",
     trigger: { kind: "scheduled", turn: 0 },
     choices: [
       { id: "d_walk", side: "dem", text: "Walk it back — say you regret the generalization.",
@@ -273,7 +273,7 @@ export const HIST_2016: GameEvent[] = [
         resultText: "A rare disciplined day reassures wary suburbanites — and bores the base." },
     ] },
   { id: "h16_health", title: "A Stumble at a 9/11 Memorial", subject: "dem", oncePerGame: true,
-    prompt: "The Democratic nominee nearly collapses leaving a memorial, caught on a bystander's phone. A pneumonia diagnosis the campaign sat on sets off a stamina frenzy.",
+    prompt: "Hillary Clinton buckles and is helped into a van leaving the 9/11 memorial, caught on a bystander's phone. A pneumonia diagnosis the campaign had sat on sets off a stamina frenzy.",
     trigger: { kind: "scheduled", turn: 1 },
     choices: [
       { id: "d_records", side: "dem", text: "Release detailed medical records and get back out fast.",
@@ -290,7 +290,7 @@ export const HIST_2016: GameEvent[] = [
         resultText: "Magnanimity surprises the press and softens your edges — for a day." },
     ] },
   { id: "h16_debate1", title: "First Debate (Hofstra)", subject: "both", isDebate: true, oncePerGame: true,
-    prompt: "The most-watched debate in history. One of you is over-prepared, one is winging it. Ninety minutes to define the race.",
+    prompt: "Clinton vs. Trump at Hofstra — the most-watched debate in history. One of you is over-prepared, one is winging it. Ninety minutes to define the race.",
     trigger: { kind: "scheduled", turn: 2 },
     choices: [
       { id: "bait", text: "Set traps — bait your opponent into an unforced error.",
@@ -318,7 +318,7 @@ export const HIST_2016: GameEvent[] = [
         resultText: "Discipline reads as classy — but you leave a free shot on the table." },
     ] },
   { id: "h16_debate3", title: "Final Debate (Las Vegas)", subject: "both", isDebate: true, oncePerGame: true,
-    prompt: "Last debate. A loaded question about accepting the result of the election hangs in the air. Your answer will be the headline.",
+    prompt: "Last debate, in Las Vegas. Trump won't say he'll accept the result — \"I'll keep you in suspense\" — and the night turns on whether you'll respect the voters. Your answer will be the headline.",
     trigger: { kind: "scheduled", turn: 6 },
     choices: [
       { id: "respect", text: "Pledge to respect the result, whatever it is.",
@@ -328,8 +328,8 @@ export const HIST_2016: GameEvent[] = [
         effects: { blocDeltas: [{ blocId: "noncollege_white", margin: 0.04, enthusiasm: 0.02 }, { blocId: "college_white", margin: -0.05 }], momentum: 2, narrative: -6 },
         resultText: "The base eats it up; the press calls it unprecedented for a week." },
     ] },
-  { id: "h16_letter", title: "The Bureau Reopens an Investigation", subject: "dem", oncePerGame: true,
-    prompt: "Eleven days out, a law-enforcement letter to Congress reopens a closed investigation of the Democratic nominee. No new facts — just a cloud, at the worst moment.",
+  { id: "h16_letter", title: "The Comey Letter", subject: "dem", oncePerGame: true,
+    prompt: "Eleven days out, FBI Director James Comey writes Congress that the bureau is reviewing newly found emails — reopening the closed investigation into Clinton's server. No new facts yet, just a cloud, at the worst possible moment.",
     trigger: { kind: "scheduled", turn: 7 },
     choices: [
       { id: "d_fight", side: "dem", text: "Fight the process — demand they release everything now.",
@@ -349,8 +349,8 @@ export const HIST_2016: GameEvent[] = [
 
 // ── 2012 · Obama v. Romney ────────────────────────────────────────────────
 export const HIST_2012: GameEvent[] = [
-  { id: "h12_47", title: "A Leaked Fundraiser Tape", subject: "rep", oncePerGame: true,
-    prompt: "A secretly recorded line from the Republican's closed-door donor event — writing off nearly half the country as freeloaders — leaks and dominates the week.",
+  { id: "h12_47", title: "The 47 Percent Tape", subject: "rep", oncePerGame: true,
+    prompt: "A secretly recorded clip from a Romney donor dinner — writing off \"47 percent\" of the country as freeloaders who'll never take responsibility — leaks and dominates the week.",
     trigger: { kind: "scheduled", turn: 0 },
     choices: [
       { id: "r_clarify", side: "rep", text: "Clarify and apologize — say it came out wrong.",
@@ -367,7 +367,7 @@ export const HIST_2012: GameEvent[] = [
         resultText: "You keep it clean — and trust the tape to do its own damage." },
     ] },
   { id: "h12_debate1", title: "First Debate (Denver)", subject: "both", isDebate: true, oncePerGame: true,
-    prompt: "The first debate. One of you risks coasting and looking flat; the other comes in hot and well-rehearsed. Tens of millions are watching for a moment.",
+    prompt: "The first debate, in Denver. Obama risks coasting and looking flat; Romney comes in hot and well-rehearsed. Tens of millions are watching for a moment.",
     trigger: { kind: "scheduled", turn: 2 },
     choices: [
       { id: "aggressive", text: "Come out aggressive and crisp — win the night outright.",
@@ -389,7 +389,7 @@ export const HIST_2012: GameEvent[] = [
         resultText: "The wonkish energy plays well with college and younger voters." },
     ] },
   { id: "h12_debate3", title: "Foreign-Policy Debate (Boca Raton)", subject: "both", isDebate: true, oncePerGame: true,
-    prompt: "The final debate, on foreign policy. A memorable one-liner can crystallize a contrast about who belongs in the present.",
+    prompt: "The final debate, in Boca Raton, on foreign policy. \"The 1980s are calling to ask for their foreign policy back\" — \"horses and bayonets\" — a one-liner can crystallize who belongs in the present.",
     trigger: { kind: "scheduled", turn: 5 },
     choices: [
       { id: "modern", text: "Land the modern-era zinger — make them look dated.",
@@ -399,8 +399,8 @@ export const HIST_2012: GameEvent[] = [
         effects: { blocDeltas: [{ blocId: "seniors", margin: 0.05 }, { blocId: "noncollege_white", margin: 0.03 }], momentum: 4, narrative: 4 },
         resultText: "Steady and serious — you reassure voters who want a safe pair of hands." },
     ] },
-  { id: "h12_storm", title: "An October Storm", subject: "both", oncePerGame: true,
-    prompt: "A monster hurricane slams the coast a week out, freezing the campaign. A rival-party governor embraces the federal response on camera.",
+  { id: "h12_storm", title: "Hurricane Sandy", subject: "both", oncePerGame: true,
+    prompt: "Superstorm Sandy slams the East Coast a week out, freezing the campaign. New Jersey's Republican governor, Chris Christie, praises Obama's federal response on camera — a bipartisan embrace days before the vote.",
     trigger: { kind: "scheduled", turn: 6 },
     choices: [
       { id: "d_govern", side: "dem", text: "Be the steady leader — bipartisanship over politics.",
@@ -454,8 +454,8 @@ export const HIST_2008: GameEvent[] = [
         effects: { blocDeltas: [{ blocId: "noncollege_white", margin: 0.04 }, { blocId: "seniors", margin: 0.02 }], salienceDeltas: { economy: 0.04 }, momentum: 3, narrative: 3 },
         resultText: "You keep the race about kitchen tables — and deny the other side the spotlight." },
     ] },
-  { id: "h08_crisis", title: "Wall Street in Free Fall", subject: "both", oncePerGame: true,
-    prompt: "A historic financial collapse freezes credit and panics the country overnight. This is the moment the whole election turns on. How do you respond?",
+  { id: "h08_crisis", title: "Lehman Falls; Wall Street in Free Fall", subject: "both", oncePerGame: true,
+    prompt: "Lehman Brothers collapses, credit freezes, and the country panics overnight as Washington scrambles for a bailout. This is the moment the whole election turns on. How do you respond?",
     trigger: { kind: "scheduled", turn: 2 },
     choices: [
       { id: "d_steady", side: "dem", text: "Project a calm, steady hand and a clear plan.",
@@ -472,7 +472,7 @@ export const HIST_2008: GameEvent[] = [
         resultText: "The 'tested' argument holds the base — but it's the other side's issue now." },
     ] },
   { id: "h08_debate1", title: "First Debate (Ole Miss)", subject: "both", isDebate: true, oncePerGame: true,
-    prompt: "A debate meant to be about foreign policy is swallowed by the economy. Command of the moment matters more than any single answer.",
+    prompt: "Obama and McCain at Ole Miss — a debate meant to be about foreign policy, swallowed by the economic crisis. Command of the moment matters more than any single answer.",
     trigger: { kind: "scheduled", turn: 3 },
     choices: [
       { id: "presidential", text: "Look presidential — calm, fluent, in command.",
@@ -483,7 +483,7 @@ export const HIST_2008: GameEvent[] = [
         resultText: "The résumé argument holds your base; the middle is unmoved." },
     ] },
   { id: "h08_townhall", title: "The Town-Hall Debate", subject: "both", isDebate: true, oncePerGame: true,
-    prompt: "A town-hall format with real voters. Warmth and connection beat zingers. One stray, dismissive moment can define you.",
+    prompt: "Obama and McCain in a town-hall format with real voters — the night of \"that one.\" Warmth and connection beat zingers, and one stray, dismissive moment can define you.",
     trigger: { kind: "scheduled", turn: 5 },
     choices: [
       { id: "connect", text: "Connect — empathy, names, eye contact.",
@@ -515,7 +515,7 @@ export const HIST_2008: GameEvent[] = [
 // ── 2004 · Bush v. Kerry ──────────────────────────────────────────────────
 export const HIST_2004: GameEvent[] = [
   { id: "h04_convention", title: "Reporting for Duty", subject: "both", oncePerGame: true,
-    prompt: "A wartime election. One ticket runs on resolve and a steady hand; the other on a decorated war record and a course correction. Set the frame.",
+    prompt: "A wartime election. Kerry opens his convention with a salute — \"reporting for duty\" — running on a decorated Vietnam record and a course correction in Iraq; Bush runs on wartime resolve and a steady hand. Set the frame.",
     trigger: { kind: "scheduled", turn: 0 },
     choices: [
       { id: "d_veteran", side: "dem", text: "Lead with the war record — strength and service.",
@@ -531,8 +531,8 @@ export const HIST_2004: GameEvent[] = [
         effects: { blocDeltas: [{ blocId: "suburban_women", margin: 0.05 }, { blocId: "hispanic", margin: 0.04 }, { blocId: "noncollege_white", margin: -0.02 }], momentum: 2, narrative: 3 },
         resultText: "The warmer pitch reaches suburban and Latino voters — and the base wants more fight." },
     ] },
-  { id: "h04_swiftboat", title: "A Veteran's Record Under Attack", subject: "dem", oncePerGame: true,
-    prompt: "A shadowy ad campaign attacks the Democratic nominee's war record — disputed, but everywhere. The story refuses to die for two weeks.",
+  { id: "h04_swiftboat", title: "The Swift Boat Attacks", subject: "dem", oncePerGame: true,
+    prompt: "A group calling itself Swift Boat Veterans for Truth runs ads attacking Kerry's Vietnam record and medals — disputed, but everywhere. The story refuses to die for two weeks.",
     trigger: { kind: "scheduled", turn: 1 },
     choices: [
       { id: "d_fightback", side: "dem", text: "Hit back hard — call the smears what they are.",
@@ -549,7 +549,7 @@ export const HIST_2004: GameEvent[] = [
         resultText: "The high road impresses the suburbs — and the base grumbles you gave up a weapon." },
     ] },
   { id: "h04_debate1", title: "First Debate (Coral Gables)", subject: "both", isDebate: true, oncePerGame: true,
-    prompt: "A foreign-policy debate with the war front and center. One of you is crisp and precise; the other risks looking impatient. Command the stage.",
+    prompt: "Bush and Kerry in Coral Gables — a foreign-policy debate with Iraq front and center. Kerry is crisp and precise; Bush risks looking impatient behind the podium. Command the stage.",
     trigger: { kind: "scheduled", turn: 2 },
     choices: [
       { id: "command", text: "Command the substance — a precise case on the war.", requires: { trait: "debatePrep", min: 70 },
@@ -576,8 +576,8 @@ export const HIST_2004: GameEvent[] = [
         effects: { blocDeltas: [{ blocId: "noncollege_white", margin: 0.04 }, { blocId: "suburban_women", margin: 0.02 }, { blocId: "college_white", margin: -0.01 }], momentum: 4, narrative: 2 },
         resultText: "The 'for it before he was against it' frame sticks like glue." },
     ] },
-  { id: "h04_memo", title: "A Network Story Implodes", subject: "rep", oncePerGame: true,
-    prompt: "A major network's exposé on the incumbent's old service record collapses over forged documents. The story is now about the media, not the record.",
+  { id: "h04_memo", title: "Rathergate — The Forged Memos", subject: "rep", oncePerGame: true,
+    prompt: "CBS's 60 Minutes and Dan Rather air an exposé on Bush's National Guard service — then the documents are exposed as likely forgeries. The story is now about the media, not the record.",
     trigger: { kind: "scheduled", turn: 5 },
     choices: [
       { id: "r_letit", side: "rep", text: "Let it implode — sit back and watch the press squirm.",
@@ -593,8 +593,8 @@ export const HIST_2004: GameEvent[] = [
         effects: { blocDeltas: [{ blocId: "youth", margin: 0.03 }, { blocId: "college_white", margin: 0.02 }, { blocId: "suburban_women", margin: -0.03 }], momentum: 0, narrative: -3 },
         resultText: "You keep poking — and end up tangled in the discredited story yourself." },
     ] },
-  { id: "h04_octobersurprise", title: "An October Surprise on Tape", subject: "both", oncePerGame: true,
-    prompt: "Days before the vote, a new tape from the world's most-wanted terrorist airs, dragging national security back to the center of the race.",
+  { id: "h04_octobersurprise", title: "The Bin Laden Tape", subject: "both", oncePerGame: true,
+    prompt: "Days before the vote, a new Osama bin Laden video airs, dragging the war on terror and national security back to the center of the race.",
     trigger: { kind: "scheduled", turn: 7 },
     choices: [
       { id: "r_strength", side: "rep", text: "Project strength — remind them who keeps you safe.",
@@ -614,8 +614,8 @@ export const HIST_2004: GameEvent[] = [
 
 // ── 2000 · Gore v. Bush ───────────────────────────────────────────────────
 export const HIST_2000: GameEvent[] = [
-  { id: "h00_convention", title: "Stepping Out of a Shadow", subject: "both", oncePerGame: true,
-    prompt: "Peace, prosperity, and a budget surplus — and a sitting VP who must decide how close to stand to a popular but scandal-touched president. Set your stance.",
+  { id: "h00_convention", title: "Stepping Out of Clinton's Shadow", subject: "both", oncePerGame: true,
+    prompt: "Peace, prosperity, and a budget surplus — but Al Gore must decide how close to stand to Bill Clinton, popular yet shadowed by impeachment, while George W. Bush runs to \"restore honor and dignity.\" Set your stance.",
     trigger: { kind: "scheduled", turn: 0 },
     choices: [
       { id: "d_ownman", side: "dem", text: "Be your own man — run a populist 'people vs. powerful' pitch.",
@@ -632,7 +632,7 @@ export const HIST_2000: GameEvent[] = [
         resultText: "The softer brand reaches suburban and Latino voters — at some cost to base intensity." },
     ] },
   { id: "h00_debate1", title: "First Debate (Boston)", subject: "both", isDebate: true, oncePerGame: true,
-    prompt: "The first debate. One of you risks looking like a know-it-all; the other risks looking out of his depth. Mannerisms will matter as much as substance.",
+    prompt: "Gore and Bush in Boston. Gore risks the audible sighs and eye-rolls that read as condescending; Bush risks looking out of his depth. Mannerisms will matter as much as substance.",
     trigger: { kind: "scheduled", turn: 2 },
     choices: [
       { id: "command", text: "Command the substance — bury them in policy.", requires: { trait: "policyKnowledge", min: 70 },
@@ -654,7 +654,7 @@ export const HIST_2000: GameEvent[] = [
         resultText: "A forward-looking pitch nudges younger and suburban voters your way." },
     ] },
   { id: "h00_townhall", title: "The Town-Hall Debate", subject: "both", isDebate: true, oncePerGame: true,
-    prompt: "A town-hall format with undecided voters in the room. Body language is everything — one awkward move can define you.",
+    prompt: "Gore and Bush in a town-hall format with undecided voters in the room. Body language is everything — when Gore strides over and looms at Bush's shoulder, one awkward move can define you.",
     trigger: { kind: "scheduled", turn: 5 },
     choices: [
       { id: "connect", text: "Work the room — empathy and eye contact.",
@@ -664,8 +664,8 @@ export const HIST_2000: GameEvent[] = [
         effects: { blocDeltas: [{ blocId: "noncollege_white", margin: 0.03 }, { blocId: "suburban_women", margin: -0.05 }], momentum: 1, narrative: -4 },
         resultText: "The move reads as aggressive and odd. The clip loops for days." },
     ] },
-  { id: "h00_ads", title: "A Subliminal-Ad Flap", subject: "rep", oncePerGame: true,
-    prompt: "A single frame of a Republican attack ad is caught flashing a loaded word for a thirtieth of a second. It's silly — and it's leading every newscast.",
+  { id: "h00_ads", title: "The 'RATS' Ad", subject: "rep", oncePerGame: true,
+    prompt: "A Bush attack ad is caught flashing the word \"RATS\" for a single frame as \"BUREAUCRATS\" scrolls past — a thirtieth of a second of alleged subliminal messaging. It's silly, and it's leading every newscast.",
     trigger: { kind: "scheduled", turn: 6 },
     choices: [
       { id: "r_laugh", side: "rep", text: "Laugh it off and pull the ad.",
@@ -681,8 +681,8 @@ export const HIST_2000: GameEvent[] = [
         effects: { blocDeltas: [{ blocId: "seniors", margin: 0.04 }, { blocId: "suburban_women", margin: 0.02 }], salienceDeltas: { healthcare: 0.04 }, momentum: 2, narrative: 2 },
         resultText: "Discipline on the issues seniors care about beats chasing a gimmick." },
     ] },
-  { id: "h00_dui", title: "An Eleventh-Hour Revelation", subject: "rep", oncePerGame: true,
-    prompt: "Days before the vote, a decades-old arrest record for the Republican nominee surfaces and dominates the final weekend. It's old news, but the timing is brutal.",
+  { id: "h00_dui", title: "Bush's DUI Surfaces", subject: "rep", oncePerGame: true,
+    prompt: "Days before the vote, a 1976 drunk-driving arrest of George W. Bush surfaces and dominates the final weekend. It's decades-old news, but the timing is brutal.",
     trigger: { kind: "scheduled", turn: 7 },
     choices: [
       { id: "r_honest", side: "rep", text: "Get ahead of it — own it, be honest, move on.",
