@@ -266,9 +266,12 @@ function applyGotv(game: GameState, action: CampaignAction) {
     return;
   }
   // Mobilization advantage → effective two-party margin shift toward you.
+  // Runs through the same saturating curve as every other persuasion action, so
+  // repeat GOTV in one state diminishes instead of stacking linearly (otherwise
+  // late-game GOTV spam on a field-built state is a flat, uncapped margin print).
   for (const bloc of state.blocs) {
     const propensity = 1 - bloc.turnoutPropensity; // more upside for low-turnout blocs
-    const raw = 0.12 * ground * (0.5 + propensity);
+    const raw = saturate(bloc, 0.12 * ground * (0.5 + propensity));
     addCause(game, bloc, state, `GOTV mobilization in ${state.abbr}`, favorSign(c) * raw);
     bloc.enthusiasm = Math.min(1.3, bloc.enthusiasm + 0.03 * ground);
   }

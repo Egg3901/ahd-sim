@@ -288,6 +288,9 @@ export interface TurnPoint {
   repMomentum: number;
   demCash: number;
   repCash: number;
+  // True two-party Dem share per vote-bearing state this week — powers the
+  // per-state polling trend sparklines in the State Detail panel.
+  demShareByState: Record<string, number>;
 }
 
 export interface GameState {

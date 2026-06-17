@@ -3,6 +3,7 @@ import { tallyContest, pollState, pollAverage, liveBlocDemShare } from "@engine/
 import { BLOCS } from "@content/blocs";
 import { shareToColor, leanLabel } from "./colors";
 import { pct } from "./format";
+import { Sparkline } from "./Sparkline";
 import { MapPin } from "lucide-react";
 
 export function StatePanel() {
@@ -37,6 +38,15 @@ export function StatePanel() {
   const rep = game.candidates.rep.shortName;
   const polls = pollState(game, st.id);
   const avg = pollAverage(game, st.id);
+  const meanMoe = polls.length ? polls.reduce((s, p) => s + p.marginOfError, 0) / polls.length : 0;
+
+  // Per-state two-party trend across the weeks played so far (player's view).
+  const playerColor = game.candidates[player].color;
+  const trend = (game.timeline ?? [])
+    .map((p) => p.demShareByState[st.id])
+    .filter((v): v is number => v !== undefined)
+    .map((v) => (player === "dem" ? v : 1 - v));
+  const trendDelta = trend.length >= 2 ? (trend[trend.length - 1] - trend[0]) * 100 : null;
 
   // "Travel here" schedules (or cancels) a campaign rally in this state, dropped
   // on the next open day of the 7-day plan. Costs one action from the pool.
@@ -76,9 +86,21 @@ export function StatePanel() {
       )}
       <div className="kv"><span className="k">Lean (true model)</span><span style={{ color: shareToColor(tally.demShare) }}>{leanLabel(tally.demShare)}</span></div>
       <div className="kv"><span className="k">{dem} / {rep}</span><span>{pct(tally.demShare)} / {pct(1 - tally.demShare)}</span></div>
-      {avg !== null && <div className="kv"><span className="k">Poll average</span><span>{dem} {pct(avg)}</span></div>}
+      {avg !== null && <div className="kv"><span className="k">Poll average</span><span>{dem} {pct(avg)} <span className="moe">±{meanMoe.toFixed(1)}</span></span></div>}
       <div className="kv"><span className="k">Your ground game</span><span>{pct(st.groundGame[player], 0)}</span></div>
       <div className="kv"><span className="k">Momentum (D−R)</span><span>{st.momentum >= 0 ? "+" : ""}{st.momentum.toFixed(0)}</span></div>
+
+      {trend.length >= 2 && (
+        <div className="trend-row">
+          <div className="trend-head">
+            <span className="k">Your share — weekly trend</span>
+            <span className={`trend-delta ${trendDelta! >= 0 ? "up" : "down"}`}>
+              {trendDelta! >= 0 ? "▲" : "▼"} {Math.abs(trendDelta!).toFixed(1)} pts since Wk 1
+            </span>
+          </div>
+          <Sparkline values={trend} color={playerColor} width={240} height={40} />
+        </div>
+      )}
 
       <h3 style={{ marginTop: 14 }}>Demographic Blocs</h3>
       {st.blocs.map((b) => {

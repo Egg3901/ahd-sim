@@ -119,6 +119,41 @@ it("ad spend has diminishing returns", () => {
   expect(big).toBeLessThan(small * 2.4); // …but far less than linearly (3× spend ≪ 3× effect)
 });
 
+// ── GOTV diminishing returns ───────────────────────────────────────────────
+it("repeat GOTV in one state diminishes (it doesn't stack linearly)", () => {
+  const g = createGame({ seed: "gotv" });
+  g.states.find((s) => s.id === "GA")!.groundGame.dem = 1.0;
+  g.resources.dem.actions = 99;
+  g.resources.dem.cash = 999_000_000;
+  const rng = createRng("gotv");
+  const gains: number[] = [];
+  let prev = demShareOf(g, "GA");
+  for (let k = 0; k < 4; k++) {
+    applyAction(g, { type: "gotv", candidate: "dem", stateId: "GA" }, rng);
+    const now = demShareOf(g, "GA");
+    gains.push(now - prev);
+    prev = now;
+  }
+  // Each successive GOTV moves the margin less than the one before it.
+  for (let k = 1; k < gains.length; k++) {
+    expect(gains[k], `GOTV #${k + 1} < #${k}`).toBeLessThan(gains[k - 1]);
+  }
+});
+
+// ── AI keeps its powder dry ─────────────────────────────────────────────────
+it("the AI doesn't blow its war chest early and go broke by October", () => {
+  let g = beginGame(createGame({ seed: "ai-econ", playerCandidate: "dem" }));
+  const ai = "rep" as const;
+  let lateCash = Infinity;
+  let guard = 0;
+  while (g.phase !== "result" && guard++ < 12) {
+    g = advanceTurn(g, [], "ai-econ", { difficulty: DIFFICULTY.hard, autoResolvePlayerEvents: true });
+    if (g.turn >= g.totalTurns - 2) lateCash = Math.min(lateCash, g.resources[ai].cash);
+  }
+  // It is still funding ad pressure in the final stretch, not running on fumes.
+  expect(lateCash).toBeGreaterThan(5_000_000);
+});
+
 // ── Weekly action pool is a hard cap ───────────────────────────────────────
 it("actions beyond the weekly pool don't apply", () => {
   const g = createGame({ seed: "pool" });

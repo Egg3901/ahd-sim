@@ -11,6 +11,8 @@ import { OPPONENT_OF, CANDIDATES } from "@content/candidates";
 // game start (the opening baseline) and once at the end of every advanced week.
 function recordTimelinePoint(game: GameState) {
   const proj = projectElection(game);
+  const demShareByState: Record<string, number> = {};
+  for (const c of proj.contests) demShareByState[c.stateId] = c.demShare;
   (game.timeline ??= []).push({
     turn: game.turn,
     demPoll: nationalPoll(game),
@@ -21,6 +23,7 @@ function recordTimelinePoint(game: GameState) {
     repMomentum: game.resources.rep.nationalMomentum,
     demCash: game.resources.dem.cash,
     repCash: game.resources.rep.cash,
+    demShareByState,
   });
 }
 
