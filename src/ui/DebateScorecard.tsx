@@ -16,12 +16,27 @@ export function DebateScorecard() {
   const order: CandidateId[] = debate.winner === "rep" ? ["rep", "dem"] : ["dem", "rep"];
   const playerWon = debate.winner === player;
 
+  const opp = cands[player === "dem" ? "rep" : "dem"].shortName;
   const banner =
     debate.winner === "tie"
       ? "Too close to call — a draw."
       : debate.meltdown
         ? `Debate meltdown — ${cands[debate.winner].shortName} routs ${cands[debate.winner === "dem" ? "rep" : "dem"].shortName}`
         : `${cands[debate.winner].shortName} wins the debate`;
+
+  // Outcome-aware verdict from the player's seat — so the narration never reads
+  // like a win when you lost. (The choice's own flavor text is its intended
+  // tack, not the result of the head-to-head.)
+  const verdict =
+    debate.winner === "tie"
+      ? "A wash — neither of you broke through. The race holds where it was."
+      : playerWon
+        ? debate.meltdown
+          ? `A commanding night — you routed ${opp}, and the spin room knows it. Momentum surges your way.`
+          : `You won the night — ${opp} came out second-best.`
+        : debate.meltdown
+          ? `A meltdown — ${opp} dominated and the coverage will sting. Momentum swings hard against you.`
+          : `${opp} edged you tonight. Not a disaster, but not the night you wanted.`;
 
   return (
     <div className="overlay">
@@ -60,7 +75,7 @@ export function DebateScorecard() {
             </div>
           )}
 
-          <p className="resulttext">{debate.resultText[player]}</p>
+          <p className="resulttext">{verdict}</p>
 
           <button className="primary" style={{ width: "100%" }} onClick={dismiss}>
             Continue →

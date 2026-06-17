@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useGameStore } from "@store/gameStore";
-import { nationalPoll, type Projection } from "@engine/index";
+import { nationalPoll, turnsUntilDebate, debateReadiness, type Projection } from "@engine/index";
 import { getScenario } from "@content/scenarios";
 import { leanLabel } from "./colors";
 import { pct } from "./format";
@@ -19,6 +19,17 @@ function buildHeadlines(game: GameState, live: Projection | null): string[] {
   if (game.turn === 0) {
     out.push(`${dem.name} vs ${rep.name} — the ${scen.year} campaign begins.`);
     out.push(scen.tagline);
+  }
+
+  // Debate-prep nudge: when a debate is within two weeks, lead with it so the
+  // player knows prep (Debate Prep + Policy Prep) pays off before showtime.
+  const toDebate = turnsUntilDebate(game);
+  if (toDebate !== null && toDebate >= 1 && toDebate <= 2) {
+    const readyish = debateReadiness(game, game.playerCandidate) >= 56;
+    const when = toDebate === 1 ? "NEXT WEEK" : "IN 2 WEEKS";
+    out.push(
+      `⚑ DEBATE ${when} — ${readyish ? "you look ready; bank more prep to dominate." : "prep now (Debate Prep + Policy Prep) to lift your score."}`,
+    );
   }
 
   out.push(`NATIONAL POLL — ${dem.shortName} ${pct(natl)} · ${rep.shortName} ${pct(1 - natl)}`);

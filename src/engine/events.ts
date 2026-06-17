@@ -16,6 +16,23 @@ function favorSign(candidate: CandidateId): number {
   return candidate === "dem" ? 1 : -1;
 }
 
+// Weeks until the next scheduled debate (0 = this week, null = none left). Lets
+// the UI nudge the player to prep before showtime.
+export function turnsUntilDebate(game: GameState): number | null {
+  const historical = (game.eventMode ?? "historical") === "historical";
+  const deck = historical
+    ? HISTORICAL_EVENTS[game.scenarioId ?? "2020"] ?? HISTORICAL_EVENTS["2020"]
+    : GENERIC_DEBATES;
+  let best: number | null = null;
+  for (const e of deck) {
+    if (e.isDebate && e.trigger.kind === "scheduled" && e.trigger.turn >= game.turn) {
+      const dt = e.trigger.turn - game.turn;
+      if (best === null || dt < best) best = dt;
+    }
+  }
+  return best;
+}
+
 // Debate readiness, 0..100: innate debating talent plus the two prep tracks
 // (debate prep = stagecraft, policy command = substance). 50 is "average" and
 // leaves a debate playing exactly as authored.

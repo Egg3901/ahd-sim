@@ -22,6 +22,7 @@ export {
   aiChooseEvent,
   resolveAiEvents,
   debateReadiness,
+  turnsUntilDebate,
   resolveDebate,
 } from "./events";
 export { planAiActions, DIFFICULTY, type AiConfig } from "./ai";

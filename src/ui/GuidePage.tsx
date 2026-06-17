@@ -56,7 +56,7 @@ const ACTION_GUIDE = [
     cost: "$1M",
     target: "Any state with field offices",
     effect:
-      "Turnout push. Effective only where ground game exists. Bigger impact on low-turnout-propensity blocs. Wastes money if no field offices.",
+      "Turnout push. Effective only where ground game exists. Bigger impact on low-turnout-propensity blocs. Wastes money if no field offices. Diminishing returns — repeat GOTV in one state fades, so spread it across your tight states.",
     when: "Late game (weeks 5–9). Use where ground game is built and margin is tight.",
   },
   {
@@ -64,7 +64,7 @@ const ACTION_GUIDE = [
     cost: "$2M",
     target: "National",
     effect:
-      "55% chance to land a scandal on opponent (hits college whites and suburban women). 45% chance to backfire as 'desperate,' damaging media narrative.",
+      "55% chance to land a national scandal on the opponent (hits college whites and suburban women everywhere). 45% chance to backfire as 'desperate,' damaging media narrative. Diminishing returns, and safe states resist — it nudges the map, it doesn't flip the loyal.",
     when: "High-risk, high-reward. Use when behind and narrative is already poor. Avoid when ahead.",
   },
   {
@@ -72,8 +72,16 @@ const ACTION_GUIDE = [
     cost: "1 action",
     target: "None (buffs next debate)",
     effect:
-      "Temporarily raises debating trait (+4 per day). Decays after debate event. Improves debate performance odds.",
-    when: "Use 2–3 days before scheduled debate events. Check calendar for debate weeks.",
+      "Raises debate readiness (+8 to Debate Prep). Readiness = debating skill + debate prep + policy knowledge; it amplifies a strong night and blunts a bad one. Decays gently (~35%/week), so prep in the week or two before a debate.",
+    when: "Stack with Policy Prep ahead of a scheduled debate. A higher score wins the head-to-head; a blowout is a meltdown that swings momentum hard.",
+  },
+  {
+    name: "Policy Prep",
+    cost: "1 action",
+    target: "None (buffs next debate)",
+    effect:
+      "Raises policy command (+8 to Policy Knowledge) — the substance half of debate readiness. Also unlocks wonk-gated debate answers that require high policy knowledge. Decays gently, like Debate Prep.",
+    when: "Pair with Debate Prep before debate weeks. Worth it for candidates with weak starting policy knowledge.",
   },
   {
     name: "Issue Pivot",
@@ -145,6 +153,15 @@ const BLOC_GUIDE = [
 ];
 
 const CHANGELOG = [
+  { version: "0.2.0", date: "2026-06", changes: [
+    "Debates are now scored head-to-head: both tickets get a 0–100 showing, a winner is called, and the margin swings national momentum. A blowout is a 'meltdown' that hits momentum hard.",
+    "Real debate prep: Debate Prep raises readiness (stagecraft), new Policy Prep raises policy command (substance). Both lift your debate score and decay gently.",
+    "Smarter AI: paces its war chest, preps for debates, drives its best issue, goes negative when it's behind, and reaches further down the map when losing.",
+    "Balance: GOTV and opposition research now have diminishing returns (no more late-game stacking).",
+    "Campaign Trends screen — national polling, EV, and momentum by week, plus per-state polling sparklines.",
+    "Historical events now name the real beats (RBG, the Comey letter, the 47% tape, Springfield, the bin Laden tape, and more).",
+    "Setup redesigned as a guided wizard with a randomized seed.",
+  ] },
   { version: "0.1.0", date: "2024-06", changes: ["Initial release. 9 action types, 8 voter blocs, 2020 map.", "Mobile responsive layout.", "Guide page with actions, blocs, turns, scoring docs.", "Candidate profiles with stat bars and running mate tabs.", "Renamed traits: energy, debate prep, intelligence, policy knowledge, debating skill, fundraising prowess."] },
 ];
 
