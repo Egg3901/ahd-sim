@@ -443,6 +443,27 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
 .scenario-year { font-size: 17px; font-weight: 800; font-family: var(--font-mono); }
 .scenario-match { font-size: 10px; color: var(--muted); white-space: nowrap; }
 
+/* ── Country picker (battleground landing) ──────────────────────────── */
+.country-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
+.country-card { position: relative; overflow: hidden; display: flex; flex-direction: column;
+  align-items: flex-start; gap: 3px; padding: 20px 18px; text-align: left;
+  border-radius: var(--radius-lg); border: 1px solid var(--border); background: var(--panel-2);
+  transition: transform var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease); }
+.country-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; opacity: 0.9; }
+.country-card.us::before { background: linear-gradient(90deg, #3b6fd4, #b3c7f0); }
+.country-card.uk::before { background: linear-gradient(90deg, #cf2b3a, #e8a23a); }
+.country-card:hover { transform: translateY(-3px); border-color: var(--border-hover);
+  background: var(--surface-hover); box-shadow: var(--glow-gold); }
+.country-flag { font-size: 34px; line-height: 1; margin-bottom: 4px; }
+.country-name { font-size: 19px; font-weight: 800; letter-spacing: 0.3px; }
+.country-sys { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--gold); }
+.country-goal { font-size: 13px; color: var(--ink-300); margin-top: 8px; }
+.country-goal strong { color: var(--text); }
+.country-meta { font-size: 11px; line-height: 1.4; color: var(--muted); margin-top: 6px; }
+@media (max-width: 560px) { .country-grid { grid-template-columns: 1fr; } }
+
 /* ── Running-mate picker (setup) ────────────────────────────────────── */
 .vp-roster { display: flex; flex-wrap: wrap; gap: 6px; }
 .vp-card { display: inline-flex; align-items: center; gap: 5px; padding: 7px 11px;

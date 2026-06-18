@@ -2,6 +2,16 @@
 // a Tauri shell, or a headless batch runner. Zero React/DOM here.
 
 export * from "./types";
+export {
+  partyById,
+  type PartyId,
+  type PartyScope,
+  type PartyDef,
+  type AllocationStrategyId,
+  type AllocationStrategy,
+  type MajorityRule,
+  type PoliticalSystem,
+} from "./system";
 export { createRng, hashSeed, type Rng } from "./rng";
 export { createGame, buildStates, sigmoid, type NewGameOptions } from "./setup";
 export {

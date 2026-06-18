@@ -2,7 +2,15 @@
 // CAMPAIGN — core data model (Section 4 of the design).
 // These types are the single shared contract between ENGINE, CONTENT and UI.
 // The engine is pure: no React, no DOM, no browser globals appear here.
+//
+// MULTIPARTY NOTE: this game began as a two-party (dem/rep) U.S. simulator and
+// that path is kept byte-identical (it's the N=2 special case). The UK
+// expansion layers an N-party representation *alongside* it — see the optional
+// `appeal` / `seats` / `seatResults` fields below, populated only under a
+// multiparty PoliticalSystem. See engine/system.ts and engine/multiparty.ts.
 // ─────────────────────────────────────────────────────────────────────────
+
+import type { PartyId } from "./system";
 
 export type IssueId =
   | "economy"
@@ -111,12 +119,21 @@ export interface StateBloc {
   // two-party result. Campaign effects add to this margin during play.
   baselineMargin: number;
   // Mutable per-turn state:
-  // Two-party support for each candidate, 0..1, sums to 1.
+  // Two-party support for each candidate, 0..1, sums to 1. (Multiparty systems
+  // store an N-party share here keyed by PartyId — Record<CandidateId> is a
+  // Record<string>, so it widens cleanly.)
   support: Record<CandidateId, number>;
   // Accumulated campaign margin shift (Biden − Trump), layered onto baseline.
   campaignMargin: number;
   // Enthusiasm multiplier on turnout, around 1.0.
   enthusiasm: number;
+
+  // ── Multiparty (UK) representation — present only under an N-party system ──
+  // Baseline appeal per party in logit space (the N-party analog of
+  // baselineMargin). softmax over (appeal + campaignAppeal) gives vote shares.
+  appeal?: Record<PartyId, number>;
+  // Accumulated campaign appeal shift per party (the analog of campaignMargin).
+  campaignAppeal?: Record<PartyId, number>;
 }
 
 export type Region =
@@ -148,6 +165,21 @@ export interface StateContest {
   // ME-AL / NE-AL at-large units award their EVs to whoever wins the combined
   // vote of these district contests. Such aggregate units carry no blocs.
   aggregateOf?: string[];
+
+  // ── Multiparty (UK) seat allocation — present only under an N-party system ──
+  // This contest is a region with a fixed pool of FPTP seats. Seats are awarded
+  // by a swing-elasticity curve on a real baseline (engine/multiparty.ts):
+  // neutral play reproduces `baselineSeats` exactly, and as a party's vote share
+  // swings off `baselineShare` its seats move, amplified by `seatElasticity`
+  // (FPTP's disproportionality), then largest-remainder rounded to sum to `seats`.
+  seats?: number;
+  // The region's real seat split for this election — the neutral baseline.
+  baselineSeats?: Record<PartyId, number>;
+  // The region's real vote share for this election — the swing reference point.
+  baselineShare?: Record<PartyId, number>;
+  // How hard seats swing per point of vote-share change (FPTP amplification,
+  // ~2.5). Higher = more disproportional. Omitted ⇒ system default.
+  seatElasticity?: number;
 }
 
 // ── Resources (player + AI each hold one) ────────────────────────────────
@@ -360,6 +392,26 @@ export interface StateResult {
   margin: number; // winner's two-party margin in points
 }
 
+// ── Multiparty (UK) result shapes ────────────────────────────────────────
+// One region's seat split under the regional seats curve.
+export interface SeatResult {
+  contestId: string;
+  name: string;
+  totalSeats: number;
+  seatsByParty: Record<PartyId, number>;
+  voteShare: Record<PartyId, number>;
+  winner: PartyId; // largest party in the region
+}
+
+// Who can form a government after the seats fall, the UK analog of the U.S.
+// 269–269 contingent-election ending.
+export type Government =
+  | { kind: "majority"; party: PartyId; seats: number }
+  | { kind: "minority"; party: PartyId; seats: number }
+  | { kind: "coalition"; parties: PartyId[]; seats: number }
+  | { kind: "confidence_supply"; lead: PartyId; partner: PartyId; seats: number }
+  | { kind: "hung"; largest: PartyId };
+
 export interface GameResult {
   electoralVotes: Record<CandidateId, number>;
   winner: CandidateId | "tie";
@@ -368,4 +420,18 @@ export interface GameResult {
   stateResults: StateResult[];
   // Post-mortem: biggest swings the player caused.
   postMortem: CauseEntry[];
+
+  // ── Multiparty (UK) — present only under an N-party system ──
+  // Total seats won per party (the analog of electoralVotes).
+  seats?: Record<PartyId, number>;
+  // National vote share per party.
+  voteShare?: Record<PartyId, number>;
+  // Per-region seat splits.
+  seatResults?: SeatResult[];
+  // Largest party by seats.
+  largestParty?: PartyId;
+  // True when no party reached the (effective) majority threshold.
+  hung?: boolean;
+  // The government-formation call.
+  government?: Government;
 }

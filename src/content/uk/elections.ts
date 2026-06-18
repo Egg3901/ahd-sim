@@ -1,0 +1,320 @@
+// Per-election regional results: each region's real vote share (`v`) and seat
+// count (`s`) per party. These are the calibration anchors — the UK analog of
+// the U.S. per-state 2020 priors. Neutral play reproduces the seat split by
+// construction (the seats curve swings off this baseline). Seats per region sum
+// to the region's pool; the national totals land on the real result.
+//
+// Vote shares need not sum to exactly 1 — the setup builder normalizes them over
+// the parties present in each region.
+
+export interface RegionResult {
+  v: Record<string, number>; // vote share per party
+  s: Record<string, number>; // seats per party (sums to the region's pool)
+}
+
+export interface UkElectionData {
+  id: string;
+  year: number;
+  label: string;
+  tagline: string;
+  // Issue salience for the year (UkIssueId → 0..1).
+  salience: Record<string, number>;
+  regions: Record<string, RegionResult>;
+}
+
+// Seat helper: the lead party absorbs whatever the region's pool has left after
+// the minor parties, so every region's seats always sum to its (2024-boundary)
+// pool exactly. Historic elections are mapped onto the modern region pools, so
+// national totals are approximate — the calibration target is the right winner,
+// the right government type, and 650 seats overall (per-cycle boundary sets are
+// future work, noted in docs/UK_EXPANSION.md).
+function fill(pool: number, lead: string, others: Record<string, number>): Record<string, number> {
+  const used = Object.values(others).reduce((s, x) => s + x, 0);
+  return { ...others, [lead]: Math.max(0, pool - used) };
+}
+
+// Region pools (2024 boundaries) — kept stable across elections for simplicity.
+const POOL: Record<string, number> = {
+  NE: 27, NW: 73, YH: 54, EM: 47, WM: 57, EE: 61, LON: 75, SE: 91, SW: 58, SCO: 57, WAL: 32, NI: 18,
+};
+
+// ── 2024: Starmer's landslide, Reform's surge, the SNP collapse ────────────
+const RESULT_2024: Record<string, RegionResult> = {
+  NE:  { v: { lab: 0.41, con: 0.18, ref: 0.21, ld: 0.07, grn: 0.07, oth: 0.06 }, s: { lab: 25, con: 1, ref: 1 } },
+  NW:  { v: { lab: 0.40, con: 0.21, ref: 0.15, ld: 0.10, grn: 0.07, oth: 0.07 }, s: { lab: 60, con: 9, ld: 2, ref: 1, oth: 1 } },
+  YH:  { v: { lab: 0.38, con: 0.22, ref: 0.17, ld: 0.09, grn: 0.07, oth: 0.07 }, s: { lab: 43, con: 8, ld: 2, ref: 1 } },
+  EM:  { v: { lab: 0.34, con: 0.27, ref: 0.16, ld: 0.10, grn: 0.06, oth: 0.07 }, s: { lab: 34, con: 11, ld: 1, oth: 1 } },
+  WM:  { v: { lab: 0.37, con: 0.25, ref: 0.15, ld: 0.10, grn: 0.06, oth: 0.07 }, s: { lab: 42, con: 11, ld: 1, ref: 1, grn: 1, oth: 1 } },
+  EE:  { v: { lab: 0.29, con: 0.28, ref: 0.15, ld: 0.16, grn: 0.07, oth: 0.05 }, s: { lab: 27, con: 24, ld: 7, ref: 1, grn: 1, oth: 1 } },
+  LON: { v: { lab: 0.44, con: 0.21, ref: 0.08, ld: 0.13, grn: 0.11, oth: 0.03 }, s: { lab: 59, con: 9, ld: 6, oth: 1 } },
+  SE:  { v: { lab: 0.29, con: 0.28, ref: 0.13, ld: 0.21, grn: 0.08, oth: 0.01 }, s: { lab: 33, con: 34, ld: 23, grn: 1 } },
+  SW:  { v: { lab: 0.26, con: 0.27, ref: 0.14, ld: 0.25, grn: 0.07, oth: 0.01 }, s: { lab: 20, con: 13, ld: 24, grn: 1 } },
+  SCO: { v: { lab: 0.36, snp: 0.30, con: 0.13, ld: 0.10, ref: 0.07, grn: 0.04 }, s: { lab: 37, snp: 9, con: 5, ld: 6 } },
+  WAL: { v: { lab: 0.37, con: 0.18, pc: 0.15, ref: 0.17, ld: 0.07, grn: 0.06 }, s: { lab: 27, pc: 4, ld: 1 } },
+  NI:  { v: { sf: 0.27, dup: 0.22, apni: 0.15, uup: 0.12, sdlp: 0.11, oth: 0.13 }, s: { sf: 7, dup: 5, apni: 1, uup: 1, sdlp: 2, oth: 2 } },
+};
+
+// ── 2019: Johnson's majority, the Red Wall falls, "Get Brexit Done" ────────
+const RESULT_2019: Record<string, RegionResult> = {
+  NE:  { v: { lab: 0.42, con: 0.38, ld: 0.07, grn: 0.04, oth: 0.09 }, s: fill(POOL.NE, "lab", { con: 10, oth: 1 }) },
+  NW:  { v: { lab: 0.46, con: 0.38, ld: 0.08, grn: 0.03 }, s: fill(POOL.NW, "lab", { con: 31, ld: 1 }) },
+  YH:  { v: { lab: 0.39, con: 0.43, ld: 0.08, grn: 0.04 }, s: fill(POOL.YH, "lab", { con: 26 }) },
+  EM:  { v: { con: 0.55, lab: 0.32, ld: 0.08, grn: 0.03 }, s: fill(POOL.EM, "con", { lab: 9 }) },
+  WM:  { v: { con: 0.53, lab: 0.34, ld: 0.08, grn: 0.03 }, s: fill(POOL.WM, "con", { lab: 13 }) },
+  EE:  { v: { con: 0.57, lab: 0.24, ld: 0.13, grn: 0.04 }, s: fill(POOL.EE, "con", { lab: 7, ld: 1 }) },
+  LON: { v: { lab: 0.48, con: 0.32, ld: 0.15, grn: 0.04 }, s: fill(POOL.LON, "lab", { con: 21, ld: 3, oth: 2 }) },
+  SE:  { v: { con: 0.54, lab: 0.22, ld: 0.18, grn: 0.05 }, s: fill(POOL.SE, "con", { lab: 8, ld: 4, grn: 1 }) },
+  SW:  { v: { con: 0.53, lab: 0.21, ld: 0.20, grn: 0.05 }, s: fill(POOL.SW, "con", { lab: 7, ld: 1 }) },
+  SCO: { v: { snp: 0.45, con: 0.25, lab: 0.19, ld: 0.10 }, s: fill(POOL.SCO, "snp", { con: 6, ld: 4, lab: 1 }) },
+  WAL: { v: { lab: 0.41, con: 0.36, pc: 0.10, ld: 0.06 }, s: fill(POOL.WAL, "lab", { con: 11, pc: 3 }) },
+  NI:  { v: { dup: 0.31, sf: 0.23, apni: 0.17, sdlp: 0.12, uup: 0.12, oth: 0.05 }, s: fill(POOL.NI, "dup", { sf: 7, sdlp: 2, apni: 1, oth: 1 }) },
+};
+
+// ── 2017: May's gamble, a hung parliament, the DUP confidence-and-supply ───
+const RESULT_2017: Record<string, RegionResult> = {
+  NE:  { v: { lab: 0.55, con: 0.34, ld: 0.05 }, s: fill(POOL.NE, "lab", { con: 9 }) },
+  NW:  { v: { lab: 0.55, con: 0.36, ld: 0.05 }, s: fill(POOL.NW, "lab", { con: 24 }) },
+  YH:  { v: { lab: 0.49, con: 0.41, ld: 0.05 }, s: fill(POOL.YH, "lab", { con: 21 }) },
+  EM:  { v: { con: 0.51, lab: 0.40, ld: 0.05 }, s: fill(POOL.EM, "con", { lab: 18 }) },
+  WM:  { v: { con: 0.49, lab: 0.42, ld: 0.04 }, s: fill(POOL.WM, "con", { lab: 24 }) },
+  EE:  { v: { con: 0.55, lab: 0.33, ld: 0.08 }, s: fill(POOL.EE, "con", { lab: 16, ld: 1 }) },
+  LON: { v: { lab: 0.55, con: 0.33, ld: 0.09 }, s: fill(POOL.LON, "lab", { con: 21, ld: 3 }) },
+  SE:  { v: { con: 0.54, lab: 0.29, ld: 0.11 }, s: fill(POOL.SE, "con", { lab: 18, ld: 3 }) },
+  SW:  { v: { con: 0.51, lab: 0.29, ld: 0.15 }, s: fill(POOL.SW, "con", { lab: 13, ld: 1 }) },
+  SCO: { v: { snp: 0.37, con: 0.29, lab: 0.27, ld: 0.07 }, s: fill(POOL.SCO, "snp", { con: 13, lab: 7, ld: 4 }) },
+  WAL: { v: { lab: 0.49, con: 0.34, pc: 0.10, ld: 0.05 }, s: fill(POOL.WAL, "lab", { con: 11, pc: 3 }) },
+  NI:  { v: { dup: 0.36, sf: 0.30, uup: 0.10, sdlp: 0.12, apni: 0.08, oth: 0.04 }, s: fill(POOL.NI, "dup", { sf: 7, oth: 1 }) },
+};
+
+// ── 2010: the expenses-scandal election, a hung parliament, Con–LD coalition ─
+const RESULT_2010: Record<string, RegionResult> = {
+  NE:  { v: { lab: 0.44, con: 0.24, ld: 0.24 }, s: fill(POOL.NE, "lab", { con: 2, ld: 3 }) },
+  NW:  { v: { lab: 0.40, con: 0.32, ld: 0.22 }, s: fill(POOL.NW, "lab", { con: 22, ld: 6 }) },
+  YH:  { v: { lab: 0.35, con: 0.33, ld: 0.23 }, s: fill(POOL.YH, "lab", { con: 19, ld: 3 }) },
+  EM:  { v: { con: 0.41, lab: 0.30, ld: 0.21 }, s: fill(POOL.EM, "con", { lab: 15, ld: 1 }) },
+  WM:  { v: { con: 0.40, lab: 0.31, ld: 0.21 }, s: fill(POOL.WM, "con", { lab: 24, ld: 2 }) },
+  EE:  { v: { con: 0.47, lab: 0.20, ld: 0.24 }, s: fill(POOL.EE, "con", { lab: 6, ld: 4 }) },
+  LON: { v: { lab: 0.37, con: 0.35, ld: 0.22 }, s: fill(POOL.LON, "lab", { con: 28, ld: 7 }) },
+  SE:  { v: { con: 0.50, lab: 0.16, ld: 0.26 }, s: fill(POOL.SE, "con", { lab: 8, ld: 12 }) },
+  SW:  { v: { con: 0.43, lab: 0.15, ld: 0.35 }, s: fill(POOL.SW, "con", { lab: 4, ld: 15 }) },
+  SCO: { v: { lab: 0.42, snp: 0.20, ld: 0.19, con: 0.17 }, s: fill(POOL.SCO, "lab", { snp: 6, ld: 11, con: 1 }) },
+  WAL: { v: { lab: 0.36, con: 0.26, ld: 0.20, pc: 0.11 }, s: fill(POOL.WAL, "lab", { con: 6, ld: 3, pc: 3 }) },
+  NI:  { v: { dup: 0.28, sf: 0.25, uup: 0.15, sdlp: 0.16, apni: 0.06, oth: 0.10 }, s: fill(POOL.NI, "dup", { sf: 5, sdlp: 3, apni: 1, oth: 1 }) },
+};
+
+// ── 1997: New Labour's landslide, the Tories wiped from Scotland and Wales ──
+const RESULT_1997: Record<string, RegionResult> = {
+  NE:  { v: { lab: 0.61, con: 0.20, ld: 0.14 }, s: fill(POOL.NE, "lab", { con: 1, ld: 1 }) },
+  NW:  { v: { lab: 0.54, con: 0.27, ld: 0.15 }, s: fill(POOL.NW, "lab", { con: 7, ld: 2 }) },
+  YH:  { v: { lab: 0.52, con: 0.28, ld: 0.16 }, s: fill(POOL.YH, "lab", { con: 7, ld: 2 }) },
+  EM:  { v: { lab: 0.48, con: 0.35, ld: 0.14 }, s: fill(POOL.EM, "lab", { con: 12, ld: 1 }) },
+  WM:  { v: { lab: 0.48, con: 0.34, ld: 0.14 }, s: fill(POOL.WM, "lab", { con: 14, ld: 1 }) },
+  EE:  { v: { lab: 0.39, con: 0.39, ld: 0.18 }, s: fill(POOL.EE, "lab", { con: 30, ld: 5 }) },
+  LON: { v: { lab: 0.49, con: 0.31, ld: 0.15 }, s: fill(POOL.LON, "lab", { con: 11, ld: 5 }) },
+  SE:  { v: { con: 0.41, lab: 0.32, ld: 0.21 }, s: fill(POOL.SE, "con", { lab: 35, ld: 14 }) },
+  SW:  { v: { lab: 0.33, con: 0.36, ld: 0.27 }, s: fill(POOL.SW, "lab", { con: 18, ld: 15 }) },
+  SCO: { v: { lab: 0.46, snp: 0.22, con: 0.18, ld: 0.13 }, s: fill(POOL.SCO, "lab", { snp: 6, ld: 9 }) },
+  WAL: { v: { lab: 0.55, con: 0.20, pc: 0.10, ld: 0.12 }, s: fill(POOL.WAL, "lab", { pc: 4, ld: 2 }) },
+  NI:  { v: { uup: 0.33, dup: 0.14, sdlp: 0.24, sf: 0.16, apni: 0.08, oth: 0.05 }, s: fill(POOL.NI, "uup", { dup: 2, sdlp: 3, sf: 2, oth: 2 }) },
+};
+
+// ── 2015: Cameron's surprise majority, the SNP wave, the Lib Dem collapse ──
+const RESULT_2015: Record<string, RegionResult> = {
+  NE:  { v: { lab: 0.47, con: 0.25, ref: 0.17, ld: 0.06 }, s: fill(POOL.NE, "lab", { con: 4 }) },
+  NW:  { v: { lab: 0.45, con: 0.32, ref: 0.14, ld: 0.06 }, s: fill(POOL.NW, "lab", { con: 22, ld: 1 }) },
+  YH:  { v: { lab: 0.39, con: 0.33, ref: 0.16, ld: 0.07 }, s: fill(POOL.YH, "lab", { con: 24 }) },
+  EM:  { v: { con: 0.43, lab: 0.32, ref: 0.16, ld: 0.05 }, s: fill(POOL.EM, "con", { lab: 14 }) },
+  WM:  { v: { con: 0.42, lab: 0.33, ref: 0.16, ld: 0.05 }, s: fill(POOL.WM, "con", { lab: 24 }) },
+  EE:  { v: { con: 0.49, lab: 0.22, ref: 0.16, ld: 0.08 }, s: fill(POOL.EE, "con", { lab: 5, ld: 1 }) },
+  LON: { v: { lab: 0.44, con: 0.35, ref: 0.08, ld: 0.08 }, s: fill(POOL.LON, "lab", { con: 27, ld: 1 }) },
+  SE:  { v: { con: 0.51, lab: 0.18, ref: 0.15, ld: 0.10 }, s: fill(POOL.SE, "con", { lab: 8, ld: 2 }) },
+  SW:  { v: { con: 0.47, lab: 0.18, ref: 0.14, ld: 0.15 }, s: fill(POOL.SW, "con", { lab: 4, ld: 2 }) },
+  SCO: { v: { snp: 0.50, lab: 0.24, con: 0.15, ld: 0.08 }, s: fill(POOL.SCO, "snp", { lab: 1, con: 1, ld: 1 }) },
+  WAL: { v: { lab: 0.37, con: 0.27, ref: 0.14, pc: 0.12, ld: 0.06 }, s: fill(POOL.WAL, "lab", { con: 8, pc: 3, ld: 1 }) },
+  NI:  { v: { dup: 0.26, sf: 0.24, uup: 0.16, sdlp: 0.14, apni: 0.09, oth: 0.11 }, s: fill(POOL.NI, "dup", { sf: 4, uup: 2, sdlp: 3, oth: 1 }) },
+};
+
+// ── 1979: the Winter of Discontent, Thatcher's first win ──────────────────
+const RESULT_1979: Record<string, RegionResult> = {
+  NE:  { v: { lab: 0.50, con: 0.34, ld: 0.14 }, s: fill(POOL.NE, "lab", { con: 9, ld: 1 }) },
+  NW:  { v: { lab: 0.45, con: 0.41, ld: 0.13 }, s: fill(POOL.NW, "lab", { con: 33, ld: 2 }) },
+  YH:  { v: { lab: 0.46, con: 0.39, ld: 0.13 }, s: fill(POOL.YH, "lab", { con: 23, ld: 1 }) },
+  EM:  { v: { con: 0.47, lab: 0.40, ld: 0.12 }, s: fill(POOL.EM, "con", { lab: 18, ld: 1 }) },
+  WM:  { v: { con: 0.46, lab: 0.41, ld: 0.12 }, s: fill(POOL.WM, "con", { lab: 25, ld: 1 }) },
+  EE:  { v: { con: 0.50, lab: 0.32, ld: 0.16 }, s: fill(POOL.EE, "con", { lab: 14, ld: 2 }) },
+  LON: { v: { con: 0.46, lab: 0.41, ld: 0.12 }, s: fill(POOL.LON, "con", { lab: 33, ld: 2 }) },
+  SE:  { v: { con: 0.56, lab: 0.27, ld: 0.16 }, s: fill(POOL.SE, "con", { lab: 13, ld: 4 }) },
+  SW:  { v: { con: 0.52, lab: 0.27, ld: 0.20 }, s: fill(POOL.SW, "con", { lab: 9, ld: 4 }) },
+  SCO: { v: { lab: 0.42, con: 0.31, snp: 0.17, ld: 0.09 }, s: fill(POOL.SCO, "lab", { con: 18, snp: 2, ld: 5 }) },
+  WAL: { v: { lab: 0.49, con: 0.32, ld: 0.11, pc: 0.08 }, s: fill(POOL.WAL, "lab", { con: 8, pc: 1, ld: 1 }) },
+  NI:  { v: { uup: 0.37, dup: 0.12, sdlp: 0.20, sf: 0.08, apni: 0.10, oth: 0.13 }, s: fill(POOL.NI, "uup", { dup: 1, sdlp: 3, apni: 1, oth: 3 }) },
+};
+
+// ── 1983: the Falklands, mass unemployment, Foot's long suicide note ───────
+const RESULT_1983: Record<string, RegionResult> = {
+  NE:  { v: { lab: 0.44, con: 0.34, ld: 0.21 }, s: fill(POOL.NE, "lab", { con: 11, ld: 1 }) },
+  NW:  { v: { con: 0.41, lab: 0.39, ld: 0.19 }, s: fill(POOL.NW, "con", { lab: 32, ld: 2 }) },
+  YH:  { v: { con: 0.39, lab: 0.37, ld: 0.23 }, s: fill(POOL.YH, "con", { lab: 26, ld: 1 }) },
+  EM:  { v: { con: 0.47, lab: 0.29, ld: 0.23 }, s: fill(POOL.EM, "con", { lab: 13, ld: 1 }) },
+  WM:  { v: { con: 0.45, lab: 0.32, ld: 0.22 }, s: fill(POOL.WM, "con", { lab: 22, ld: 1 }) },
+  EE:  { v: { con: 0.51, lab: 0.20, ld: 0.27 }, s: fill(POOL.EE, "con", { lab: 8, ld: 3 }) },
+  LON: { v: { con: 0.44, lab: 0.30, ld: 0.24 }, s: fill(POOL.LON, "con", { lab: 26, ld: 3 }) },
+  SE:  { v: { con: 0.55, lab: 0.15, ld: 0.28 }, s: fill(POOL.SE, "con", { lab: 6, ld: 5 }) },
+  SW:  { v: { con: 0.51, lab: 0.14, ld: 0.33 }, s: fill(POOL.SW, "con", { lab: 4, ld: 6 }) },
+  SCO: { v: { lab: 0.35, con: 0.28, ld: 0.24, snp: 0.12 }, s: fill(POOL.SCO, "lab", { con: 18, snp: 1, ld: 6 }) },
+  WAL: { v: { lab: 0.38, con: 0.31, ld: 0.23, pc: 0.08 }, s: fill(POOL.WAL, "lab", { con: 10, pc: 2, ld: 2 }) },
+  NI:  { v: { uup: 0.34, dup: 0.20, sdlp: 0.18, sf: 0.13, apni: 0.08, oth: 0.07 }, s: fill(POOL.NI, "uup", { dup: 2, sdlp: 1, sf: 1, apni: 1, oth: 3 }) },
+};
+
+// ── 1987: boom in the South, a slick Labour relaunch, Thatcher's third term ─
+const RESULT_1987: Record<string, RegionResult> = {
+  NE:  { v: { lab: 0.50, con: 0.32, ld: 0.18 }, s: fill(POOL.NE, "lab", { con: 8, ld: 1 }) },
+  NW:  { v: { lab: 0.43, con: 0.40, ld: 0.17 }, s: fill(POOL.NW, "lab", { con: 35, ld: 2 }) },
+  YH:  { v: { lab: 0.42, con: 0.39, ld: 0.18 }, s: fill(POOL.YH, "lab", { con: 25, ld: 1 }) },
+  EM:  { v: { con: 0.48, lab: 0.34, ld: 0.18 }, s: fill(POOL.EM, "con", { lab: 15, ld: 1 }) },
+  WM:  { v: { con: 0.46, lab: 0.36, ld: 0.18 }, s: fill(POOL.WM, "con", { lab: 24, ld: 1 }) },
+  EE:  { v: { con: 0.52, lab: 0.23, ld: 0.25 }, s: fill(POOL.EE, "con", { lab: 9, ld: 3 }) },
+  LON: { v: { con: 0.46, lab: 0.32, ld: 0.21 }, s: fill(POOL.LON, "con", { lab: 30, ld: 3 }) },
+  SE:  { v: { con: 0.56, lab: 0.16, ld: 0.27 }, s: fill(POOL.SE, "con", { lab: 7, ld: 5 }) },
+  SW:  { v: { con: 0.52, lab: 0.16, ld: 0.31 }, s: fill(POOL.SW, "con", { lab: 5, ld: 6 }) },
+  SCO: { v: { lab: 0.42, con: 0.24, ld: 0.19, snp: 0.14 }, s: fill(POOL.SCO, "lab", { con: 12, snp: 3, ld: 6 }) },
+  WAL: { v: { lab: 0.45, con: 0.30, ld: 0.18, pc: 0.07 }, s: fill(POOL.WAL, "lab", { con: 8, pc: 2, ld: 2 }) },
+  NI:  { v: { uup: 0.33, dup: 0.18, sdlp: 0.21, sf: 0.11, apni: 0.10, oth: 0.07 }, s: fill(POOL.NI, "uup", { dup: 2, sdlp: 2, sf: 1, apni: 1, oth: 3 }) },
+};
+
+// ── 1992: a recession, a new Tory leader, and Labour's poll lead that wasn't ─
+const RESULT_1992: Record<string, RegionResult> = {
+  NE:  { v: { lab: 0.55, con: 0.31, ld: 0.13 }, s: fill(POOL.NE, "lab", { con: 6, ld: 1 }) },
+  NW:  { v: { lab: 0.45, con: 0.38, ld: 0.16 }, s: fill(POOL.NW, "lab", { con: 30, ld: 2 }) },
+  YH:  { v: { lab: 0.44, con: 0.38, ld: 0.17 }, s: fill(POOL.YH, "lab", { con: 24, ld: 1 }) },
+  EM:  { v: { con: 0.47, lab: 0.37, ld: 0.15 }, s: fill(POOL.EM, "con", { lab: 17, ld: 1 }) },
+  WM:  { v: { con: 0.45, lab: 0.39, ld: 0.15 }, s: fill(POOL.WM, "con", { lab: 26, ld: 1 }) },
+  EE:  { v: { con: 0.51, lab: 0.27, ld: 0.20 }, s: fill(POOL.EE, "con", { lab: 11, ld: 3 }) },
+  LON: { v: { con: 0.45, lab: 0.40, ld: 0.14 }, s: fill(POOL.LON, "con", { lab: 33, ld: 3 }) },
+  SE:  { v: { con: 0.55, lab: 0.20, ld: 0.23 }, s: fill(POOL.SE, "con", { lab: 9, ld: 6 }) },
+  SW:  { v: { con: 0.50, lab: 0.19, ld: 0.29 }, s: fill(POOL.SW, "con", { lab: 6, ld: 9 }) },
+  SCO: { v: { lab: 0.39, con: 0.26, snp: 0.21, ld: 0.13 }, s: fill(POOL.SCO, "lab", { con: 11, snp: 4, ld: 8 }) },
+  WAL: { v: { lab: 0.50, con: 0.29, ld: 0.12, pc: 0.09 }, s: fill(POOL.WAL, "lab", { con: 6, pc: 4, ld: 1 }) },
+  NI:  { v: { uup: 0.35, dup: 0.13, sdlp: 0.24, sf: 0.10, apni: 0.09, oth: 0.09 }, s: fill(POOL.NI, "uup", { dup: 2, sdlp: 3, apni: 1, oth: 3 }) },
+};
+
+// ── 2001: the quiet landslide, Blair's second term ─────────────────────────
+const RESULT_2001: Record<string, RegionResult> = {
+  NE:  { v: { lab: 0.59, con: 0.22, ld: 0.16 }, s: fill(POOL.NE, "lab", { con: 1, ld: 1 }) },
+  NW:  { v: { lab: 0.51, con: 0.29, ld: 0.16 }, s: fill(POOL.NW, "lab", { con: 7, ld: 3 }) },
+  YH:  { v: { lab: 0.49, con: 0.30, ld: 0.17 }, s: fill(POOL.YH, "lab", { con: 7, ld: 2 }) },
+  EM:  { v: { lab: 0.45, con: 0.37, ld: 0.15 }, s: fill(POOL.EM, "lab", { con: 13, ld: 1 }) },
+  WM:  { v: { lab: 0.45, con: 0.36, ld: 0.15 }, s: fill(POOL.WM, "lab", { con: 15, ld: 1 }) },
+  EE:  { v: { lab: 0.39, con: 0.38, ld: 0.18 }, s: fill(POOL.EE, "lab", { con: 26, ld: 5 }) },
+  LON: { v: { lab: 0.47, con: 0.30, ld: 0.17 }, s: fill(POOL.LON, "lab", { con: 13, ld: 5 }) },
+  SE:  { v: { con: 0.43, lab: 0.33, ld: 0.20 }, s: fill(POOL.SE, "con", { lab: 30, ld: 9 }) },
+  SW:  { v: { con: 0.39, lab: 0.30, ld: 0.27 }, s: fill(POOL.SW, "con", { lab: 15, ld: 15 }) },
+  SCO: { v: { lab: 0.44, snp: 0.20, ld: 0.16, con: 0.16 }, s: fill(POOL.SCO, "lab", { snp: 6, ld: 9, con: 1 }) },
+  WAL: { v: { lab: 0.49, con: 0.21, pc: 0.14, ld: 0.14 }, s: fill(POOL.WAL, "lab", { pc: 4, con: 1, ld: 2 }) },
+  NI:  { v: { uup: 0.27, dup: 0.23, sf: 0.22, sdlp: 0.21, apni: 0.04, oth: 0.03 }, s: fill(POOL.NI, "uup", { dup: 5, sdlp: 3, sf: 4, oth: 1 }) },
+};
+
+// ── 2005: Iraq's shadow, a Lib Dem surge, Blair's reduced third term ───────
+const RESULT_2005: Record<string, RegionResult> = {
+  NE:  { v: { lab: 0.53, con: 0.20, ld: 0.23 }, s: fill(POOL.NE, "lab", { con: 2, ld: 3 }) },
+  NW:  { v: { lab: 0.45, con: 0.29, ld: 0.21 }, s: fill(POOL.NW, "lab", { con: 10, ld: 6 }) },
+  YH:  { v: { lab: 0.44, con: 0.29, ld: 0.22 }, s: fill(POOL.YH, "lab", { con: 9, ld: 5 }) },
+  EM:  { v: { lab: 0.39, con: 0.37, ld: 0.20 }, s: fill(POOL.EM, "lab", { con: 18, ld: 2 }) },
+  WM:  { v: { lab: 0.39, con: 0.35, ld: 0.20 }, s: fill(POOL.WM, "lab", { con: 20, ld: 2 }) },
+  EE:  { v: { con: 0.43, lab: 0.30, ld: 0.22 }, s: fill(POOL.EE, "con", { lab: 22, ld: 6 }) },
+  LON: { v: { lab: 0.39, con: 0.32, ld: 0.22 }, s: fill(POOL.LON, "lab", { con: 21, ld: 8 }) },
+  SE:  { v: { con: 0.45, lab: 0.24, ld: 0.25 }, s: fill(POOL.SE, "con", { lab: 25, ld: 12 }) },
+  SW:  { v: { con: 0.39, lab: 0.23, ld: 0.33 }, s: fill(POOL.SW, "con", { lab: 13, ld: 16 }) },
+  SCO: { v: { lab: 0.40, ld: 0.23, snp: 0.18, con: 0.16 }, s: fill(POOL.SCO, "lab", { snp: 6, ld: 11, con: 1 }) },
+  WAL: { v: { lab: 0.43, con: 0.21, ld: 0.18, pc: 0.13 }, s: fill(POOL.WAL, "lab", { pc: 3, con: 3, ld: 4 }) },
+  NI:  { v: { dup: 0.34, sf: 0.24, uup: 0.18, sdlp: 0.18, apni: 0.04, oth: 0.02 }, s: fill(POOL.NI, "dup", { uup: 1, sdlp: 3, sf: 5 }) },
+};
+
+export const UK_ELECTIONS: Record<string, UkElectionData> = {
+  "2024": {
+    id: "2024", year: 2024,
+    label: "2024 · Starmer v. Sunak",
+    tagline: "July 2024. Fourteen years of Tory government, a cost-of-living squeeze, and Reform eating the right. Labour smells a landslide — don't fumble it.",
+    salience: { cost_of_living: 0.92, nhs: 0.85, economy: 0.85, immigration: 0.7, housing: 0.55, crime: 0.5, taxation: 0.6, europe: 0.3, climate: 0.4, defence: 0.35, scottish_independence: 0.25 },
+    regions: RESULT_2024,
+  },
+  "2019": {
+    id: "2019", year: 2019,
+    label: "2019 · Johnson v. Corbyn",
+    tagline: "December 2019. Three years of Brexit deadlock, a fractured opposition, and the Red Wall up for grabs. Break the impasse.",
+    salience: { europe: 0.95, nhs: 0.8, economy: 0.75, immigration: 0.6, cost_of_living: 0.55, crime: 0.45, taxation: 0.55, climate: 0.45, scottish_independence: 0.4, defence: 0.35, housing: 0.45 },
+    regions: RESULT_2019,
+  },
+  "2017": {
+    id: "2017", year: 2017,
+    label: "2017 · May v. Corbyn",
+    tagline: "June 2017. A snap election called from a commanding lead — but a manifesto wobble and a surging opposition turn a coronation into a knife-edge.",
+    salience: { europe: 0.85, nhs: 0.8, economy: 0.78, taxation: 0.6, immigration: 0.55, crime: 0.55, defence: 0.5, cost_of_living: 0.5, housing: 0.5, climate: 0.4, scottish_independence: 0.45 },
+    regions: RESULT_2017,
+  },
+  "2010": {
+    id: "2010", year: 2010,
+    label: "2010 · Brown v. Cameron v. Clegg",
+    tagline: "May 2010. A banking crash, an expenses scandal, and the first TV debates of the age. 'I agree with Nick' — and nobody wins outright.",
+    salience: { economy: 0.95, nhs: 0.7, taxation: 0.65, immigration: 0.6, crime: 0.55, europe: 0.4, housing: 0.5, climate: 0.45, defence: 0.45, cost_of_living: 0.6, scottish_independence: 0.3 },
+    regions: RESULT_2010,
+  },
+  "2015": {
+    id: "2015", year: 2015,
+    label: "2015 · Cameron v. Miliband",
+    tagline: "May 2015. Five years of coalition, a UKIP surge, and an SNP tide rising in Scotland. The polls say a dead heat — they're about to be wrong.",
+    salience: { economy: 0.9, nhs: 0.8, immigration: 0.72, europe: 0.55, taxation: 0.6, cost_of_living: 0.6, scottish_independence: 0.6, housing: 0.5, crime: 0.45, defence: 0.4, climate: 0.4 },
+    regions: RESULT_2015,
+  },
+  "1997": {
+    id: "1997", year: 1997,
+    label: "1997 · Blair v. Major",
+    tagline: "May 1997. Eighteen years of Conservative rule, a tired government, and a rebranded opposition. Things can only get better — can you finish the job?",
+    salience: { economy: 0.85, nhs: 0.78, taxation: 0.6, crime: 0.6, europe: 0.5, immigration: 0.4, defence: 0.45, housing: 0.5, climate: 0.25, cost_of_living: 0.55, scottish_independence: 0.35 },
+    regions: RESULT_1997,
+  },
+  "2005": {
+    id: "2005", year: 2005,
+    label: "2005 · Blair v. Howard",
+    tagline: "May 2005. Iraq hangs over a third Labour term, the Lib Dems surge on the anti-war vote, and Howard's Tories claw back. A majority — but a chastened one.",
+    salience: { nhs: 0.78, economy: 0.7, immigration: 0.66, crime: 0.6, defence: 0.62, europe: 0.5, taxation: 0.55, housing: 0.5, cost_of_living: 0.5, climate: 0.35, scottish_independence: 0.3 },
+    regions: RESULT_2005,
+  },
+  "2001": {
+    id: "2001", year: 2001,
+    label: "2001 · Blair v. Hague",
+    tagline: "June 2001. Four years of New Labour, a becalmed economy, and a Conservative Party still in the wilderness. The quiet landslide.",
+    salience: { nhs: 0.8, economy: 0.72, europe: 0.55, taxation: 0.6, crime: 0.55, immigration: 0.5, housing: 0.45, defence: 0.4, climate: 0.3, cost_of_living: 0.5, scottish_independence: 0.3 },
+    regions: RESULT_2001,
+  },
+  "1992": {
+    id: "1992", year: 1992,
+    label: "1992 · Major v. Kinnock",
+    tagline: "April 1992. A recession, a new Conservative leader, and Labour ahead in the polls. The election Labour was sure to win — and the shock that followed.",
+    salience: { economy: 0.92, taxation: 0.78, nhs: 0.75, housing: 0.62, europe: 0.5, crime: 0.5, immigration: 0.4, defence: 0.45, cost_of_living: 0.6, climate: 0.2, scottish_independence: 0.38 },
+    regions: RESULT_1992,
+  },
+  "1987": {
+    id: "1987", year: 1987,
+    label: "1987 · Thatcher v. Kinnock",
+    tagline: "June 1987. Boom in the South, bust in the North, and a slick Labour relaunch that still can't close the gap. Can Kinnock break the Thatcher grip?",
+    salience: { economy: 0.86, nhs: 0.72, defence: 0.66, taxation: 0.6, crime: 0.55, europe: 0.4, housing: 0.55, immigration: 0.4, cost_of_living: 0.55, climate: 0.15, scottish_independence: 0.32 },
+    regions: RESULT_1987,
+  },
+  "1983": {
+    id: "1983", year: 1983,
+    label: "1983 · Thatcher v. Foot",
+    tagline: "June 1983. A Falklands triumph, mass unemployment, and a divided left — Labour's 'longest suicide note in history' against a rising Alliance. The landslide year.",
+    salience: { defence: 0.82, economy: 0.86, taxation: 0.58, nhs: 0.6, europe: 0.42, crime: 0.5, housing: 0.5, immigration: 0.4, cost_of_living: 0.6, climate: 0.12, scottish_independence: 0.26 },
+    regions: RESULT_1983,
+  },
+  "1979": {
+    id: "1979", year: 1979,
+    label: "1979 · Thatcher v. Callaghan",
+    tagline: "May 1979. The Winter of Discontent — strikes, the rubbish piled high, the dead unburied. A tired Labour government meets a new kind of Conservative. Labour isn't working.",
+    salience: { economy: 0.9, cost_of_living: 0.72, taxation: 0.62, defence: 0.52, nhs: 0.6, crime: 0.52, immigration: 0.42, housing: 0.5, europe: 0.3, climate: 0.1, scottish_independence: 0.3 },
+    regions: RESULT_1979,
+  },
+};
+
+export const UK_ELECTION_IDS = Object.keys(UK_ELECTIONS);

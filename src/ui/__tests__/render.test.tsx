@@ -13,27 +13,49 @@ import { useGameStore } from "@store/gameStore";
 
 const reset = () => useGameStore.setState({ game: null, history: [], lastEventResult: null });
 
-function mount(): { html: () => string; cleanup: () => void } {
+function mount(): { html: () => string; container: HTMLElement; cleanup: () => void } {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container);
   act(() => { root.render(<App />); });
   return {
     html: () => container.innerHTML,
+    container,
     cleanup: () => { act(() => root.unmount()); container.remove(); },
   };
+}
+
+// Click the first <button> whose text contains `text`.
+function clickButton(container: HTMLElement, text: string) {
+  const btn = [...container.querySelectorAll("button")].find((b) => b.textContent?.includes(text));
+  if (!btn) throw new Error(`button containing "${text}" not found`);
+  act(() => { btn.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
 }
 
 describe("App renders without crashing", () => {
   beforeEach(reset);
 
-  it("renders the setup wizard with the scenario picker on first load", () => {
+  it("shows the country picker on first load, then the U.S. setup wizard", () => {
     const m = mount();
+    // The new landing offers both battlegrounds.
+    expect(m.html()).toContain("choose your battleground");
+    expect(m.html()).toContain("United States");
+    expect(m.html()).toContain("United Kingdom");
+    // Entering the U.S. game shows the scenario picker wizard.
+    clickButton(m.container, "United States");
     const html = m.html();
-    expect(html).toContain("A House Divided");
     expect(html).toContain("The Election"); // step 1 of the setup wizard
-    expect(html).toContain("Next"); // advances through the wizard steps
     expect(html).toContain("Gore v. Bush"); // scenario picker is present on step 1
+    m.cleanup();
+  });
+
+  it("enters the U.K. general-election setup from the country picker", () => {
+    const m = mount();
+    clickButton(m.container, "United Kingdom");
+    const html = m.html();
+    expect(html).toContain("UNITED KINGDOM — GENERAL ELECTION"); // setup eyebrow
+    expect(html).toContain("The Election"); // step 1 of the UK wizard
+    expect(html).toContain("Starmer"); // 2024 contenders preview
     m.cleanup();
   });
 

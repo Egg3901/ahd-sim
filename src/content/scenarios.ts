@@ -26,6 +26,10 @@ export interface ScenarioTicket {
 export interface Scenario {
   id: string;
   year: number;
+  // Which political system this election runs under (see content/systems).
+  // Absent ⇒ "US" — every existing scenario is a U.S. presidential race, so
+  // this stays backward-compatible and the default path is untouched.
+  systemId?: string;
   // "2020 · Biden v. Trump"
   label: string;
   // One-line setup framing.
