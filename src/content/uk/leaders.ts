@@ -16,6 +16,11 @@ export interface UkLeader {
 // Leaders keyed by election id → party id. Only the leaders of the parties
 // playing that election need entries; others fall back to a neutral default.
 export const UK_LEADERS: Record<string, Partial<Record<PartyId, UkLeader>>> = {
+  "1951": {
+    con: { partyId: "con", name: "Winston Churchill", charisma: 78, energy: 50, competence: 78, machine: 84 },
+    lab: { partyId: "lab", name: "Clement Attlee",    charisma: 42, energy: 60, competence: 86, machine: 78 },
+    ld:  { partyId: "ld",  name: "Clement Davies",    charisma: 50, energy: 50, competence: 60, machine: 30 },
+  },
   "2024": {
     lab: { partyId: "lab", name: "Keir Starmer", charisma: 52, energy: 64, competence: 74, machine: 80 },
     con: { partyId: "con", name: "Rishi Sunak", charisma: 50, energy: 60, competence: 66, machine: 70 },

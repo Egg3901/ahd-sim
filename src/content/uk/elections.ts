@@ -134,6 +134,28 @@ const RESULT_2015: Record<string, RegionResult> = {
   NI:  { v: { dup: 0.26, sf: 0.24, uup: 0.16, sdlp: 0.14, apni: 0.09, oth: 0.11 }, s: fill(POOL.NI, "dup", { sf: 4, uup: 2, sdlp: 3, oth: 1 }) },
 };
 
+// ── 1951: the wrong-winner election — Labour votes most, Churchill wins most ─
+// Vote shares from real 1951 national/regional returns; seats mapped onto the
+// modern 650-seat pool (2024 boundaries). Nationally Con 48.0% / Lab 48.8% but
+// FPTP gave Churchill 321 seats vs Attlee 295 of 625 — scaled here to Con 326
+// (bare majority). Lib Party negligible nationally (6 seats). SNP <1% in SCO;
+// Plaid Cymru contested Wales (~3% vote) but won no Westminster seats. NI:
+// Ulster Unionists (conservative-aligned) 9 historical seats, Nationalist/other 3.
+const RESULT_1951: Record<string, RegionResult> = {
+  NE:  { v: { con: 0.40, lab: 0.55, ld: 0.04, oth: 0.01 }, s: fill(POOL.NE, "lab", { con: 3 }) },
+  NW:  { v: { con: 0.46, lab: 0.50, ld: 0.03, oth: 0.01 }, s: fill(POOL.NW, "lab", { con: 29, ld: 1 }) },
+  YH:  { v: { con: 0.44, lab: 0.52, ld: 0.03, oth: 0.01 }, s: fill(POOL.YH, "lab", { con: 18, ld: 1 }) },
+  EM:  { v: { con: 0.48, lab: 0.48, ld: 0.03, oth: 0.01 }, s: fill(POOL.EM, "lab", { con: 20 }) },
+  WM:  { v: { con: 0.49, lab: 0.47, ld: 0.03, oth: 0.01 }, s: fill(POOL.WM, "lab", { con: 26 }) },
+  EE:  { v: { con: 0.55, lab: 0.40, ld: 0.04, oth: 0.01 }, s: fill(POOL.EE, "con", { lab: 19 }) },
+  LON: { v: { con: 0.50, lab: 0.47, ld: 0.02, oth: 0.01 }, s: fill(POOL.LON, "con", { lab: 35 }) },
+  SE:  { v: { con: 0.60, lab: 0.35, ld: 0.04, oth: 0.01 }, s: fill(POOL.SE, "con", { lab: 19 }) },
+  SW:  { v: { con: 0.52, lab: 0.38, ld: 0.09, oth: 0.01 }, s: fill(POOL.SW, "con", { lab: 13, ld: 1 }) },
+  SCO: { v: { con: 0.45, lab: 0.46, ld: 0.05, oth: 0.04 }, s: fill(POOL.SCO, "lab", { con: 27, ld: 1 }) },
+  WAL: { v: { con: 0.30, lab: 0.57, ld: 0.09, pc: 0.03, oth: 0.01 }, s: fill(POOL.WAL, "lab", { con: 5, ld: 2 }) },
+  NI:  { v: { uup: 0.65, oth: 0.35 }, s: fill(POOL.NI, "uup", { oth: 4 }) },
+};
+
 // ── 1979: the Winter of Discontent, Thatcher's first win ──────────────────
 const RESULT_1979: Record<string, RegionResult> = {
   NE:  { v: { lab: 0.50, con: 0.34, ld: 0.14 }, s: fill(POOL.NE, "lab", { con: 9, ld: 1 }) },
@@ -231,6 +253,13 @@ const RESULT_2005: Record<string, RegionResult> = {
 };
 
 export const UK_ELECTIONS: Record<string, UkElectionData> = {
+  "1951": {
+    id: "1951", year: 1951,
+    label: "1951 · Churchill v. Attlee",
+    tagline: "October 1951. Six years of Labour austerity, rationing still on the shelves, and Churchill promising to set the people free. Can Attlee hold on — or does the old lion get one last roar?",
+    salience: { economy: 0.90, cost_of_living: 0.80, housing: 0.80, nhs: 0.70, defence: 0.70, taxation: 0.60, crime: 0.30, europe: 0.20, scottish_independence: 0.10, immigration: 0.10, climate: 0.00 },
+    regions: RESULT_1951,
+  },
   "2024": {
     id: "2024", year: 2024,
     label: "2024 · Starmer v. Sunak",

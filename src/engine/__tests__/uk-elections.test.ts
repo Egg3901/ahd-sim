@@ -7,6 +7,7 @@ import { UK_REGIONS_BY_ID } from "@content/uk/regions";
 // pools and to 650) and reproduce the right headline outcome at the neutral
 // baseline: the right largest party and the right kind of government.
 const EXPECTED: Record<string, { largest: string; gov: string }> = {
+  "1951": { largest: "con", gov: "majority" },
   "2024": { largest: "lab", gov: "majority" },
   "2019": { largest: "con", gov: "majority" },
   "2017": { largest: "con", gov: "confidence_supply" },
@@ -24,7 +25,7 @@ const EXPECTED: Record<string, { largest: string; gov: string }> = {
 describe("UK elections roster", () => {
   it("covers the expected modern elections", () => {
     expect(UK_ELECTION_IDS.sort()).toEqual(
-      ["1979", "1983", "1987", "1992", "1997", "2001", "2005", "2010", "2015", "2017", "2019", "2024"],
+      ["1951", "1979", "1983", "1987", "1992", "1997", "2001", "2005", "2010", "2015", "2017", "2019", "2024"],
     );
   });
 
