@@ -35,27 +35,27 @@ function clickButton(container: HTMLElement, text: string) {
 describe("App renders without crashing", () => {
   beforeEach(reset);
 
-  it("shows the country picker on first load, then the U.S. setup wizard", () => {
+  it("shows the landing scenario browser on first load, then the U.S. setup wizard", () => {
     const m = mount();
-    // The new landing offers both battlegrounds.
-    expect(m.html()).toContain("choose your battleground");
-    expect(m.html()).toContain("United States");
-    expect(m.html()).toContain("United Kingdom");
-    // Entering the U.S. game shows the scenario picker wizard.
-    clickButton(m.container, "United States");
+    // The landing page: free tier up top, full catalog, packs strip.
+    expect(m.html()).toContain("Play free");
+    expect(m.html()).toContain("Harris v. Trump");
+    expect(m.html()).toContain("Scenario packs");
+    // Entering a free U.S. scenario shows the setup wizard on that year.
+    clickButton(m.container, "Biden v. Trump");
     const html = m.html();
     expect(html).toContain("The Election"); // step 1 of the setup wizard
-    expect(html).toContain("Gore v. Bush"); // scenario picker is present on step 1
+    expect(html).toContain("The War Room"); // staff-hire step present
     m.cleanup();
   });
 
-  it("enters the U.K. general-election setup from the country picker", () => {
+  it("locked scenarios open the auth/paywall modal instead of a game", () => {
     const m = mount();
-    clickButton(m.container, "United Kingdom");
+    // 2016 US is paid; a signed-out click routes to login.
+    clickButton(m.container, "Clinton v. Trump");
     const html = m.html();
-    expect(html).toContain("UNITED KINGDOM — GENERAL ELECTION"); // setup eyebrow
-    expect(html).toContain("The Election"); // step 1 of the UK wizard
-    expect(html).toContain("Starmer"); // 2024 contenders preview
+    expect(html).toContain("Log In"); // login modal opened
+    expect(m.html()).not.toContain("The War Room"); // no setup wizard
     m.cleanup();
   });
 

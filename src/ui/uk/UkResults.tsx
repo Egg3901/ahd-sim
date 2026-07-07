@@ -1,4 +1,8 @@
+import { useMemo, useState } from "react";
 import { useUkStore } from "@store/ukStore";
+import { useAuthStore } from "@store/authStore";
+import { api } from "@lib/api";
+import { computeScoreFromFacts, multipartyScoreFacts } from "@engine/scoring";
 import type { Government } from "@engine/types";
 import { UkSeatBar } from "./UkSeatBar";
 import { partyName, partyShort, sortBySeats, partyColor } from "./parties";
@@ -24,6 +28,29 @@ export function UkResults() {
     ("lead" in r.government && r.government.lead === game.playerParty) ||
     (r.government.kind === "coalition" && r.government.parties.includes(game.playerParty));
 
+  // ── Campaign score + leaderboard post ──
+  const user = useAuthStore((s) => s.user);
+  const openModal = useAuthStore((s) => s.openModal);
+  const scenarioId = `uk-${game.electionId}`;
+  const facts = useMemo(() => multipartyScoreFacts(r, game.playerParty, 326, 650, "normal"), [r, game.playerParty]);
+  const score = computeScoreFromFacts(facts);
+  const [postState, setPostState] = useState<"idle" | "busy" | "done" | "error">("idle");
+  const [postNote, setPostNote] = useState("");
+  const post = async () => {
+    setPostState("busy");
+    try {
+      const out = await api.postScore({
+        scenarioId, difficulty: "normal", score, facts,
+        evMargin: Math.round(facts.unitMargin), popularVoteMargin: facts.popularMargin, turnsPlayed: game.turn,
+      });
+      setPostState("done");
+      setPostNote(out.posted ? `Posted — rank #${out.rank}.` : `Kept your best (${out.personalBest}). Rank #${out.rank}.`);
+    } catch (e) {
+      setPostState("error");
+      setPostNote(e instanceof Error ? e.message : "Server unreachable");
+    }
+  };
+
   return (
     <div className="card" style={{ maxWidth: 780, margin: "24px auto" }}>
       <div className={`win270 ${won ? "dem" : ""}`} style={{ textAlign: "center" }}>
@@ -34,6 +61,21 @@ export function UkResults() {
       <p>You led <strong style={{ color: partyColor(game.playerParty) }}>{partyName(game.playerParty)}</strong> to <strong>{playerSeats}</strong> seats.</p>
 
       <div style={{ margin: "16px 0" }}><UkSeatBar result={r} /></div>
+
+      <div className="kv" style={{ alignItems: "center", margin: "0 0 14px" }}>
+        <span className="k">
+          Campaign score <strong style={{ fontSize: 20 }}>{score}</strong><span className="muted small"> / 1000</span>
+          <span className="muted small"> · seat margin {facts.unitMargin >= 0 ? "+" : ""}{Math.round(facts.unitMargin)} vs 326</span>
+        </span>
+        {user ? (
+          <button className="secondary" disabled={postState === "busy" || postState === "done"} onClick={post}>
+            {postState === "done" ? "Posted ✓" : postState === "busy" ? "Posting…" : "Post to Leaderboard"}
+          </button>
+        ) : (
+          <button className="secondary" onClick={() => openModal("login")}>Log in to post</button>
+        )}
+      </div>
+      {postNote && <p className="muted small">{postNote}</p>}
 
       <h3>Final standings</h3>
       {order.map((p) => (

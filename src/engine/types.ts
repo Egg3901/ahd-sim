@@ -243,6 +243,9 @@ export interface EventEffect {
   cash?: number;
   narrative?: number; // media narrative delta
   favorability?: Partial<Record<BlocId, number>>;
+  // Shifts the answering candidate's OWN issue positions (a policy promise —
+  // the price of an endorsement). Applied directly, clamped to [-1, 1].
+  positionShifts?: Partial<Record<IssueId, number>>;
 }
 
 export interface EventChoice {
@@ -363,6 +366,21 @@ export interface GameState {
   // Chosen running mate id per ticket (drives the applied bonuses + UI). Optional
   // for backward compatibility with saves predating VP selection.
   runningMates?: Record<CandidateId, string>;
+  // Hired staffer ids per ticket (see content/staff). Passive bonuses applied at
+  // creation + in actions; weekly salaries and loyalty run in the store layer.
+  staff?: Partial<Record<CandidateId, string[]>>;
+  // Cumulative ad dollars spent per ticket (drives the Grassroots achievement).
+  adSpend?: Partial<Record<CandidateId, number>>;
+  // Cumulative fundraising hauls per ticket (drives the Money Machine achievement).
+  fundsRaised?: Partial<Record<CandidateId, number>>;
+  // Every resolved debate, in order (drives the Debate Dominator achievement).
+  debateHistory?: DebateResult[];
+  // Optional scenario modifiers chosen at setup (all free features).
+  modifiers?: {
+    whatIfState?: string;   // flip this contest's prior to a pure tossup
+    mirrorMatch?: boolean;  // underdog boost: extra cash + action slots
+    pandemic?: boolean;     // COVID-era salience in any year
+  };
   // Per-week trend log (national poll, EV split, momentum, cash). Optional for
   // backward compatibility with saves predating the stats screen.
   timeline?: TurnPoint[];

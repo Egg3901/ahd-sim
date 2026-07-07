@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useUkStore } from "@store/ukStore";
+import { useAuthStore } from "@store/authStore";
 import { UK_ELECTIONS, UK_ELECTION_IDS } from "@content/uk/elections";
 import { UK_PLAYABLE, playablePartiesIn } from "@engine/ukGame";
 import { leaderFor } from "@content/uk/leaders";
@@ -10,6 +11,26 @@ import type { PartyId } from "@engine/system";
 
 function randomSeed(): string {
   return String(Math.floor(Math.random() * 1_000_000)).padStart(6, "0");
+}
+
+// Paywall-aware Begin: every UK election is part of the UK pack — locked
+// elections route to login/activation instead of starting a game.
+function UkBeginButton({ election, party, seed, year, onBegin }: {
+  election: string; party: PartyId; seed: string; year: number; onBegin: () => void;
+}) {
+  void seed;
+  const canPlay = useAuthStore((s) => s.canPlay);
+  const openModal = useAuthStore((s) => s.openModal);
+  const user = useAuthStore((s) => s.user);
+  const unlocked = canPlay(`uk-${election}`);
+  return (
+    <button
+      className="primary su-next"
+      onClick={() => (unlocked ? onBegin() : openModal(user ? "activate" : "login", `uk-${election}`))}
+    >
+      <Flag size={15} /> {unlocked ? `Begin ${year} as ${partyShort(party)}` : "🔒 Unlock to play"}
+    </button>
+  );
 }
 
 type StepId = 0 | 1 | 2;
@@ -32,11 +53,11 @@ function contenders(electionId: string): { party: PartyId; leader: string }[] {
     .map((p) => ({ party: p as PartyId, leader: leaderFor(electionId, p, partyName(p)).name }));
 }
 
-export function UkSetup({ onBack }: { onBack: () => void }) {
+export function UkSetup({ onBack, initialElection }: { onBack: () => void; initialElection?: string }) {
   const newGame = useUkStore((s) => s.newGame);
   const ids = [...UK_ELECTION_IDS].sort((a, b) => Number(b) - Number(a));
   const [step, setStep] = useState<StepId>(0);
-  const [election, setElection] = useState(ids[0]);
+  const [election, setElection] = useState(initialElection && UK_ELECTIONS[initialElection] ? initialElection : ids[0]);
   const [party, setParty] = useState<PartyId>("lab");
   const [seed, setSeed] = useState<string>(randomSeed);
   const data = UK_ELECTIONS[election];
@@ -172,9 +193,8 @@ export function UkSetup({ onBack }: { onBack: () => void }) {
           {step < 2 ? (
             <button className="primary su-next" onClick={() => setStep((step + 1) as StepId)}>Next <ChevronRight size={16} /></button>
           ) : (
-            <button className="primary su-next" onClick={() => newGame(election, activeParty, seed)}>
-              <Flag size={15} /> Begin {data.year} as {partyShort(activeParty)}
-            </button>
+            <UkBeginButton election={election} party={activeParty} seed={seed} year={data.year}
+              onBegin={() => newGame(election, activeParty, seed)} />
           )}
         </div>
       </div>

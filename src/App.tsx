@@ -17,6 +17,11 @@ import { NewsTicker } from "@ui/NewsTicker";
 import { getScenario } from "@content/scenarios";
 import { money, turnLabel } from "@ui/format";
 import { UkApp } from "@ui/uk/UkApp";
+import { CountryApp } from "@ui/country/CountryApp";
+import { COUNTRIES } from "@content/countries";
+import { LandingPage, type LandingDestination } from "@ui/LandingPage";
+import { LeaderboardScreen } from "@ui/LeaderboardScreen";
+import { AuthModals } from "@ui/auth/AuthModals";
 import { Vote, X } from "lucide-react";
 
 // True when the viewport is in the single-column mobile layout. Re-renders on
@@ -166,51 +171,57 @@ function GameScreen() {
   );
 }
 
-// Country landing — pick the U.S. presidential game or the U.K. general-election
-// game. Each runs on the same engine core (the multiparty vote model is the
-// N-party generalization of the two-party one).
-function CountryPicker({ onPick }: { onPick: (m: "us" | "uk") => void }) {
-  return (
-    <div className="center">
-      <div className="setup">
-        <div className="setup-eyebrow">
-          <span className="mark"><Vote size={18} /></span>CHOOSE YOUR BATTLEGROUND
-        </div>
-        <div className="title">A House Divided</div>
-        <p className="sub">Two nations, one engine — choose your battleground and run the campaign.</p>
-
-        <div className="country-grid">
-          <button type="button" className="country-card us" onClick={() => onPick("us")}>
-            <span className="country-flag">🇺🇸</span>
-            <span className="country-name">United States</span>
-            <span className="country-sys">Presidential</span>
-            <span className="country-goal">Race to <strong>270</strong> electoral votes</span>
-            <span className="country-meta">Winner-take-all states · 7 elections · two-party duel</span>
-          </button>
-          <button type="button" className="country-card uk" onClick={() => onPick("uk")}>
-            <span className="country-flag">🇬🇧</span>
-            <span className="country-name">United Kingdom</span>
-            <span className="country-sys">General Election</span>
-            <span className="country-goal">Fight for <strong>326</strong> of 650 seats</span>
-            <span className="country-meta">12 regions · multiparty FPTP · coalitions &amp; hung parliaments</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+// Where the app currently is: the landing scenario browser, one of the game
+// shells (US / UK / a generic country), or the leaderboard.
+type View =
+  | { kind: "landing" }
+  | { kind: "us"; scenarioId?: string }
+  | { kind: "uk"; electionId?: string }
+  | { kind: "country"; countryId: string }
+  | { kind: "leaderboard" };
 
 export function App() {
   const game = useGameStore((s) => s.game);
   const refreshSaves = useGameStore((s) => s.refreshSaves);
-  const [mode, setMode] = useState<"us" | "uk" | null>(null);
+  const [view, setView] = useState<View>({ kind: "landing" });
   useEffect(() => { void refreshSaves(); }, [refreshSaves]);
 
-  // A resumed U.S. save jumps straight back into the U.S. game.
-  if (mode === null && !game) return <CountryPicker onPick={setMode} />;
-  if (mode === "uk") return <UkApp onExit={() => setMode(null)} />;
+  const go = (dest: LandingDestination) => setView(dest as View);
+  const home = () => setView({ kind: "landing" });
 
-  if (!game) return <div className="app screen" key="setup"><SetupScreen /></div>;
-  if (game.phase === "result") return <div className="app screen" key="result"><ResultsScreen /></div>;
-  return <GameScreen />;
+  // Everything renders above the shared auth/paywall modals.
+  const withModals = (node: React.ReactNode) => (
+    <>
+      {node}
+      <AuthModals />
+    </>
+  );
+
+  // A live U.S. game (or a resumed autosave) takes over the screen.
+  if (view.kind === "us" || game) {
+    if (!game) {
+      return withModals(
+        <div className="app screen" key="setup">
+          <SetupScreen initialScenarioId={view.kind === "us" ? view.scenarioId : undefined} onExit={home} />
+        </div>,
+      );
+    }
+    if (game.phase === "result") return withModals(<div className="app screen" key="result"><ResultsScreen /></div>);
+    return withModals(<GameScreen />);
+  }
+
+  if (view.kind === "uk") {
+    return withModals(<UkApp onExit={home} initialElection={view.electionId} />);
+  }
+
+  if (view.kind === "country") {
+    const country = COUNTRIES[view.countryId];
+    if (country) return withModals(<CountryApp country={country} onExit={home} />);
+  }
+
+  if (view.kind === "leaderboard") {
+    return withModals(<LeaderboardScreen onBack={home} />);
+  }
+
+  return withModals(<LandingPage onGo={go} />);
 }

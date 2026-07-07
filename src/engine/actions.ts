@@ -11,6 +11,7 @@ import type {
 import type { Rng } from "./rng";
 import { BLOCS } from "@content/blocs";
 import { OPPONENT_OF } from "@content/candidates";
+import { staffEffects } from "@content/staff";
 
 // All action effects route THROUGH the vote model: they write margin deltas
 // (Biden − Trump) into blocs' campaignMargin, plus enthusiasm / momentum /
@@ -96,13 +97,18 @@ function applyAdvertise(game: GameState, action: CampaignAction, rng: Rng, mult 
   const actualSpend = Math.min(spend, res.cash);
   res.cash -= actualSpend;
 
+  // Track lifetime ad spend (drives the Grassroots achievement).
+  game.adSpend = game.adSpend ?? {};
+  game.adSpend[c] = (game.adSpend[c] ?? 0) + actualSpend;
+
   const mode: AdMode = action.adMode ?? "positive";
   // Effective spend, scaled by media market, then run through a saturating curve
   // so a single enormous buy hits diminishing returns and can't single-handedly
   // carry a state. adReach asymptotes toward AD_SAT (~6 effective $M-equivalents).
   const effectiveMillions = actualSpend / 1_000_000 / state.mediaMarketCost;
   const AD_SAT = 6;
-  const adReach = AD_SAT * (1 - Math.exp(-effectiveMillions / AD_SAT));
+  // A media strategist on staff stretches every buy.
+  const adReach = AD_SAT * (1 - Math.exp(-effectiveMillions / AD_SAT)) * staffEffects(game, c).adMult;
   const fundraisingBoost = 0.85 + game.candidates[c].traits.fundraisingProwess / 400;
 
   if (mode === "issue" && action.issueId) {
@@ -215,8 +221,11 @@ function applyFundraise(game: GameState, action: CampaignAction, rng: Rng) {
   // donor base scales with the state. National (no state) is the 1.0× baseline.
   const st = findState(game, action.stateId);
   const sizeMult = st ? 0.6 + Math.min(1.1, st.electoralVotes / 28) : 1;
-  const haul = (8_000_000 + trait * 120_000) * momentumBonus * sizeMult * (0.85 + rng.next() * 0.3);
+  const haul = (8_000_000 + trait * 120_000) * momentumBonus * sizeMult * (0.85 + rng.next() * 0.3)
+    * staffEffects(game, c).fundraiseMult;
   res.cash += haul;
+  game.fundsRaised = game.fundsRaised ?? {};
+  game.fundsRaised[c] = (game.fundsRaised[c] ?? 0) + haul;
   game.causes.push({
     turn: game.turn,
     stateId: st?.id,
@@ -287,7 +296,8 @@ function applyOppoResearch(game: GameState, action: CampaignAction, rng: Rng, mu
   const cost = 2_000_000;
   if (res.cash < cost) return;
   res.cash -= cost;
-  const success = rng.chance(0.55);
+  // A rapid-response director on the TARGET's staff blunts incoming hits.
+  const success = rng.chance(Math.max(0.15, 0.55 - staffEffects(game, opp).oppoShield));
   const sign = favorSign(c);
   // National in reach (it hits persuadable blocs everywhere), but each hit runs
   // through the saturating curve: repeat oppo dumps diminish, and a bloc that
@@ -323,7 +333,8 @@ function applyOppoResearch(game: GameState, action: CampaignAction, rng: Rng, mu
 // payoff (and limits the damage) of the next debate event. Decays gently.
 function applyDebatePrep(game: GameState, action: CampaignAction) {
   const c = action.candidate;
-  game.candidates[c].traits.debatePrep = Math.min(100, game.candidates[c].traits.debatePrep + 8);
+  const bonus = 8 + staffEffects(game, c).debatePrepBonus;
+  game.candidates[c].traits.debatePrep = Math.min(100, game.candidates[c].traits.debatePrep + bonus);
   game.causes.push({
     turn: game.turn,
     cause: `Debate prep (+8 debate readiness)`,

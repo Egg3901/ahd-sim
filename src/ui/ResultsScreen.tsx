@@ -1,11 +1,28 @@
 import { useEffect, useMemo, useState } from "react";
 import { useGameStore } from "@store/gameStore";
+import { useAuthStore } from "@store/authStore";
 import { GRID, SPLIT_UNITS, GRID_COLS, GRID_ROWS } from "@content/mapLayout";
 import { STATE_PATHS } from "@content/statePaths";
+import { SCENARIOS } from "@content/scenarios";
 import type { Projection } from "@engine/index";
+import { computeScoreFromFacts, usScoreFacts } from "@engine/scoring";
+import { checkAchievements, recordLocalAchievements } from "@engine/achievements";
+import { api } from "@lib/api";
 import { EvBar } from "./EvBar";
 import { StatsScreen } from "./StatsScreen";
 import { pct, votes } from "./format";
+import { Trophy, Lock } from "lucide-react";
+
+// Light scenario branching: after the race, suggest where to go next.
+const NEXT_SCENARIO: Record<string, { id: string; blurb: string }> = {
+  "2000": { id: "2004", blurb: "Continue the timeline — the wartime election" },
+  "2004": { id: "2008", blurb: "Continue the timeline — the crash of 2008" },
+  "2008": { id: "2012", blurb: "Continue the timeline — defend the coalition" },
+  "2012": { id: "2016", blurb: "Continue the timeline — hold the blue wall" },
+  "2016": { id: "2020", blurb: "Continue the timeline — the pandemic election" },
+  "2020": { id: "2024", blurb: "Continue the timeline — the 2024 rematch" },
+  "2024": { id: "2000", blurb: "Try a different era — the Florida recount awaits" },
+};
 
 const prefersReduced = () =>
   typeof window === "undefined" ||
@@ -167,6 +184,8 @@ export function ResultsScreen() {
           )}
         </div>
 
+        {done && <ScoreAndAchievements />}
+
         {done && (
           <>
             <div className="card">
@@ -184,6 +203,8 @@ export function ResultsScreen() {
               ))}
             </div>
 
+            <NextScenario />
+
             <div className="row" style={{ gap: 8, marginTop: 4 }}>
               <button className="ghost" style={{ flex: "0 0 auto", padding: "12px 18px" }} onClick={() => setStatsOpen(true)}>
                 📊 Race Stats
@@ -197,6 +218,141 @@ export function ResultsScreen() {
         )}
       </div>
       {statsOpen && <StatsScreen onClose={() => setStatsOpen(false)} />}
+    </div>
+  );
+}
+
+// ── Campaign score + achievements + leaderboard post ────────────────────────
+function ScoreAndAchievements() {
+  const game = useGameStore((s) => s.game)!;
+  const difficulty = useGameStore((s) => s.difficulty);
+  const user = useAuthStore((s) => s.user);
+  const openModal = useAuthStore((s) => s.openModal);
+  const result = game.result!;
+  const player = game.playerCandidate;
+  const scenarioId = `us-${SCENARIOS[game.scenarioId ?? "2020"]?.year ?? game.scenarioId}`;
+
+  const facts = useMemo(() => usScoreFacts(result, player, difficulty), [result, player, difficulty]);
+  const score = computeScoreFromFacts(facts);
+  const earned = useMemo(
+    () => checkAchievements({ result, game, player, difficulty }),
+    [result, game, player, difficulty],
+  );
+
+  const [postState, setPostState] = useState<"idle" | "busy" | "done" | "error">("idle");
+  const [postNote, setPostNote] = useState("");
+
+  // Persist achievements once per mount: server for accounts, local for guests.
+  useEffect(() => {
+    const ids = earned.map((a) => a.id);
+    if (ids.length === 0) return;
+    recordLocalAchievements(scenarioId, ids);
+    if (user) void api.syncAchievements(scenarioId, ids).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const post = async () => {
+    setPostState("busy");
+    try {
+      const out = await api.postScore({
+        scenarioId,
+        difficulty,
+        score,
+        facts,
+        evMargin: Math.round(facts.unitMargin),
+        popularVoteMargin: facts.popularMargin,
+        turnsPlayed: game.turn,
+      });
+      setPostState("done");
+      setPostNote(out.posted ? `Posted — you're rank #${out.rank}.` : `Kept your personal best (${out.personalBest}). Rank #${out.rank}.`);
+    } catch (e) {
+      setPostState("error");
+      setPostNote(e instanceof Error ? e.message : "Could not reach the server");
+    }
+  };
+
+  return (
+    <>
+      <div className="card">
+        <div className="row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+          <div>
+            <div className="tag muted small" style={{ color: "var(--gold)", letterSpacing: "2px" }}>
+              <Trophy size={12} style={{ verticalAlign: "-2px" }} /> CAMPAIGN SCORE
+            </div>
+            <div style={{ fontSize: 38, fontWeight: 800, lineHeight: 1.1 }}>
+              {score}<span className="muted" style={{ fontSize: 16, fontWeight: 600 }}> / 1000</span>
+            </div>
+            <div className="muted small">
+              EV margin {facts.unitMargin >= 0 ? "+" : ""}{Math.round(facts.unitMargin)} · popular{" "}
+              {facts.popularMargin >= 0 ? "+" : ""}{facts.popularMargin.toFixed(1)} pts · {difficulty} ×
+              {difficulty === "easy" ? "0.7" : difficulty === "hard" ? "1.5" : "1.0"}
+            </div>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            {user ? (
+              <button className="primary" disabled={postState === "busy" || postState === "done"} onClick={post}>
+                {postState === "done" ? "Posted ✓" : postState === "busy" ? "Posting…" : "Post to Leaderboard"}
+              </button>
+            ) : (
+              <button className="primary" onClick={() => openModal("login")}>
+                <Lock size={13} style={{ verticalAlign: "-2px", marginRight: 5 }} />Log in to post
+              </button>
+            )}
+            {postNote && <div className="muted small" style={{ marginTop: 6 }}>{postNote}</div>}
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <h3>🏆 Achievements — {earned.length} earned</h3>
+        {earned.length === 0 ? (
+          <p className="muted small">None this run. Landslides, comebacks, and debate sweeps all leave trophies.</p>
+        ) : (
+          <div className="row" style={{ flexWrap: "wrap", gap: 8 }}>
+            {earned.map((a) => (
+              <span key={a.id} className="chip up" title={a.description} style={{ fontSize: 12, padding: "6px 10px" }}>
+                {a.icon} {a.name}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+// ── "Next scenario" branching suggestion ─────────────────────────────────────
+function NextScenario() {
+  const game = useGameStore((s) => s.game)!;
+  const difficulty = useGameStore((s) => s.difficulty);
+  const newGame = useGameStore((s) => s.newGame);
+  const canPlay = useAuthStore((s) => s.canPlay);
+  const openModal = useAuthStore((s) => s.openModal);
+  const user = useAuthStore((s) => s.user);
+
+  const next = NEXT_SCENARIO[game.scenarioId ?? "2020"];
+  if (!next) return null;
+  const s = SCENARIOS[next.id];
+  const unlocked = canPlay(`us-${next.id}`);
+
+  return (
+    <div className="card">
+      <h3>Next Campaign</h3>
+      <div className="row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+        <div>
+          <div style={{ fontWeight: 700 }}>{s.label}</div>
+          <div className="muted small">{next.blurb}{!unlocked && " · part of the US Historical pack"}</div>
+        </div>
+        {unlocked ? (
+          <button className="secondary" onClick={() => newGame({ seed: String(Date.now()), playerCandidate: game.playerCandidate, scenario: next.id, eventMode: game.eventMode, difficulty })}>
+            Play {s.year} →
+          </button>
+        ) : (
+          <button className="secondary" onClick={() => openModal(user ? "activate" : "login", `us-${next.id}`)}>
+            🔒 Unlock {s.year}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

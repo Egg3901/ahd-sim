@@ -16,6 +16,7 @@ import { ISSUES, ISSUE_IDS } from "@content/issues";
 import { OPPONENT_OF } from "@content/candidates";
 import { resolveRunningMate, defaultRunningMate } from "@content/runningMates";
 import { getScenario, type Scenario, type ScenarioTicket } from "@content/scenarios";
+import { STAFF_BY_ID, MAX_STAFF } from "@content/staff";
 
 export function sigmoid(x: number): number {
   return 1 / (1 + Math.exp(-x));
@@ -210,6 +211,10 @@ export interface NewGameOptions {
   eventMode?: EventMode;
   // Difficulty — also sizes the player's resource handicap. Defaults to "normal".
   difficulty?: "easy" | "normal" | "hard";
+  // Hired staffer ids for the player's ticket (up to MAX_STAFF; see content/staff).
+  staff?: string[];
+  // Free replayability modifiers (see GameState.modifiers).
+  modifiers?: GameState["modifiers"];
 }
 
 // Builds a fresh, fully-initialized game state. Deterministic given the seed.
@@ -228,7 +233,12 @@ export function createGame(opts: NewGameOptions = {}): GameState {
   const salience = {} as GameState["salience"];
   for (const id of ISSUE_IDS) salience[id] = scenario.issueSalience?.[id] ?? ISSUES[id].baseSalience;
   const player = opts.playerCandidate ?? "dem";
-  const handicap = HANDICAP[opts.difficulty ?? "normal"];
+  const baseHandicap = HANDICAP[opts.difficulty ?? "normal"];
+  // Mirror Match: the underdog boost — extra war chest + slots regardless of
+  // difficulty (the "play the historical loser with better resources" mode).
+  const handicap: PlayerHandicap = opts.modifiers?.mirrorMatch
+    ? { ...baseHandicap, cash: baseHandicap.cash + 40_000_000, actions: baseHandicap.actions + 2 }
+    : baseHandicap;
   const tickets: Record<CandidateId, ScenarioTicket> = { dem: scenario.dem, rep: scenario.rep };
   const candidates: Record<CandidateId, Candidate> = {
     dem: buildCandidate("dem", scenario.dem),
@@ -240,6 +250,39 @@ export function createGame(opts: NewGameOptions = {}): GameState {
   } as Record<CandidateId, RunningMate>;
   applyRunningMate(candidates.dem, vps.dem);
   applyRunningMate(candidates.rep, vps.rep);
+
+  // Staff: instant effects fold in at creation (trait bonuses now; the extra
+  // action slots below via startingResources); in-flight multipliers are read
+  // from game.staff during play. Salaries + loyalty live in the store layer.
+  const hires = (opts.staff ?? []).filter((id) => STAFF_BY_ID[id]).slice(0, MAX_STAFF);
+  let staffActionBonus = 0;
+  for (const id of hires) {
+    const def = STAFF_BY_ID[id];
+    staffActionBonus += def.effects.maxActions ?? 0;
+    if (def.effects.traitBonuses) {
+      for (const [k, v] of Object.entries(def.effects.traitBonuses)) {
+        const key = k as keyof CandidateTraits;
+        candidates[player].traits[key] = Math.max(0, Math.min(100, candidates[player].traits[key] + (v ?? 0)));
+      }
+      // Staff trait boosts are permanent for the run: fold them into the decay
+      // baseline so weekly prep-relaxation doesn't erase the hire.
+      candidates[player].baseTraits = { ...candidates[player].traits };
+    }
+  }
+
+  // What If: flip a chosen contest's prior to a pure tossup (free modifier).
+  const priors = { ...(scenario.statePriors ?? {}) };
+  if (opts.modifiers?.whatIfState) priors[opts.modifiers.whatIfState] = 0.5;
+
+  // Pandemic Mode: COVID-era dynamics in any year.
+  if (opts.modifiers?.pandemic) salience.covid_response = Math.max(salience.covid_response ?? 0, 0.85);
+
+  const resources = {
+    dem: startingResources("dem", vps.dem, scenario.dem.traits.energy, player === "dem" ? handicap : undefined),
+    rep: startingResources("rep", vps.rep, scenario.rep.traits.energy, player === "rep" ? handicap : undefined),
+  };
+  resources[player].maxActions += staffActionBonus;
+  resources[player].actions += staffActionBonus;
 
   return {
     seed,
@@ -256,17 +299,18 @@ export function createGame(opts: NewGameOptions = {}): GameState {
     candidates,
     issues: structuredClone(ISSUES),
     salience,
-    states: withEnvironment(buildStates(scenario.statePriors, scenario.evOverrides), player, handicap.environment),
-    resources: {
-      dem: startingResources("dem", vps.dem, scenario.dem.traits.energy, player === "dem" ? handicap : undefined),
-      rep: startingResources("rep", vps.rep, scenario.rep.traits.energy, player === "rep" ? handicap : undefined),
-    },
+    states: withEnvironment(buildStates(priors, scenario.evOverrides), player, handicap.environment),
+    resources,
     pendingEvents: [],
     firedEventIds: [],
     queuedActions: [],
     causes: [],
     lastRecap: [],
     runningMates: { dem: vps.dem.id, rep: vps.rep.id },
+    staff: { [player]: hires },
+    adSpend: { dem: 0, rep: 0 },
+    debateHistory: [],
+    modifiers: opts.modifiers,
   };
 }
 

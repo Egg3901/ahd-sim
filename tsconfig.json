@@ -22,7 +22,8 @@
       "@content/*": ["src/content/*"],
       "@ui/*": ["src/ui/*"],
       "@persistence/*": ["src/persistence/*"],
-      "@store/*": ["src/store/*"]
+      "@store/*": ["src/store/*"],
+      "@lib/*": ["src/lib/*"]
     }
   },
   "include": ["src"]

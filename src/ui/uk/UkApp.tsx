@@ -9,14 +9,14 @@ import { UkResults } from "./UkResults";
 import { partyName, partyColor } from "./parties";
 import { Vote } from "lucide-react";
 
-export function UkApp({ onExit }: { onExit: () => void }) {
+export function UkApp({ onExit, initialElection }: { onExit: () => void; initialElection?: string }) {
   const game = useUkStore((s) => s.game);
   const endTurn = useUkStore((s) => s.endTurn);
   const undo = useUkStore((s) => s.undo);
   const canUndo = useUkStore((s) => s.history.length > 0);
   const live = useUkStore((s) => s.liveProjection)();
 
-  if (!game) return <div className="app screen"><UkSetup onBack={onExit} /></div>;
+  if (!game) return <div className="app screen"><UkSetup onBack={onExit} initialElection={initialElection} /></div>;
   if (game.phase === "result") return <div className="app screen"><UkResults /></div>;
 
   const weeksLeft = game.totalTurns - game.turn;

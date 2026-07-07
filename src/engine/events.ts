@@ -117,6 +117,14 @@ export function applyEventEffect(
     }
   }
 
+  if (effect.positionShifts) {
+    const positions = game.candidates[beneficiary].issuePositions;
+    for (const [issueId, delta] of Object.entries(effect.positionShifts)) {
+      const key = issueId as keyof typeof positions;
+      positions[key] = clamp((positions[key] ?? 0) + (delta ?? 0), -1, 1);
+    }
+  }
+
   const res = game.resources[beneficiary];
   if (effect.momentum) res.nationalMomentum = clamp(res.nationalMomentum + effect.momentum, -100, 100);
   if (effect.cash) res.cash += effect.cash;
@@ -220,7 +228,10 @@ export function resolveDebate(
     if (meltdown) l.mediaNarrative = clamp(l.mediaNarrative - 8, -100, 100);
   }
 
-  return { eventId: event.id, title: event.title, scores, choiceText, resultText, winner, margin, meltdown, momentumSwing };
+  const debate: DebateResult = { eventId: event.id, title: event.title, scores, choiceText, resultText, winner, margin, meltdown, momentumSwing };
+  // Record for the post-game ledger (Debate Dominator achievement, stats).
+  (game.debateHistory ??= []).push(debate);
+  return debate;
 }
 
 // Queues this turn's events: every scheduled event due now, plus up to one

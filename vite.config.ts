@@ -13,6 +13,13 @@ export default defineConfig({
       "@ui": fileURLToPath(new URL("./src/ui", import.meta.url)),
       "@persistence": fileURLToPath(new URL("./src/persistence", import.meta.url)),
       "@store": fileURLToPath(new URL("./src/store", import.meta.url)),
+      "@lib": fileURLToPath(new URL("./src/lib", import.meta.url)),
+    },
+  },
+  server: {
+    // Dev-mode API passthrough to the campaign backend (npm run server).
+    proxy: {
+      "/api": `http://localhost:${process.env.CAMPAIGN_API_PORT ?? 3401}`,
     },
   },
   test: {

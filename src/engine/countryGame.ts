@@ -1,0 +1,588 @@
+// ─────────────────────────────────────────────────────────────────────────
+// COUNTRY GAME — the country-agnostic multiparty campaign.
+//
+// ukGame.ts proved the shape: regions with calibrated bloc appeals, the shared
+// softmax vote model + seats curve (multiparty.ts), leaders whose traits scale
+// action effectiveness, and a light weekly event. This module is that same
+// game with every UK-specific import replaced by a `CountryBundle` parameter,
+// so Canada, Germany, France (and any future country) are pure content drops.
+// The UK path itself is intentionally untouched.
+// ─────────────────────────────────────────────────────────────────────────
+
+import type { PartyId, PoliticalSystem } from "./system";
+import type { CauseEntry, Government, SeatResult, StateBloc, StateContest } from "./types";
+import { createRng, hashSeed, type Rng } from "./rng";
+import { computeSeatsResult, blocPartyShares, tallyRegion, softmax } from "./multiparty";
+
+// ── Content bundle: everything a country ships ────────────────────────────
+export interface CountryBlocDef {
+  id: string;
+  name: string;
+  share: number;             // national electorate fraction (normalized per region)
+  turnoutPropensity: number; // 0..1
+  tilt: Record<PartyId, number>; // per-party logit nudge vs the region baseline
+}
+
+export interface CountryRegionMeta {
+  id: string;
+  name: string;
+  abbr: string;
+  seats: number;      // the region's awardable-unit pool
+  electorate: number; // thousands of votes cast (weights the national aggregate)
+  profile?: Record<string, number>; // per-bloc share multipliers
+  // Rough cartogram position for the generic tile map.
+  tile: { row: number; col: number };
+  // Optional per-region FPTP amplification override (1.0 ≈ proportional).
+  seatElasticity?: number;
+}
+
+export interface CountryRegionResult {
+  v: Record<PartyId, number>; // real vote share per party
+  s: Record<PartyId, number>; // real seats per party (sums to the region pool)
+}
+
+export interface CountryElectionData {
+  id: string;
+  year: number;
+  label: string;
+  tagline: string;
+  salience: Record<string, number>;
+  regions: Record<string, CountryRegionResult>;
+}
+
+export interface CountryLeader {
+  partyId: PartyId;
+  name: string;
+  charisma: number;
+  energy: number;
+  competence: number;
+  machine: number;
+}
+
+export type CountryEventRole = "any" | "player" | "leader" | "challenger";
+
+export interface CountryEventDef {
+  id: string;
+  headline: string; // {party} substituted with the target's short name
+  role: CountryEventRole;
+  weight: number;
+  appeal?: number;
+  momentum?: number;
+}
+
+export interface CountryIssueDef {
+  id: string;
+  name: string;
+  blurb: string;
+}
+
+export interface CountryBundle {
+  id: string;    // "CA" | "DE" | "FR"
+  label: string; // "Canada"
+  flag: string;
+  currency: string;        // "$" | "€"
+  unitName: string;        // "seat" | "point"
+  unitNamePlural: string;  // "seats" | "points"
+  goalText: string;        // "172 of 343 seats"
+  system: PoliticalSystem;
+  playable: PartyId[];
+  abstaining: PartyId[];
+  defaultSeatElasticity: number;
+  issues: CountryIssueDef[];
+  blocs: CountryBlocDef[];
+  regions: CountryRegionMeta[];
+  elections: Record<string, CountryElectionData>;
+  leaders: Record<string, Partial<Record<PartyId, CountryLeader>>>;
+  events: CountryEventDef[];
+  eventChance: number;
+  // Coalition-compatibility predicate (Germany's firewall, etc.).
+  compatible?: (lead: PartyId, partner: PartyId) => boolean;
+  // Country-specific framing of the outcome (France: "wins the presidency").
+  governmentText?: (g: Government, partyName: (p: PartyId) => string) => string | undefined;
+}
+
+// ── Region construction (the country-parameterized ukSetup) ───────────────
+const EPS = 1e-9;
+
+function normalizeShare(v: Record<string, number>): Record<PartyId, number> {
+  const sum = Object.values(v).reduce((s, x) => s + Math.max(0, x), 0);
+  const out: Record<PartyId, number> = {};
+  for (const p of Object.keys(v)) out[p] = sum > 0 ? Math.max(0, v[p]) / sum : 0;
+  return out;
+}
+
+// Solve per-bloc appeals so the region's turnout-weighted aggregate hits the
+// real result — same IPF as the UK builder, over this country's blocs.
+function solveRegionBlocs(
+  blocs: { id: string; size: number; turnout: number; tilt: Record<PartyId, number> }[],
+  target: Record<PartyId, number>,
+): StateBloc[] {
+  const parties = Object.keys(target);
+  const lnTarget: Record<PartyId, number> = {};
+  for (const p of parties) lnTarget[p] = Math.log(Math.max(EPS, target[p]));
+  const corr: Record<PartyId, number> = Object.fromEntries(parties.map((p) => [p, 0]));
+
+  const appealFor = (b: { tilt: Record<PartyId, number> }): Record<PartyId, number> => {
+    const a: Record<PartyId, number> = {};
+    for (const p of parties) a[p] = lnTarget[p] + (b.tilt[p] ?? 0) + corr[p];
+    return a;
+  };
+
+  for (let iter = 0; iter < 16; iter++) {
+    const agg: Record<PartyId, number> = Object.fromEntries(parties.map((p) => [p, 0]));
+    let totW = 0;
+    for (const b of blocs) {
+      const sh = softmax(appealFor(b));
+      const w = b.size * b.turnout;
+      for (const p of parties) agg[p] += w * sh[p];
+      totW += w;
+    }
+    for (const p of parties) {
+      const a = totW > 0 ? agg[p] / totW : target[p];
+      corr[p] += Math.log(Math.max(EPS, target[p]) / Math.max(EPS, a));
+    }
+  }
+
+  return blocs.map((b) => {
+    const appeal = appealFor(b);
+    const support = softmax(appeal);
+    return {
+      blocId: b.id as StateBloc["blocId"],
+      size: b.size,
+      turnoutPropensity: b.turnout,
+      baselineMargin: 0,
+      support: support as StateBloc["support"],
+      campaignMargin: 0,
+      enthusiasm: 1,
+      appeal,
+      campaignAppeal: Object.fromEntries(parties.map((p) => [p, 0])),
+    };
+  });
+}
+
+function buildRegionContest(country: CountryBundle, meta: CountryRegionMeta, res: CountryRegionResult): StateContest {
+  const target = normalizeShare(res.v);
+  const raw = country.blocs.map((b) => ({ def: b, share: b.share * (meta.profile?.[b.id] ?? 1) }));
+  const totalShare = raw.reduce((s, r) => s + r.share, 0);
+  const blocsIn = raw.map((r) => ({
+    id: r.def.id,
+    size: (meta.electorate * r.share) / totalShare,
+    turnout: r.def.turnoutPropensity,
+    tilt: r.def.tilt,
+  }));
+
+  return {
+    id: meta.id,
+    name: meta.name,
+    abbr: meta.abbr,
+    electoralVotes: 0,
+    region: "Swing",
+    prior2020DemShare: 0.5,
+    mediaMarketCost: 1,
+    battleground: false,
+    blocs: solveRegionBlocs(blocsIn, target),
+    groundGame: { dem: 0, rep: 0 },
+    momentum: 0,
+    seats: meta.seats,
+    baselineSeats: { ...res.s },
+    baselineShare: target,
+    seatElasticity: meta.seatElasticity ?? country.defaultSeatElasticity,
+  };
+}
+
+export function buildCountryRegions(country: CountryBundle, election: CountryElectionData): StateContest[] {
+  return country.regions
+    .filter((meta) => election.regions[meta.id])
+    .map((meta) => buildRegionContest(country, meta, election.regions[meta.id]));
+}
+
+// ── Game state (mirrors UkGameState, keyed by countryId) ──────────────────
+export interface CountryResources {
+  funds: number;    // millions, in the country's currency
+  actions: number;
+  maxActions: number;
+  momentum: number;
+}
+
+export type CountryActionType =
+  | "broadcast" | "rally" | "surrogate" | "fundraise" | "ground_game" | "gotv"
+  | "canvass" | "oppo_research" | "debate_prep" | "policy_prep" | "issue_pivot";
+
+export type CountryAdMode = "positive" | "contrast" | "issue";
+
+export interface CountryAction {
+  type: CountryActionType;
+  party: PartyId;
+  regionId?: string;
+  targetParty?: PartyId;
+  mode?: CountryAdMode;
+  issueId?: string;
+  spend?: number;
+  day?: number;
+}
+
+export interface CountryResult {
+  seats: Record<PartyId, number>;
+  voteShare: Record<PartyId, number>;
+  seatResults: SeatResult[];
+  largestParty: PartyId;
+  hung: boolean;
+  government: Government;
+  postMortem: CauseEntry[];
+}
+
+export interface CountryGameState {
+  countryId: string;
+  seed: number;
+  rngState: number;
+  turn: number;
+  totalTurns: number;
+  phase: "campaign" | "result";
+  electionId: string;
+  label: string;
+  tagline: string;
+  playerParty: PartyId;
+  parties: PartyId[];
+  leaders: Record<PartyId, CountryLeader>;
+  salience: Record<string, number>;
+  regions: StateContest[];
+  resources: Record<PartyId, CountryResources>;
+  causes: CauseEntry[];
+  queuedActions: CountryAction[];
+  abstaining: PartyId[];
+  news: { turn: number; text: string }[];
+  result?: CountryResult;
+}
+
+function activeParties(country: CountryBundle, election: CountryElectionData): PartyId[] {
+  const set = new Set<PartyId>();
+  for (const r of Object.values(election.regions)) {
+    for (const p of Object.keys(r.v)) set.add(p);
+    for (const p of Object.keys(r.s)) set.add(p);
+  }
+  const order = [...country.playable, ...country.system.parties.map((p) => p.id)];
+  return [...set].sort((a, b) => order.indexOf(a) - order.indexOf(b));
+}
+
+export function playablePartiesIn(country: CountryBundle, electionId: string): PartyId[] {
+  const election = country.elections[electionId];
+  if (!election) return [...country.playable];
+  const active = new Set(activeParties(country, election));
+  return country.playable.filter((p) => active.has(p));
+}
+
+function leaderFor(country: CountryBundle, electionId: string, partyId: PartyId): CountryLeader {
+  const name = country.system.parties.find((p) => p.id === partyId)?.shortName ?? partyId.toUpperCase();
+  return (
+    country.leaders[electionId]?.[partyId] ?? {
+      partyId, name: `${name} leader`, charisma: 55, energy: 60, competence: 60, machine: 55,
+    }
+  );
+}
+
+export interface NewCountryGameOptions {
+  seed?: number | string;
+  election?: string;
+  playerParty?: PartyId;
+  totalTurns?: number;
+}
+
+export function createCountryGame(country: CountryBundle, opts: NewCountryGameOptions = {}): CountryGameState {
+  const ids = Object.keys(country.elections);
+  const election = country.elections[opts.election ?? ids[0]] ?? country.elections[ids[0]];
+  const seed = typeof opts.seed === "string" ? hashSeed(opts.seed) : (opts.seed ?? Date.now()) >>> 0;
+  const parties = activeParties(country, election);
+  const playerParty =
+    opts.playerParty && parties.includes(opts.playerParty)
+      ? opts.playerParty
+      : parties.find((p) => country.playable.includes(p)) ?? parties[0];
+
+  const leaders: Record<PartyId, CountryLeader> = {};
+  for (const p of parties) leaders[p] = leaderFor(country, election.id, p);
+
+  const resources: Record<PartyId, CountryResources> = {};
+  for (const p of parties) {
+    const machine = leaders[p].machine;
+    resources[p] = {
+      funds: 4 + machine / 10,
+      actions: 5 + Math.round(leaders[p].energy / 40),
+      maxActions: 5 + Math.round(leaders[p].energy / 40),
+      momentum: 0,
+    };
+  }
+
+  return {
+    countryId: country.id,
+    seed,
+    rngState: seed,
+    turn: 0,
+    totalTurns: opts.totalTurns ?? 6,
+    phase: "campaign",
+    electionId: election.id,
+    label: election.label,
+    tagline: election.tagline,
+    playerParty,
+    parties,
+    leaders,
+    salience: { ...election.salience },
+    regions: buildCountryRegions(country, election),
+    resources,
+    causes: [],
+    queuedActions: [],
+    abstaining: [...country.abstaining],
+    news: [],
+  };
+}
+
+// ── Actions (same verbs + balance as the UK game) ──────────────────────────
+const clamp = (x: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, x));
+const findRegion = (g: CountryGameState, id?: string) => g.regions.find((r) => r.id === id);
+
+function saturate(bloc: StateContest["blocs"][number], party: PartyId, raw: number): number {
+  const acc = Math.abs(bloc.campaignAppeal?.[party] ?? 0);
+  const room = Math.max(0.15, 1 - acc / 0.8);
+  return raw * room;
+}
+
+function addAppeal(g: CountryGameState, region: StateContest, party: PartyId, cause: string, delta: number) {
+  for (const bloc of region.blocs) {
+    if (!bloc.campaignAppeal) bloc.campaignAppeal = {};
+    bloc.campaignAppeal[party] = (bloc.campaignAppeal[party] ?? 0) + saturate(bloc, party, delta);
+  }
+  g.causes.push({ turn: g.turn, stateId: region.id, cause, marginDelta: delta });
+}
+
+const standsIn = (g: CountryGameState, party: PartyId) =>
+  g.regions.filter((r) => r.baselineShare?.[party] !== undefined);
+
+function topRivalIn(region: StateContest, party: PartyId): PartyId | undefined {
+  const { shareByParty } = tallyRegion(region);
+  return Object.keys(shareByParty)
+    .filter((p) => p !== party && (shareByParty[p] ?? 0) > 0)
+    .sort((x, y) => (shareByParty[y] ?? 0) - (shareByParty[x] ?? 0))[0];
+}
+
+export function applyCountryAction(g: CountryGameState, a: CountryAction, rng: Rng) {
+  const res = g.resources[a.party];
+  if (!res || res.actions < 1) return;
+  const leader = g.leaders[a.party];
+  const skill = 0.85 + leader.charisma / 400;
+  const compSkill = 0.85 + leader.competence / 400;
+  const region = findRegion(g, a.regionId);
+  const spend = (need: number) => { if (res.funds < need) return false; res.funds -= need; return true; };
+
+  switch (a.type) {
+    case "canvass": {
+      if (!region) return;
+      res.actions -= 1;
+      addAppeal(g, region, a.party, `${leader.name} doorstep campaign in ${region.abbr}`, 0.05 * skill * (0.9 + rng.next() * 0.2));
+      break;
+    }
+    case "ground_game": {
+      if (!region) return;
+      if (!spend(1.5)) return;
+      res.actions -= 1;
+      region.momentum = clamp(region.momentum + 2, -100, 100);
+      addAppeal(g, region, a.party, `${leader.name} field operation in ${region.abbr}`, 0.075 * (0.85 + leader.machine / 300));
+      break;
+    }
+    case "gotv": {
+      if (!region) return;
+      if (!spend(1)) return;
+      res.actions -= 1;
+      addAppeal(g, region, a.party, `${leader.name} GOTV drive in ${region.abbr}`, 0.06 * (0.85 + leader.energy / 300));
+      break;
+    }
+    case "rally": {
+      if (!region) return;
+      res.actions -= 1;
+      region.momentum = clamp(region.momentum + 6, -100, 100);
+      res.momentum = clamp(res.momentum + 2, -100, 100);
+      addAppeal(g, region, a.party, `${leader.name} rally in ${region.abbr}`, 0.045 * skill);
+      break;
+    }
+    case "surrogate": {
+      if (!region) return;
+      if (!spend(0.25)) return;
+      res.actions -= 1;
+      addAppeal(g, region, a.party, `Surrogate stumps for ${leader.name} in ${region.abbr}`, 0.035 * (0.85 + leader.energy / 300));
+      break;
+    }
+    case "broadcast": {
+      const cost = Math.max(0.5, a.spend ?? 1.5);
+      if (!spend(cost)) return;
+      res.actions -= 1;
+      const mode = a.mode ?? "positive";
+      const targets = region ? [region] : standsIn(g, a.party);
+      const power = 0.02 * Math.sqrt(cost / 1.5) * (0.85 + leader.machine / 300);
+      const per = region ? power : power * 0.8;
+      if (mode === "issue" && a.issueId) {
+        g.salience[a.issueId] = clamp((g.salience[a.issueId] ?? 0.4) + 0.05, 0, 1);
+        for (const t of targets) addAppeal(g, t, a.party, `${leader.name} issue broadcast`, per * 0.7);
+      } else if (mode === "contrast") {
+        for (const t of targets) {
+          const foe = a.targetParty ?? topRivalIn(t, a.party);
+          if (foe) addAppeal(g, t, foe, `${leader.name} contrast broadcast`, -per * 0.9);
+        }
+      } else {
+        for (const t of targets) addAppeal(g, t, a.party, `${leader.name} broadcast`, per);
+      }
+      res.momentum = clamp(res.momentum + 1, -100, 100);
+      break;
+    }
+    case "oppo_research": {
+      if (!spend(2)) return;
+      res.actions -= 1;
+      const scope = region ? [region] : standsIn(g, a.party);
+      for (const t of scope) {
+        const foe = a.targetParty ?? topRivalIn(t, a.party);
+        if (foe) addAppeal(g, t, a.party === foe ? a.party : foe, `${leader.name}'s team releases dossier on ${foe.toUpperCase()}`, -0.05 * compSkill);
+      }
+      break;
+    }
+    case "debate_prep": {
+      res.actions -= 1;
+      for (const t of standsIn(g, a.party)) addAppeal(g, t, a.party, `${leader.name} debate performance`, 0.012 * compSkill);
+      res.momentum = clamp(res.momentum + 4, -100, 100);
+      break;
+    }
+    case "policy_prep": {
+      res.actions -= 1;
+      for (const t of standsIn(g, a.party)) addAppeal(g, t, a.party, `${leader.name} platform launch`, 0.014 * compSkill);
+      res.momentum = clamp(res.momentum + 2, -100, 100);
+      break;
+    }
+    case "issue_pivot": {
+      res.actions -= 1;
+      if (a.issueId) g.salience[a.issueId] = clamp((g.salience[a.issueId] ?? 0.4) + 0.08, 0, 1);
+      for (const t of standsIn(g, a.party)) addAppeal(g, t, a.party, `${leader.name} pivots the campaign`, 0.008 * skill);
+      break;
+    }
+    case "fundraise": {
+      res.actions -= 1;
+      const haul = (1.5 + leader.machine / 50) * (0.85 + rng.next() * 0.3);
+      res.funds += haul;
+      g.causes.push({ turn: g.turn, cause: `${leader.name} fundraising (+${haul.toFixed(1)}M)`, marginDelta: 0 });
+      break;
+    }
+  }
+}
+
+// ── AI + events + turn loop (country-parameterized) ────────────────────────
+function planAiActions(g: CountryGameState, party: PartyId, rng: Rng): CountryAction[] {
+  const out: CountryAction[] = [];
+  const budget = g.resources[party].actions;
+  const ranked = g.regions
+    .filter((r) => r.baselineShare?.[party] !== undefined)
+    .map((r) => ({ r, share: r.baselineShare?.[party] ?? 0 }))
+    .sort((a, b) => b.share - a.share);
+  for (let i = 0; i < budget && i < ranked.length; i++) {
+    const region = ranked[i % Math.max(1, Math.min(ranked.length, 4))].r;
+    if (g.resources[party].funds < 1 && rng.chance(0.4)) out.push({ type: "fundraise", party });
+    else if (rng.chance(0.25)) out.push({ type: "rally", party, regionId: region.id });
+    else out.push({ type: "canvass", party, regionId: region.id });
+  }
+  return out;
+}
+
+function pickEventTarget(
+  role: CountryEventRole,
+  player: PartyId,
+  leader: PartyId,
+  majors: PartyId[],
+  pick: (xs: PartyId[]) => PartyId,
+): PartyId {
+  switch (role) {
+    case "player": return player;
+    case "leader": return leader;
+    case "challenger": return pick(majors.filter((p) => p !== leader)) ?? player;
+    default: return pick(majors) ?? player;
+  }
+}
+
+function fireCountryEvent(g: CountryGameState, country: CountryBundle, rng: Rng) {
+  if (country.events.length === 0 || !rng.chance(country.eventChance)) return;
+  const ev = rng.weightedPick(country.events, country.events.map((e) => e.weight));
+  const proj = computeSeatsResult(g.regions, country.system.majority, g.abstaining);
+  const majors = g.parties.filter((p) => country.playable.includes(p));
+  const target = pickEventTarget(ev.role, g.playerParty, proj.largestParty, majors, (xs) => rng.pick(xs));
+  if (!target) return;
+
+  if (ev.appeal) {
+    for (const region of g.regions) {
+      if (region.baselineShare?.[target] === undefined) continue;
+      for (const bloc of region.blocs) {
+        if (!bloc.campaignAppeal) bloc.campaignAppeal = {};
+        bloc.campaignAppeal[target] = (bloc.campaignAppeal[target] ?? 0) + ev.appeal;
+      }
+    }
+    g.causes.push({ turn: g.turn, cause: `${ev.id}: ${target.toUpperCase()}`, marginDelta: ev.appeal });
+  }
+  if (ev.momentum && g.resources[target]) {
+    g.resources[target].momentum = clamp(g.resources[target].momentum + ev.momentum, -100, 100);
+  }
+  const short = country.system.parties.find((p) => p.id === target)?.shortName ?? target.toUpperCase();
+  g.news = [{ turn: g.turn, text: ev.headline.replace("{party}", short) }, ...g.news].slice(0, 12);
+}
+
+export interface CountryAdvanceOptions {
+  disableAi?: boolean; // calibration anchor: neutral play reproduces history
+}
+
+export function countryAdvanceTurn(g: CountryGameState, country: CountryBundle, opts: CountryAdvanceOptions = {}): CountryGameState {
+  const next: CountryGameState = structuredClone(g);
+  const rng = createRng(next.rngState);
+
+  for (const a of next.queuedActions) applyCountryAction(next, a, rng);
+  next.queuedActions = [];
+
+  if (!opts.disableAi) {
+    for (const p of next.parties) {
+      if (p === next.playerParty || !country.playable.includes(p)) continue;
+      for (const a of planAiActions(next, p, rng)) applyCountryAction(next, a, rng);
+    }
+    fireCountryEvent(next, country, rng);
+  }
+
+  for (const p of next.parties) {
+    next.resources[p].momentum *= 0.7;
+    next.resources[p].actions = next.resources[p].maxActions;
+  }
+  for (const region of next.regions) {
+    region.momentum *= 0.6;
+    for (const bloc of region.blocs) bloc.support = blocPartyShares(bloc) as typeof bloc.support;
+  }
+
+  next.turn += 1;
+  next.rngState = rng.state();
+  if (next.turn >= next.totalTurns) {
+    next.phase = "result";
+    next.result = computeCountryResult(next, country);
+  }
+  return next;
+}
+
+export function computeCountryResult(g: CountryGameState, country: CountryBundle): CountryResult {
+  const r = computeSeatsResult(g.regions, country.system.majority, g.abstaining, country.compatible);
+  const playerName = g.leaders[g.playerParty]?.name ?? "";
+  const mine = g.causes.filter((c) => c.marginDelta !== 0 && c.cause.includes(playerName));
+  const pool = mine.length > 0 ? mine : g.causes.filter((c) => c.marginDelta !== 0);
+  const postMortem = [...pool]
+    .sort((a, b) => Math.abs(b.marginDelta) - Math.abs(a.marginDelta))
+    .slice(0, 8);
+  return { ...r, postMortem };
+}
+
+export function projectCountry(g: CountryGameState, country: CountryBundle): CountryResult {
+  return computeCountryResult(g, country);
+}
+
+export function projectCountryPreview(g: CountryGameState, country: CountryBundle): CountryResult {
+  if (g.queuedActions.length === 0) return computeCountryResult(g, country);
+  const clone = structuredClone(g);
+  const rng = createRng(clone.rngState);
+  for (const a of clone.queuedActions) applyCountryAction(clone, a, rng);
+  for (const region of clone.regions)
+    for (const bloc of region.blocs) bloc.support = blocPartyShares(bloc) as typeof bloc.support;
+  return computeCountryResult(clone, country);
+}
