@@ -5,12 +5,19 @@
 
 import express from "express";
 import cors from "cors";
+import { existsSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { getDb } from "./db.js";
 import { ensureSeedCodes, generateCodes } from "./activation.js";
 import { authRouter } from "./routes/auth.js";
 import { leaderboardRouter, achievementsRouter } from "./routes/leaderboard.js";
 
 const PORT = Number(process.env.PORT ?? 3401);
+const HERE = dirname(fileURLToPath(import.meta.url));
+// Production single-process mode: serve the built SPA alongside the API (the
+// sim.ahousedividedgame.com deployment — Caddy proxies the whole host here).
+const DIST = process.env.CAMPAIGN_DIST ?? join(HERE, "..", "dist");
 
 const app = express();
 app.use(cors());
@@ -33,6 +40,16 @@ app.post("/api/admin/codes", (req, res) => {
   const n = Math.min(1000, Math.max(1, Number(count) || 10));
   res.json({ codes: generateCodes(scenarioId ?? null, packId ?? null, n) });
 });
+
+// Static SPA (when a build exists): assets first, then the index fallback for
+// client-side routes. API routes above always win.
+if (existsSync(DIST)) {
+  app.use(express.static(DIST));
+  app.get(/^\/(?!api\/).*/, (_req, res) => {
+    res.sendFile(join(DIST, "index.html"));
+  });
+  console.log(`[campaign-server] serving SPA from ${DIST}`);
+}
 
 getDb();
 ensureSeedCodes();
