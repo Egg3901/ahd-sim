@@ -32,6 +32,11 @@ describe("calibration: every scenario reproduces its historical winner", () => {
     "2012": { winner: "dem", demEV: 332 },
     "2008": { winner: "dem", demEV: 365 },
     "2000": { winner: "rep", demEV: 266 },
+    "1996": { winner: "dem", demEV: 379 },
+    "1992": { winner: "dem", demEV: 370 },
+    "1988": { winner: "rep", demEV: 111 },
+    "1984": { winner: "rep", demEV: 13 },
+    "1980": { winner: "rep", demEV: 49 },
   };
   for (const [scenario, h] of Object.entries(HISTORICAL)) {
     it(`${scenario} → ${h.winner} (~${h.demEV} dem EV)`, () => {
@@ -44,9 +49,11 @@ describe("calibration: every scenario reproduces its historical winner", () => {
 
 // ── Sticky leans ───────────────────────────────────────────────────────────
 describe("leans are sticky: the AI can't flip deep-safe states", () => {
-  // States that are deep-safe in EVERY scenario in the picker (2004/2000 compress
-  // the map, so CA/HI/MD aren't uniformly deep — these are).
-  const DEEP_DEM = ["DC", "MA", "VT", "RI", "NY"];
+  // States that are deep-safe in EVERY scenario in the picker. The Reagan years
+  // gut the old list — 1984 swept NY/MA/VT/RI — so only DC is deep-blue across
+  // all twelve maps. The four deep-red states hold even through 1992/96 (UT's
+  // two-party share stays safely Republican despite Perot).
+  const DEEP_DEM = ["DC"];
   const DEEP_REP = ["WY", "ID", "OK", "UT"];
   for (const scenario of SCENARIO_IDS) {
     it(`${scenario}: deep states stay put vs a passive player (hard AI)`, () => {

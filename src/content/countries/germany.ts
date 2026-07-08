@@ -1,10 +1,22 @@
-// GERMANY 2025 — the 21st Bundestag election (February 23, 2025). 630 seats
-// under the reformed (fully proportional) electoral law; 316 for a majority.
-// Real result as the calibration anchor: Union 208, AfD 152, SPD 120, Greens 85,
-// Linke 64, SSW 1 — FDP and BSW under the 5% threshold. Seat elasticity is 1.0:
-// proportional representation moves seats one-for-one with vote share.
+// GERMANY — two Bundestag elections, one bundle.
+//
+// 2025 (the 21st Bundestag, February 23, 2025): 630 seats under the reformed
+// (fully proportional) electoral law; 316 for a majority. Real result as the
+// calibration anchor: Union 208, AfD 152, SPD 120, Greens 85, Linke 64, SSW 1 —
+// FDP and BSW under the 5% threshold (both live inside `oth` here).
+//
+// 2021 (the 20th Bundestag, September 26, 2021): 735 seats with overhang and
+// leveling mandates; 368 for a majority. Anchor: SPD 206, Union 197, Grüne 118,
+// FDP 92, AfD 83, Linke 39. The FDP is its own (playable) party in this cycle —
+// the engine only offers parties present in an election's region data, so FDP
+// appears in 2021 and stays folded into `oth` in 2025.
+//
+// Seat elasticity is 1.0: proportional representation moves seats one-for-one
+// with vote share. Each election's `s` tables define its own region pools, so
+// the 735-seat chamber lives beside the 630-seat one.
 
 import type { CountryBundle } from "@engine/countryGame";
+import { DE_MAP } from "./paths/de";
 
 export const GERMANY: CountryBundle = {
   id: "DE",
@@ -16,6 +28,7 @@ export const GERMANY: CountryBundle = {
   goalText: "316 of 630 seats",
   defaultSeatElasticity: 1.0,
   eventChance: 0.7,
+  map: DE_MAP,
 
   system: {
     id: "DE",
@@ -26,12 +39,15 @@ export const GERMANY: CountryBundle = {
       { id: "spd", name: "Social Democratic Party", shortName: "SPD", color: "#e3000f" },
       { id: "grn", name: "Alliance 90/The Greens", shortName: "Grüne", color: "#409a3c" },
       { id: "lnk", name: "Die Linke", shortName: "Linke", color: "#be3075" },
-      { id: "oth", name: "Others (FDP, BSW, SSW…)", shortName: "Other", color: "#9aa0a6" },
+      { id: "fdp", name: "Free Democratic Party", shortName: "FDP", color: "#ffed00" },
+      // 2025's `oth` includes the sub-threshold FDP and BSW; in 2021 the FDP
+      // stands on its own line above.
+      { id: "oth", name: "Others (BSW, SSW…)", shortName: "Other", color: "#9aa0a6" },
     ],
     allocation: { id: "regional_seats_curve", label: "Proportional representation (regional pools)", unit: "seat" },
     majority: { total: 630, threshold: 316 },
   },
-  playable: ["cdu", "spd", "afd", "grn", "lnk"],
+  playable: ["cdu", "spd", "afd", "grn", "lnk", "fdp"],
   abstaining: [],
   // The firewall (Brandmauer): no democratic party partners the AfD, and the
   // Union's incompatibility resolution rules out governing with Die Linke.
@@ -53,15 +69,15 @@ export const GERMANY: CountryBundle = {
 
   blocs: [
     { id: "young", name: "Young voters (18–29)", share: 0.18, turnoutPropensity: 0.68,
-      tilt: { lnk: 0.5, grn: 0.25, afd: 0.15, cdu: -0.35, spd: -0.3 } },
+      tilt: { lnk: 0.5, grn: 0.25, afd: 0.15, fdp: 0.35, cdu: -0.35, spd: -0.3 } },
     { id: "graduate", name: "University graduates", share: 0.28, turnoutPropensity: 0.83,
-      tilt: { grn: 0.4, cdu: 0.05, lnk: 0.1, spd: 0.0, afd: -0.5 } },
+      tilt: { grn: 0.4, cdu: 0.05, lnk: 0.1, fdp: 0.15, spd: 0.0, afd: -0.5 } },
     { id: "worker", name: "Workers (Arbeiter)", share: 0.30, turnoutPropensity: 0.7,
-      tilt: { afd: 0.5, spd: 0.15, cdu: -0.05, grn: -0.35, lnk: 0.05 } },
+      tilt: { afd: 0.5, spd: 0.15, cdu: -0.05, fdp: -0.15, grn: -0.35, lnk: 0.05 } },
     { id: "homeowner", name: "Suburban homeowners", share: 0.30, turnoutPropensity: 0.82,
-      tilt: { cdu: 0.35, afd: 0.1, grn: -0.15, lnk: -0.2 } },
+      tilt: { cdu: 0.35, afd: 0.1, fdp: 0.25, grn: -0.15, lnk: -0.2 } },
     { id: "pensioner", name: "Pensioners (65+)", share: 0.26, turnoutPropensity: 0.86,
-      tilt: { cdu: 0.4, spd: 0.3, afd: -0.1, grn: -0.35, lnk: -0.15 } },
+      tilt: { cdu: 0.4, spd: 0.3, afd: -0.1, fdp: -0.25, grn: -0.35, lnk: -0.15 } },
   ],
 
   regions: [
@@ -97,6 +113,50 @@ export const GERMANY: CountryBundle = {
         BW:    { v: { cdu: 0.32, afd: 0.18, spd: 0.13, grn: 0.135, lnk: 0.06, oth: 0.175 }, s: { cdu: 30, afd: 17, spd: 12, grn: 11, lnk: 6 } },
         BAV:   { v: { cdu: 0.37, afd: 0.19, spd: 0.12, grn: 0.11, lnk: 0.06, oth: 0.15 }, s: { cdu: 42, afd: 21, spd: 13, grn: 11, lnk: 6 } },
       },
+      // The real story beats of winter 2025, in campaign order.
+      events: [
+        { id: "musk_weidel_stream", headline: "Musk endorses the AfD and livestreams with Weidel — the base roars, the centre recoils", role: "any", party: "afd", weight: 3, appeal: -0.02, momentum: 9, turn: 0 },
+        { id: "aschaffenburg", headline: "The Aschaffenburg attack reignites the migration debate — {party} owns the week", role: "any", party: "afd", weight: 3, appeal: 0.03, momentum: 8, turn: 1 },
+        { id: "migrationsantrag", headline: "Merz's migration motion passes with AfD votes — the hardline base rallies to {party}", role: "any", party: "cdu", weight: 3, appeal: 0.03, momentum: 7, turn: 2 },
+        { id: "brandmauer_beben", headline: "Hundreds of thousands march against the firewall breach — Merkel rebukes Merz, and the centre flinches from {party}", role: "any", party: "cdu", weight: 3, appeal: -0.035, momentum: -8, turn: 3 },
+        { id: "tv_duell_kanzler", headline: "{party}'s chancellor candidate takes the TV-Duell on points", role: "any", weight: 3, appeal: 0.03, momentum: 10, turn: 4 },
+        { id: "vw_schliessungen", headline: "VW plant closures and a second year of recession put the economy minister on trial — {party} bleeds", role: "any", party: "grn", weight: 2, appeal: -0.03, momentum: -7 },
+        { id: "spd_1887", headline: "'Worst result since 1887' — the doom loop tightens around {party}", role: "any", party: "spd", weight: 2, appeal: -0.03, momentum: -8 },
+        { id: "splitter_zittern", headline: "BSW and FDP flirt with the 5% line — wasted-vote warnings squeeze {party}", role: "any", party: "oth", weight: 2, appeal: -0.025, momentum: -6 },
+        { id: "kuechentisch", headline: "Habeck's kitchen-table campaign finds its audience — a quiet lift for {party}", role: "any", party: "grn", weight: 2, appeal: 0.025, momentum: 6 },
+      ],
+    },
+
+    "2021": {
+      id: "2021",
+      year: 2021,
+      label: "2021 · Scholz v. Laschet",
+      tagline: "Autumn 2021. Merkel is leaving after sixteen years, the Ahr valley is still digging out of the flood, and for the first time in the republic's history the chancellery has no incumbent and no favourite. Three candidates, one open throne.",
+      // 735 seats with overhang and leveling mandates; the winning post moves.
+      majority: { total: 735, threshold: 368 },
+      goalText: "368 of 735 seats",
+      salience: { energy_climate: 0.85, economy: 0.72, pensions: 0.62, housing: 0.6, migration: 0.3 },
+      regions: {
+        NORTH: { v: { spd: 0.31, cdu: 0.22, grn: 0.18, fdp: 0.11, afd: 0.07, lnk: 0.04, oth: 0.07 }, s: { spd: 37, cdu: 27, grn: 22, fdp: 13, afd: 8, lnk: 4 } },
+        NE:    { v: { spd: 0.265, cdu: 0.16, grn: 0.155, afd: 0.13, lnk: 0.105, fdp: 0.09, oth: 0.095 }, s: { spd: 26, cdu: 17, grn: 16, afd: 13, lnk: 11, fdp: 10 } },
+        NRW:   { v: { spd: 0.29, cdu: 0.26, grn: 0.16, fdp: 0.115, afd: 0.075, lnk: 0.04, oth: 0.06 }, s: { spd: 46, cdu: 42, grn: 25, fdp: 18, afd: 11, lnk: 6 } },
+        EAST:  { v: { afd: 0.225, spd: 0.22, cdu: 0.18, lnk: 0.10, fdp: 0.095, grn: 0.055, oth: 0.125 }, s: { afd: 22, spd: 21, cdu: 19, lnk: 10, fdp: 9, grn: 5 } },
+        WEST:  { v: { spd: 0.29, cdu: 0.235, grn: 0.14, fdp: 0.115, afd: 0.09, lnk: 0.035, oth: 0.095 }, s: { spd: 32, cdu: 26, grn: 15, fdp: 13, afd: 10, lnk: 3 } },
+        BW:    { v: { cdu: 0.25, spd: 0.215, grn: 0.17, fdp: 0.15, afd: 0.095, lnk: 0.035, oth: 0.085 }, s: { cdu: 24, spd: 21, grn: 17, fdp: 16, afd: 9, lnk: 2 } },
+        BAV:   { v: { cdu: 0.32, spd: 0.18, grn: 0.14, fdp: 0.105, afd: 0.09, lnk: 0.03, oth: 0.135 }, s: { cdu: 42, spd: 23, grn: 18, fdp: 13, afd: 10, lnk: 3 } },
+      },
+      // The real story beats of autumn 2021, in campaign order.
+      events: [
+        { id: "flutkatastrophe_lachen", headline: "Cameras catch Laschet laughing behind the President in the flood zone — the clip is everywhere", role: "any", party: "cdu", weight: 3, appeal: -0.04, momentum: -10, turn: 0 },
+        { id: "lebenslauf_sommer", headline: "The CV-and-plagiarism summer catches up with Baerbock again", role: "any", party: "grn", weight: 3, appeal: -0.035, momentum: -8, turn: 1 },
+        { id: "triell_sieger", headline: "Scholz wins the third Triell in a row — who else?", role: "any", party: "spd", weight: 3, appeal: 0.035, momentum: 10, turn: 3 },
+        { id: "ampel_oder_jamaika", headline: "Ampel or Jamaika? Final-week coalition arithmetic pulls tactical voters toward {party}", role: "challenger", weight: 3, appeal: 0.025, momentum: 6, turn: 5 },
+        { id: "scholzomat", headline: "The 'Scholzomat' steady-hand surge — boring is the new electable for {party}", role: "any", party: "spd", weight: 2, appeal: 0.025, momentum: 8 },
+        { id: "cumex_wirecard", headline: "Cum-ex and Wirecard questions dog {party}'s candidate — but never quite land", role: "any", party: "spd", weight: 2, appeal: -0.03, momentum: -7 },
+        { id: "erstwaehler_welle", headline: "First-time voters break for {party} — the yellow wave runs through every school gym", role: "any", party: "fdp", weight: 2, appeal: 0.03, momentum: 9 },
+        { id: "fuenf_prozent_zittern", headline: "{party} stares down the 5% cliff — only three direct mandates can save the list", role: "any", party: "lnk", weight: 2, appeal: -0.03, momentum: -8 },
+        { id: "union_schlussspurt", headline: "A red-red-green scare campaign rallies the {party} base in the final stretch", role: "any", party: "cdu", weight: 2, appeal: 0.03, momentum: 7 },
+      ],
     },
   },
 
@@ -107,6 +167,14 @@ export const GERMANY: CountryBundle = {
       afd: { partyId: "afd", name: "Alice Weidel", charisma: 62, energy: 70, competence: 56, machine: 60 },
       grn: { partyId: "grn", name: "Robert Habeck", charisma: 64, energy: 68, competence: 64, machine: 58 },
       lnk: { partyId: "lnk", name: "Heidi Reichinnek", charisma: 66, energy: 74, competence: 54, machine: 44 },
+    },
+    "2021": {
+      spd: { partyId: "spd", name: "Olaf Scholz", charisma: 40, energy: 58, competence: 78, machine: 76 },
+      cdu: { partyId: "cdu", name: "Armin Laschet", charisma: 34, energy: 60, competence: 62, machine: 78 },
+      grn: { partyId: "grn", name: "Annalena Baerbock", charisma: 60, energy: 72, competence: 52, machine: 56 },
+      afd: { partyId: "afd", name: "Alice Weidel & Tino Chrupalla", charisma: 54, energy: 62, competence: 50, machine: 54 },
+      lnk: { partyId: "lnk", name: "Janine Wissler & Dietmar Bartsch", charisma: 50, energy: 60, competence: 52, machine: 46 },
+      fdp: { partyId: "fdp", name: "Christian Lindner", charisma: 66, energy: 70, competence: 60, machine: 72 },
     },
   },
 

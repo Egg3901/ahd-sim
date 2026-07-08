@@ -325,7 +325,11 @@ export interface NewCountryGameOptions {
 }
 
 export function createCountryGame(country: CountryBundle, opts: NewCountryGameOptions = {}): CountryGameState {
-  const ids = Object.keys(country.elections);
+  // Default to the NEWEST election. (Never ids[0]: JS enumerates integer-like
+  // keys such as "2021" in ascending order regardless of insertion order, so
+  // ids[0] silently picks the oldest cycle in multi-election bundles.)
+  const ids = Object.keys(country.elections)
+    .sort((a, b) => country.elections[b].year - country.elections[a].year);
   const election = country.elections[opts.election ?? ids[0]] ?? country.elections[ids[0]];
   const seed = typeof opts.seed === "string" ? hashSeed(opts.seed) : (opts.seed ?? Date.now()) >>> 0;
   const parties = activeParties(country, election);

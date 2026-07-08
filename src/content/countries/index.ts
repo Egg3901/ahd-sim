@@ -2,11 +2,13 @@ import type { CountryBundle } from "@engine/countryGame";
 import { CANADA } from "./canada";
 import { GERMANY } from "./germany";
 import { FRANCE } from "./france";
+import { AUSTRALIA } from "./australia";
 
 export const COUNTRIES: Record<string, CountryBundle> = {
   CA: CANADA,
   DE: GERMANY,
   FR: FRANCE,
+  AU: AUSTRALIA,
 };
 
 export function getCountry(id: string): CountryBundle | undefined {

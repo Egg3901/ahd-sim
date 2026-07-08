@@ -1,8 +1,11 @@
-// CANADA 2025 — the 45th federal election (April 28, 2025). 343 seats, 172 for
-// a majority. Real result baked in as the calibration anchor: LPC 169, CPC 145,
-// BQ 22, NDP 6, GRN 1 (Carney's tariff-war comeback over Poilievre).
+// CANADA — federal elections. Real results baked in as calibration anchors.
+// 2025 (April 28): 343 seats, 172 for a majority — LPC 169, CPC 145, BQ 22,
+// NDP 6, GRN 1 (Carney's tariff-war comeback over Poilievre).
+// 2021 (September 20): 338 seats, 170 for a majority — LPC 160, CPC 119, BQ 32,
+// NDP 25, GPC 2 (Trudeau's pandemic snap call buys back the same minority).
 
 import type { CountryBundle } from "@engine/countryGame";
+import { CA_MAP } from "./paths/ca";
 
 export const CANADA: CountryBundle = {
   id: "CA",
@@ -14,6 +17,7 @@ export const CANADA: CountryBundle = {
   goalText: "172 of 343 seats",
   defaultSeatElasticity: 2.4,
   eventChance: 0.7,
+  map: CA_MAP,
 
   system: {
     id: "CA",
@@ -47,6 +51,7 @@ export const CANADA: CountryBundle = {
     { id: "healthcare", name: "Health care", blurb: "Wait times and a strained public system." },
     { id: "energy_climate", name: "Energy & climate", blurb: "Pipelines, carbon pricing, and the resource economy." },
     { id: "immigration", name: "Immigration", blurb: "Record intake meets an infrastructure crunch." },
+    { id: "reconciliation", name: "Reconciliation", blurb: "Unmarked graves, residential schools, and the Crown's unkept promises to Indigenous peoples." },
   ],
 
   blocs: [
@@ -109,6 +114,56 @@ export const CANADA: CountryBundle = {
         NL:    { v: { lpc: 0.57, cpc: 0.37, ndp: 0.04, oth: 0.02 }, s: { lpc: 5, cpc: 2 } },
         NORTH: { v: { lpc: 0.50, cpc: 0.28, ndp: 0.18, oth: 0.04 }, s: { lpc: 3 } },
       },
+      events: [
+        // Scheduled beats — the real five-week arc, in order.
+        { id: "carney_sworn_in", headline: "Trudeau resigns, the carbon tax is axed — {party}'s attack lines lose their target as Carney takes the oath", role: "any", party: "cpc", weight: 1, appeal: -0.03, momentum: -8, turn: 0 },
+        { id: "gst_cut_duel", headline: "The GST-cut duel: {party}'s tax-off-new-homes pledge forces the pace on affordability", role: "any", party: "cpc", weight: 1, appeal: 0.03, momentum: 7, turn: 1 },
+        { id: "debate_faceoff_fr", headline: "The French debate: {party}'s leader labours through his second language while Blanchet and Poilievre land hits", role: "any", party: "lpc", weight: 1, appeal: -0.025, momentum: -6, turn: 3 },
+        { id: "advance_poll_record", headline: "7.3 million vote early — a record advance poll banks votes for {party}", role: "leader", weight: 1, appeal: 0.02, momentum: 6, turn: 4 },
+        { id: "ndp_consolidation", headline: "Strategic voting bites: {party} support bleeds to the front of the anti-tariff line", role: "any", party: "ndp", weight: 1, appeal: -0.035, momentum: -12, turn: 5 },
+        // Unscheduled flavor — joins the weekly draw, fires at most once.
+        { id: "annexation_rally", headline: "'51st state' — another Trump taunt sends flag-waving voters to {party}", role: "any", party: "lpc", weight: 3, appeal: 0.03, momentum: 8 },
+        { id: "elbows_up", headline: "'Elbows up' goes national — the hockey-bench battle cry rallies {party} crowds", role: "any", party: "lpc", weight: 2, appeal: 0.02, momentum: 7 },
+        { id: "debate_night_en", headline: "{party} judged the winner of the English debate showdown", role: "any", weight: 2, appeal: 0.03, momentum: 8 },
+        { id: "carleton_watch", headline: "Riding watch: {party}'s own leader is in a dogfight for his Carleton seat", role: "any", party: "cpc", weight: 2, appeal: -0.025, momentum: -6 },
+      ],
+    },
+    "2021": {
+      id: "2021",
+      year: 2021,
+      label: "2021 · Trudeau v. O'Toole",
+      tagline: "August 2021. A snap call two years early, a fourth wave rising, and a minority government gambling for a majority. Five weeks to justify the ask.",
+      // Pre-redistribution chamber: 338 seats, not 2025's 343.
+      majority: { total: 338, threshold: 170 },
+      goalText: "170 of 338 seats",
+      // Pandemic management rides healthcare; childcare rides cost_of_living.
+      salience: { healthcare: 0.9, cost_of_living: 0.78, housing: 0.7, energy_climate: 0.6, reconciliation: 0.5, immigration: 0.3 },
+      regions: {
+        BC:    { v: { cpc: 0.33, ndp: 0.29, lpc: 0.27, gpc: 0.05, oth: 0.06 }, s: { lpc: 15, cpc: 13, ndp: 13, gpc: 1 } },
+        AB:    { v: { cpc: 0.55, ndp: 0.19, lpc: 0.16, gpc: 0.01, oth: 0.09 }, s: { cpc: 30, lpc: 2, ndp: 2 } },
+        SK:    { v: { cpc: 0.59, ndp: 0.20, lpc: 0.10, oth: 0.11 }, s: { cpc: 14 } },
+        MB:    { v: { cpc: 0.40, lpc: 0.25, ndp: 0.22, gpc: 0.02, oth: 0.11 }, s: { cpc: 7, lpc: 4, ndp: 3 } },
+        ON:    { v: { lpc: 0.39, cpc: 0.35, ndp: 0.18, gpc: 0.02, oth: 0.06 }, s: { lpc: 78, cpc: 37, ndp: 5, gpc: 1 } },
+        QC:    { v: { lpc: 0.34, bq: 0.32, cpc: 0.19, ndp: 0.10, gpc: 0.01, oth: 0.04 }, s: { lpc: 35, bq: 32, cpc: 10, ndp: 1 } },
+        NB:    { v: { lpc: 0.41, cpc: 0.34, ndp: 0.12, gpc: 0.06, oth: 0.07 }, s: { lpc: 6, cpc: 4 } },
+        NS:    { v: { lpc: 0.42, cpc: 0.30, ndp: 0.22, gpc: 0.02, oth: 0.04 }, s: { lpc: 8, cpc: 3 } },
+        PE:    { v: { lpc: 0.46, cpc: 0.32, ndp: 0.15, gpc: 0.04, oth: 0.03 }, s: { lpc: 4 } },
+        NL:    { v: { lpc: 0.48, cpc: 0.33, ndp: 0.17, oth: 0.02 }, s: { lpc: 6, cpc: 1 } },
+        NORTH: { v: { lpc: 0.36, ndp: 0.31, cpc: 0.25, gpc: 0.02, oth: 0.06 }, s: { lpc: 2, ndp: 1 } },
+      },
+      events: [
+        // Scheduled beats — the real five-week arc, in order.
+        { id: "snap_call_backlash", headline: "'Why an election, why now?' — the pandemic snap call blows back on {party}", role: "any", party: "lpc", weight: 1, appeal: -0.03, momentum: -9, turn: 0 },
+        { id: "kabul_airlift", headline: "Kabul falls in week one — the airlift scramble follows {party} down the campaign trail", role: "any", party: "lpc", weight: 1, appeal: -0.025, momentum: -6, turn: 1 },
+        { id: "gravel_thrown", headline: "Anti-vax protesters throw gravel at the {party} leader — the ugliness earns a sympathy backlash", role: "any", party: "lpc", weight: 1, appeal: 0.025, momentum: 6, turn: 2 },
+        { id: "gun_ban_reversal", headline: "{party} reverses on the assault-weapons ban mid-campaign — and wears the flip-flop", role: "any", party: "cpc", weight: 1, appeal: -0.03, momentum: -8, turn: 3 },
+        { id: "tva_quebec_bashing", headline: "'Quebec bashing' — the face-à-face question ignites {party}'s campaign", role: "any", party: "bq", weight: 1, appeal: 0.03, momentum: 9, turn: 4 },
+        // Unscheduled flavor — joins the weekly draw, fires at most once.
+        { id: "mandate_wedge", headline: "The vaccine-mandate wedge splits the Conservative coalition — {party} presses it at every stop", role: "any", party: "lpc", weight: 2, appeal: 0.03, momentum: 7 },
+        { id: "otoole_union_pitch", headline: "The new Tory pitch: {party}'s leader plays the union-hall moderate and the debate-night polish pays", role: "any", party: "cpc", weight: 2, appeal: 0.035, momentum: 9 },
+        { id: "ppc_surge", headline: "The People's Party surge eats {party}'s right flank", role: "any", party: "cpc", weight: 3, appeal: -0.025, momentum: -6 },
+        { id: "singh_tiktok", headline: "{party}'s TikTok campaign owns the youth vote — Singh's likability tops every tracker", role: "any", party: "ndp", weight: 2, appeal: 0.025, momentum: 8 },
+      ],
     },
   },
 
@@ -119,6 +174,13 @@ export const CANADA: CountryBundle = {
       ndp: { partyId: "ndp", name: "Jagmeet Singh", charisma: 66, energy: 68, competence: 56, machine: 52 },
       bq:  { partyId: "bq", name: "Yves-François Blanchet", charisma: 62, energy: 60, competence: 66, machine: 48 },
       gpc: { partyId: "gpc", name: "Elizabeth May & Jonathan Pedneault", charisma: 54, energy: 56, competence: 58, machine: 30 },
+    },
+    "2021": {
+      lpc: { partyId: "lpc", name: "Justin Trudeau", charisma: 76, energy: 70, competence: 60, machine: 78 },
+      cpc: { partyId: "cpc", name: "Erin O'Toole", charisma: 50, energy: 66, competence: 68, machine: 72 },
+      ndp: { partyId: "ndp", name: "Jagmeet Singh", charisma: 72, energy: 74, competence: 54, machine: 50 },
+      bq:  { partyId: "bq", name: "Yves-François Blanchet", charisma: 62, energy: 60, competence: 66, machine: 48 },
+      gpc: { partyId: "gpc", name: "Annamie Paul", charisma: 58, energy: 52, competence: 62, machine: 20 },
     },
   },
 
