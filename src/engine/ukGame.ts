@@ -9,7 +9,8 @@ import { computeSeatsResult, blocPartyShares, tallyRegion } from "./multiparty";
 import { UK_SYSTEM, UK_ABSTAINING, PARTY_BY_ID } from "@content/uk/parties";
 import { UK_ELECTIONS, type UkElectionData } from "@content/uk/elections";
 import { leaderFor, type UkLeader } from "@content/uk/leaders";
-import { UK_EVENTS, UK_EVENT_CHANCE, headlineFor, pickTarget } from "@content/uk/events";
+import { UK_EVENTS, UK_EVENT_CHANCE, headlineFor, pickTarget, type UkEvent } from "@content/uk/events";
+import { UK_ELECTION_EVENTS } from "@content/uk/electionEvents";
 import { buildUkRegions } from "./ukSetup";
 
 // Parties a human may lead (GB-wide majors). NI parties + 'oth' are AI/fixed.
@@ -88,6 +89,8 @@ export interface UkGameState {
   abstaining: PartyId[];
   // Rolling campaign-news log (latest first) from fired events.
   news: { turn: number; text: string }[];
+  // Election-deck event ids that already fired (they never repeat in a game).
+  firedEvents?: string[];
   result?: UkResult;
 }
 
@@ -164,6 +167,7 @@ export function createUkGame(opts: NewUkGameOptions = {}): UkGameState {
     queuedActions: [],
     abstaining: [...UK_ABSTAINING],
     news: [],
+    firedEvents: [],
   };
 }
 
@@ -338,13 +342,13 @@ function planAiActions(g: UkGameState, party: PartyId, rng: Rng): UkAction[] {
   return out;
 }
 
-// Draw and apply at most one campaign event for the week.
-function fireUkEvent(g: UkGameState, rng: Rng) {
-  if (!rng.chance(UK_EVENT_CHANCE)) return;
-  const ev = rng.weightedPick(UK_EVENTS, UK_EVENTS.map((e) => e.weight));
+// Apply one event: fixed party target when pinned, role-based otherwise.
+function applyUkEvent(g: UkGameState, ev: UkEvent, rng: Rng) {
   // The "leader" role targets the largest party right now (the front-runner).
   const proj = computeSeatsResult(g.regions, UK_SYSTEM.majority, g.abstaining);
-  const target = pickTarget(ev.role, g.playerParty, proj.largestParty, g.parties, (xs) => rng.pick(xs));
+  const target = ev.party && g.parties.includes(ev.party)
+    ? ev.party
+    : pickTarget(ev.role, g.playerParty, proj.largestParty, g.parties, (xs) => rng.pick(xs));
   if (!target) return;
 
   // Apply the appeal nudge across every region the party stands in.
@@ -363,6 +367,32 @@ function fireUkEvent(g: UkGameState, rng: Rng) {
   }
   const short = PARTY_BY_ID[target]?.shortName ?? target.toUpperCase();
   g.news = [{ turn: g.turn, text: headlineFor(ev, short) }, ...g.news].slice(0, 12);
+}
+
+// Fire this week's events: scheduled story beats from the election's named
+// deck first (deterministic, once each), then at most one random draw from
+// the unscheduled deck events + the generic pool.
+function fireUkEvent(g: UkGameState, rng: Rng) {
+  if (!g.firedEvents) g.firedEvents = []; // saves predating election decks
+  const firedList = g.firedEvents;
+  const fired = new Set(firedList);
+  const deck = UK_ELECTION_EVENTS[g.electionId] ?? [];
+
+  for (const ev of deck) {
+    if (ev.turn === undefined || ev.turn !== g.turn || fired.has(ev.id)) continue;
+    applyUkEvent(g, ev, rng);
+    fired.add(ev.id);
+    firedList.push(ev.id);
+  }
+
+  const pool = [
+    ...deck.filter((e) => e.turn === undefined && !fired.has(e.id)),
+    ...UK_EVENTS,
+  ];
+  if (pool.length === 0 || !rng.chance(UK_EVENT_CHANCE)) return;
+  const ev = rng.weightedPick(pool, pool.map((e) => e.weight));
+  applyUkEvent(g, ev, rng);
+  if (deck.some((d) => d.id === ev.id)) firedList.push(ev.id);
 }
 
 // ── Turn loop ──────────────────────────────────────────────────────────────

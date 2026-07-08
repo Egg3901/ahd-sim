@@ -16,6 +16,12 @@ export interface UkEvent {
   // National appeal delta (logit) for the target party, and momentum delta.
   appeal?: number;
   momentum?: number;
+  // Fixed target: this exact party is hit regardless of role (real history —
+  // "the Ed Stone" always lands on Labour).
+  party?: PartyId;
+  // Scheduled story beat: fires deterministically at this turn index (0-based)
+  // instead of the random draw. Only meaningful on election decks.
+  turn?: number;
 }
 
 export const UK_EVENTS: UkEvent[] = [
