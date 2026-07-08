@@ -1,11 +1,19 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
+import { execSync } from "node:child_process";
+
+// Release = current commit SHA, so GlitchTip events map to a commit.
+let release = "unknown";
+try { release = execSync("git rev-parse --short HEAD").toString().trim(); } catch { /* not a git checkout */ }
 
 // Static SPA build. Output is plain static assets so it wraps directly in Tauri
 // later with no rewrite. No SSR, no server framework.
 export default defineConfig({
   plugins: [react()],
+  define: {
+    "import.meta.env.VITE_RELEASE": JSON.stringify(release),
+  },
   resolve: {
     alias: {
       "@engine": fileURLToPath(new URL("./src/engine", import.meta.url)),
