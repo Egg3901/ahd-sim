@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useCountryStore } from "@store/countryStore";
 import { tallyRegion, allocateRegionSeats } from "@engine/multiparty";
 import type { StateContest } from "@engine/types";
-import type { CountryBundle, CountryResult } from "@engine/countryGame";
+import { majorityFor, type CountryBundle, type CountryResult } from "@engine/countryGame";
 import { partyColor, partyShort, partyName, sortBySeats, byDisplayOrder } from "./helpers";
 import { MapPin } from "lucide-react";
 
@@ -19,9 +19,9 @@ function regionWinner(region: StateContest): { winner: string; seats: Record<str
 
 // ── Seat bar (majority marker at the country's threshold) ──────────────────
 export function CountrySeatBar({ country, result }: { country: CountryBundle; result: CountryResult }) {
+  const game = useCountryStore((s) => s.game);
   const order = sortBySeats(country, result.seats);
-  const total = country.system.majority.total;
-  const threshold = country.system.majority.threshold;
+  const { total, threshold } = game ? majorityFor(game, country) : country.system.majority;
   const w = (n: number) => `${(n / total) * 100}%`;
   const largest = order[0];
 
@@ -60,7 +60,7 @@ export function CountryMap() {
   const header = (
     <div className="mapcontrols" style={{ justifyContent: "space-between" }}>
       <h3 style={{ margin: 0, fontSize: 13, textTransform: "uppercase", letterSpacing: 0.8, color: "var(--muted)" }}>
-        {country.flag} {country.label} · {country.system.majority.total} {country.unitNamePlural}
+        {country.flag} {country.label} · {majorityFor(game, country).total} {country.unitNamePlural}
       </h3>
       {hasGeo && (
         <div className="row" style={{ gap: 4 }}>
@@ -162,7 +162,7 @@ export function CountryStandings() {
   const live = useCountryStore((s) => s.liveProjection)();
   if (!live) return null;
   const order = sortBySeats(country, live.seats);
-  const total = country.system.majority.total;
+  const total = majorityFor(game, country).total;
   const issues = Object.keys(game.salience).filter((id) => game.salience[id] >= 0.1).sort((a, b) => game.salience[b] - game.salience[a]);
   const issueName = (id: string) => country.issues.find((i) => i.id === id)?.name ?? id;
 

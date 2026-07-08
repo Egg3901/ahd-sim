@@ -48,6 +48,11 @@ export interface CountryElectionData {
   tagline: string;
   salience: Record<string, number>;
   regions: Record<string, CountryRegionResult>;
+  // Chamber-size override for elections fought under a different apportionment
+  // (Canada 2021: 338 seats; Bundestag 2021: 735 with overhang). Region pools
+  // come from the election's own seat data; this sets the winning post.
+  majority?: { total: number; threshold: number };
+  goalText?: string; // per-election goal line ("170 of 338 seats")
   // Named historical events for THIS election (the real story beats of the
   // campaign). Entries with a `turn` fire deterministically that week, once;
   // the rest join the country's generic pool in the weekly random draw.
@@ -183,6 +188,9 @@ function solveRegionBlocs(
 
 function buildRegionContest(country: CountryBundle, meta: CountryRegionMeta, res: CountryRegionResult): StateContest {
   const target = normalizeShare(res.v);
+  // The election's own seat table defines the region pool, so one bundle can
+  // host elections fought under different apportionments.
+  const pool = Object.values(res.s).reduce((s, x) => s + x, 0) || meta.seats;
   const raw = country.blocs.map((b) => ({ def: b, share: b.share * (meta.profile?.[b.id] ?? 1) }));
   const totalShare = raw.reduce((s, r) => s + r.share, 0);
   const blocsIn = raw.map((r) => ({
@@ -204,7 +212,7 @@ function buildRegionContest(country: CountryBundle, meta: CountryRegionMeta, res
     blocs: solveRegionBlocs(blocsIn, target),
     groundGame: { dem: 0, rep: 0 },
     momentum: 0,
-    seats: meta.seats,
+    seats: pool,
     baselineSeats: { ...res.s },
     baselineShare: target,
     seatElasticity: meta.seatElasticity ?? country.defaultSeatElasticity,
@@ -274,7 +282,13 @@ export interface CountryGameState {
   news: { turn: number; text: string }[];
   // Election-deck event ids that already fired (they never repeat in a game).
   firedEvents?: string[];
+  // Winning post for THIS election (chamber sizes vary across cycles).
+  majority?: { total: number; threshold: number };
   result?: CountryResult;
+}
+
+export function majorityFor(g: CountryGameState, country: CountryBundle): { total: number; threshold: number } {
+  return g.majority ?? country.elections[g.electionId]?.majority ?? country.system.majority;
 }
 
 function activeParties(country: CountryBundle, election: CountryElectionData): PartyId[] {
@@ -355,6 +369,7 @@ export function createCountryGame(country: CountryBundle, opts: NewCountryGameOp
     abstaining: [...country.abstaining],
     news: [],
     firedEvents: [],
+    majority: { ...(election.majority ?? country.system.majority) },
   };
 }
 
@@ -525,7 +540,7 @@ function pickEventTarget(
 }
 
 function applyCountryEvent(g: CountryGameState, country: CountryBundle, ev: CountryEventDef, rng: Rng) {
-  const proj = computeSeatsResult(g.regions, country.system.majority, g.abstaining);
+  const proj = computeSeatsResult(g.regions, majorityFor(g, country), g.abstaining);
   const majors = g.parties.filter((p) => country.playable.includes(p));
   const target = ev.party && g.parties.includes(ev.party)
     ? ev.party
@@ -612,7 +627,7 @@ export function countryAdvanceTurn(g: CountryGameState, country: CountryBundle, 
 }
 
 export function computeCountryResult(g: CountryGameState, country: CountryBundle): CountryResult {
-  const r = computeSeatsResult(g.regions, country.system.majority, g.abstaining, country.compatible);
+  const r = computeSeatsResult(g.regions, majorityFor(g, country), g.abstaining, country.compatible);
   const playerName = g.leaders[g.playerParty]?.name ?? "";
   const mine = g.causes.filter((c) => c.marginDelta !== 0 && c.cause.includes(playerName));
   const pool = mine.length > 0 ? mine : g.causes.filter((c) => c.marginDelta !== 0);

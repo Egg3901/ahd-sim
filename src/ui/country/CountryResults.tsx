@@ -3,6 +3,7 @@ import { useCountryStore } from "@store/countryStore";
 import { useAuthStore } from "@store/authStore";
 import { api } from "@lib/api";
 import { computeScoreFromFacts, multipartyScoreFacts } from "@engine/scoring";
+import { majorityFor } from "@engine/countryGame";
 import type { Government } from "@engine/types";
 import { CountrySeatBar } from "./CountryPanels";
 import { partyColor, partyName, partyShort, sortBySeats } from "./helpers";
@@ -27,7 +28,7 @@ export function CountryResults({ onExit }: { onExit: () => void }) {
   const r = game.result!;
 
   const scenarioId = `${country.id.toLowerCase()}-${game.electionId}`;
-  const majority = country.system.majority;
+  const majority = majorityFor(game, country);
 
   const facts = useMemo(
     () => multipartyScoreFacts(r, game.playerParty, majority.threshold, majority.total, "normal"),

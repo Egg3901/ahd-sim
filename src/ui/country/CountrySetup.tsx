@@ -96,7 +96,7 @@ export function CountrySetup({ country, onBack, initialElection }: { country: Co
                 {partyName(country, activeParty)}{leader ? ` · ${leader.name}` : ""}
               </span>
             </div>
-            <div className="su-summary-row"><span className="su-summary-k">Goal</span><span className="su-summary-v">{country.goalText}</span></div>
+            <div className="su-summary-row"><span className="su-summary-k">Goal</span><span className="su-summary-v">{data.goalText ?? country.goalText}</span></div>
           </div>
         </div>
 
