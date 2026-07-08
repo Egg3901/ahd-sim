@@ -10,6 +10,7 @@ import { Avatar } from "@ui/Avatar";
 import { Vote, Dices, ChevronLeft, ChevronRight, Check, Flag } from "lucide-react";
 import type { PartyId } from "@engine/system";
 import { BRAND } from "../../brand";
+import { TideBanner, ChallengePartyBanner } from "@ui/TideBanner";
 
 function randomSeed(): string {
   return String(Math.floor(Math.random() * 1_000_000)).padStart(6, "0");
@@ -89,6 +90,10 @@ export function UkSetup({ onBack, initialElection, initialSeed, initialParty }: 
         </div>
         <div className="title">{BRAND.name}</div>
         <p className="sub">{data.tagline}</p>
+        <TideBanner scenarioId={`uk-${election}`} />
+        {activeParty !== "lab" && activeParty !== "con" && (
+          <ChallengePartyBanner partyLabel={partyName(activeParty)} />
+        )}
 
         <div className="su-stepper" role="tablist">
           {STEPS.map((s, i) => {

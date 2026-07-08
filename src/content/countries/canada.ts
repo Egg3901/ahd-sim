@@ -195,5 +195,41 @@ export const CANADA: CountryBundle = {
     { id: "candidate_bozo", headline: "{party} drops a candidate over old social-media posts", role: "any", weight: 2, appeal: -0.025, momentum: -5 },
     { id: "vote_split", headline: "Strategic-voting chatter surges — progressives consolidate against the front-runner, lifting {party}", role: "challenger", weight: 2, appeal: 0.025, momentum: 8 },
     { id: "rally_surge", headline: "An overflow {party} rally electrifies the base", role: "player", weight: 2, appeal: 0.025, momentum: 10 },
+    {
+      id: "debate_call",
+      headline: "The networks offer {party} a head-to-head debate slot",
+      role: "player",
+      weight: 4,
+      prompt: "The broadcasters want a head-to-head. How do you play it?",
+      choices: [
+        { id: "accept_attack", text: "Accept and go on the attack", resultText: "You land blows — and take a few. The overnight polls twitch your way.", appeal: 0.03, momentum: 10, rivalAppeal: -0.015 },
+        { id: "accept_safe", text: "Accept and play it safe", resultText: "A steady, on-message night. No gaffes, no fireworks.", appeal: 0.015, momentum: 4 },
+        { id: "decline", text: "Decline — protect the lead / avoid the ambush", resultText: "You dodge the studio lights. The press calls it caution; your base calls it discipline.", appeal: -0.01, momentum: -4 },
+      ],
+    },
+    {
+      id: "media_fork",
+      headline: "A national outlet is sitting on a story about {party}",
+      role: "player",
+      weight: 3,
+      prompt: "A newsroom has dirt. What's the play?",
+      choices: [
+        { id: "prebut", text: "Pre-but: get your version out first", resultText: "You blunt the splash. The story still runs — softer, and on your terms.", appeal: -0.01, momentum: -2 },
+        { id: "ignore", text: "Ignore it and stay on message", resultText: "The splash dominates a news cycle. Your grid holds, barely.", appeal: -0.025, momentum: -6 },
+        { id: "contrast", text: "Pivot hard onto your rival's record", resultText: "You change the subject — and it mostly works.", appeal: 0.015, momentum: 4, rivalAppeal: -0.02 },
+      ],
+    },
+    {
+      id: "platform_fork",
+      headline: "{party}'s platform committee is split on the big pledge",
+      role: "player",
+      weight: 3,
+      prompt: "The draft is ready. Which way do you push the platform?",
+      choices: [
+        { id: "bold", text: "Go bold — a defining, risky pledge", resultText: "The base roars. The spreadsheets at HQ look nervous.", appeal: 0.035, momentum: 12 },
+        { id: "cautious", text: "Play it cautious — no hostages to fortune", resultText: "No spark, no self-inflicted wounds.", appeal: 0.01, momentum: 2 },
+        { id: "contrast", text: "Make it a contrast document against the rival", resultText: "You define them more than yourself — and it lands.", appeal: 0.02, momentum: 6, rivalAppeal: -0.02 },
+      ],
+    },
   ],
 };

@@ -1,5 +1,13 @@
-import { useMemo, useState } from "react";
-import { dailyAssignment, utcDateString, roleShortName } from "@lib/daily";
+import { useEffect, useMemo, useState } from "react";
+import {
+  dailyAssignment,
+  utcDateString,
+  roleShortName,
+  markDailyPlayed,
+  recordDailyBest,
+  dailyBest,
+  dailyStreak,
+} from "@lib/daily";
 import { SCENARIOS_BY_ID } from "@content/scenarioRegistry";
 import { buildShareText, copyShare } from "@lib/shareCard";
 import { api } from "@lib/api";
@@ -33,9 +41,20 @@ export function DailyResultPanel({ gameSeed, scenarioId, engine, won, unitLine, 
   const [copied, setCopied] = useState(false);
   const [postState, setPostState] = useState<"idle" | "busy" | "done" | "error">("idle");
   const [note, setNote] = useState("");
+  const [best, setBest] = useState<number | null>(null);
+  const [streak, setStreak] = useState(0);
+
+  // Mark played + record personal best on first mount of a finished daily.
+  useEffect(() => {
+    if (!isDaily) return;
+    markDailyPlayed(today.date);
+    setBest(recordDailyBest(today.date, score));
+    setStreak(dailyStreak());
+  }, [isDaily, today.date, score]);
 
   if (!isDaily) return null;
   const meta = SCENARIOS_BY_ID[scenarioId];
+  const pb = best ?? dailyBest(today.date);
 
   const share = async () => {
     const ok = await copyShare(buildShareText({
@@ -71,7 +90,9 @@ export function DailyResultPanel({ gameSeed, scenarioId, engine, won, unitLine, 
             <CalendarDays size={12} style={{ verticalAlign: "-2px" }} /> DAILY CHALLENGE · {today.date}
           </div>
           <div className="muted small" style={{ marginTop: 4 }}>
-            Same race, same seed, everyone. How did the field do?
+            Same race, same seed, everyone. Score {score}
+            {pb != null ? ` · personal best ${pb}` : ""}
+            {streak > 0 ? ` · ${streak}-day streak` : ""}.
           </div>
         </div>
         <div className="row" style={{ gap: 8 }}>

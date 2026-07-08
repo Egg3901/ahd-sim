@@ -50,9 +50,10 @@ describe("UK 2024 calibration", () => {
 
   it("doing nothing while opponents campaign costs the player ground (but it's recoverable)", () => {
     let g = createUkGame({ election: "2024", seed: 1, playerParty: "lab" });
-    while (g.phase !== "result") {
+    let guard = 0;
+    while (g.phase !== "result" && guard++ < 20) {
       g.queuedActions = [];
-      g = ukAdvanceTurn(g); // AI active, player passive
+      g = ukAdvanceTurn(g, { autoResolvePlayerEvents: true }); // AI active, player passive
     }
     // Labour erodes from its peak but the engine stays sane (still 650 seats).
     const total = Object.values(g.result!.seats).reduce((a, b) => a + b, 0);
@@ -62,13 +63,14 @@ describe("UK 2024 calibration", () => {
 
   it("a full campaign with player actions and events yields a valid government", () => {
     let g = createUkGame({ election: "2024", seed: 42, playerParty: "lab" });
-    while (g.phase !== "result") {
+    let guard = 0;
+    while (g.phase !== "result" && guard++ < 20) {
       // Player canvasses its weakest English region each week.
       const target = g.regions
         .filter((r) => r.baselineShare?.lab !== undefined)
         .sort((a, b) => (a.baselineShare!.lab ?? 0) - (b.baselineShare!.lab ?? 0))[0];
       g.queuedActions = [{ type: "canvass", party: "lab", regionId: target.id }];
-      g = ukAdvanceTurn(g);
+      g = ukAdvanceTurn(g, { autoResolvePlayerEvents: true });
     }
     expect(Object.values(g.result!.seats).reduce((a, b) => a + b, 0)).toBe(650);
     expect(["majority", "minority", "coalition", "confidence_supply", "hung"]).toContain(g.result!.government.kind);

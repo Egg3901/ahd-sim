@@ -12,6 +12,7 @@ import { leaderFor, type UkLeader } from "@content/uk/leaders";
 import { UK_EVENTS, UK_EVENT_CHANCE, headlineFor, pickTarget, type UkEvent } from "@content/uk/events";
 import { UK_ELECTION_EVENTS } from "@content/uk/electionEvents";
 import { buildUkRegions } from "./ukSetup";
+import { planMultipartyAi, type MpDifficulty } from "./multipartyAi";
 
 // Parties a human may lead (GB-wide majors). NI parties + 'oth' are AI/fixed.
 export const UK_PLAYABLE: PartyId[] = ["lab", "con", "ld", "ref", "grn", "snp", "pc"];
@@ -68,6 +69,18 @@ export interface UkResult {
   postMortem: CauseEntry[];
 }
 
+export interface UkRecapItem {
+  label: string;
+  detail: string;
+  marginDelta?: number;
+}
+
+export interface UkPendingEvent {
+  eventId: string;
+  // Resolved target party (always the player when pending).
+  targetParty: PartyId;
+}
+
 export interface UkGameState {
   systemId: "UK";
   seed: number;
@@ -93,6 +106,10 @@ export interface UkGameState {
   firedEvents?: string[];
   // Underdog handicap setting (defaults to "normal" = identity for old saves).
   difficulty?: Difficulty;
+  // Week-in-review lines after each turn (US lastRecap parity).
+  lastRecap: UkRecapItem[];
+  // Player-choice event waiting on a decision (blocks End Week).
+  pendingEvent?: UkPendingEvent | null;
   result?: UkResult;
 }
 
@@ -209,6 +226,8 @@ export function createUkGame(opts: NewUkGameOptions = {}): UkGameState {
     news: [],
     firedEvents: [],
     difficulty,
+    lastRecap: [],
+    pendingEvent: null,
   };
 }
 
@@ -367,51 +386,106 @@ function applyUkAction(g: UkGameState, a: UkAction, rng: Rng) {
   }
 }
 
-// ── Simple multiparty AI: each non-player active major shores up its strongest
-// regions and contests its closest ones. Tiered later (P7). ──────────────────
+// ── Multiparty AI (difficulty-tiered; shared with the balance harness) ─────
 function planAiActions(g: UkGameState, party: PartyId, rng: Rng): UkAction[] {
-  const out: UkAction[] = [];
-  const budget = g.resources[party].actions;
-  // Rank regions by this party's current vote share (campaign where you matter).
-  const ranked = g.regions
-    .filter((r) => r.baselineShare?.[party] !== undefined)
-    .map((r) => ({ r, share: r.baselineShare?.[party] ?? 0 }))
-    .sort((a, b) => b.share - a.share);
-  for (let i = 0; i < budget && i < ranked.length; i++) {
-    const region = ranked[i % Math.max(1, Math.min(ranked.length, 4))].r;
-    // Mix of canvass and the occasional rally; fundraise if broke.
-    if (g.resources[party].funds < 1 && rng.chance(0.4)) out.push({ type: "fundraise", party });
-    else if (rng.chance(0.25)) out.push({ type: "rally", party, regionId: region.id });
-    else out.push({ type: "canvass", party, regionId: region.id });
-  }
-  return out;
+  const res = g.resources[party];
+  const difficulty = (g.difficulty ?? "normal") as MpDifficulty;
+  return planMultipartyAi(
+    {
+      regions: g.regions,
+      turn: g.turn,
+      totalTurns: g.totalTurns,
+      funds: res.funds,
+      actions: res.actions,
+    },
+    party,
+    difficulty,
+    rng,
+  ) as UkAction[];
 }
 
-// Apply one event: fixed party target when pinned, role-based otherwise.
-function applyUkEvent(g: UkGameState, ev: UkEvent, rng: Rng) {
-  // The "leader" role targets the largest party right now (the front-runner).
-  const proj = computeSeatsResult(g.regions, UK_SYSTEM.majority, g.abstaining);
-  const target = ev.party && g.parties.includes(ev.party)
-    ? ev.party
-    : pickTarget(ev.role, g.playerParty, proj.largestParty, g.parties, (xs) => rng.pick(xs));
-  if (!target) return;
+function eventById(id: string, electionId: string): UkEvent | undefined {
+  const deck = UK_ELECTION_EVENTS[electionId] ?? [];
+  return deck.find((e) => e.id === id) ?? UK_EVENTS.find((e) => e.id === id);
+}
 
-  // Apply the appeal nudge across every region the party stands in.
-  if (ev.appeal) {
-    for (const region of g.regions) {
-      if (region.baselineShare?.[target] === undefined) continue;
-      for (const bloc of region.blocs) {
-        if (!bloc.campaignAppeal) bloc.campaignAppeal = {};
-        bloc.campaignAppeal[target] = (bloc.campaignAppeal[target] ?? 0) + ev.appeal;
-      }
+function topRivalParty(g: UkGameState, party: PartyId): PartyId | undefined {
+  const proj = computeSeatsResult(g.regions, UK_SYSTEM.majority, g.abstaining);
+  return Object.keys(proj.seats)
+    .filter((p) => p !== party)
+    .sort((a, b) => (proj.seats[b] ?? 0) - (proj.seats[a] ?? 0))[0] as PartyId | undefined;
+}
+
+function applyAppealNational(g: UkGameState, target: PartyId, appeal: number, cause: string) {
+  for (const region of g.regions) {
+    if (region.baselineShare?.[target] === undefined) continue;
+    for (const bloc of region.blocs) {
+      if (!bloc.campaignAppeal) bloc.campaignAppeal = {};
+      bloc.campaignAppeal[target] = (bloc.campaignAppeal[target] ?? 0) + appeal;
     }
-    g.causes.push({ turn: g.turn, cause: `${ev.id}: ${target.toUpperCase()}`, marginDelta: ev.appeal });
   }
+  g.causes.push({ turn: g.turn, cause, marginDelta: appeal });
+}
+
+// Apply one event's default (non-choice) effects. Fixed party target when pinned.
+function applyUkEventEffects(g: UkGameState, ev: UkEvent, target: PartyId) {
+  if (ev.appeal) applyAppealNational(g, target, ev.appeal, `${ev.id}: ${target.toUpperCase()}`);
   if (ev.momentum && g.resources[target]) {
     g.resources[target].momentum = clamp(g.resources[target].momentum + ev.momentum, -100, 100);
   }
   const short = PARTY_BY_ID[target]?.shortName ?? target.toUpperCase();
   g.news = [{ turn: g.turn, text: headlineFor(ev, short) }, ...g.news].slice(0, 12);
+}
+
+function resolveUkEventTarget(g: UkGameState, ev: UkEvent, rng: Rng): PartyId | undefined {
+  const proj = computeSeatsResult(g.regions, UK_SYSTEM.majority, g.abstaining);
+  return ev.party && g.parties.includes(ev.party)
+    ? ev.party
+    : pickTarget(ev.role, g.playerParty, proj.largestParty, g.parties, (xs) => rng.pick(xs));
+}
+
+// Apply or queue one event. Choice events targeting the player become pending.
+function applyUkEvent(g: UkGameState, ev: UkEvent, rng: Rng) {
+  const target = resolveUkEventTarget(g, ev, rng);
+  if (!target) return;
+
+  if (ev.choices && ev.choices.length > 0 && target === g.playerParty && !g.pendingEvent) {
+    g.pendingEvent = { eventId: ev.id, targetParty: target };
+    const short = PARTY_BY_ID[target]?.shortName ?? target.toUpperCase();
+    g.news = [{ turn: g.turn, text: headlineFor(ev, short) }, ...g.news].slice(0, 12);
+    return;
+  }
+  applyUkEventEffects(g, ev, target);
+}
+
+/** Resolve a pending player-choice event. Pure: returns a new game state. */
+export function resolveUkPlayerEvent(g: UkGameState, choiceId: string): UkGameState {
+  const next = structuredClone(g);
+  const pending = next.pendingEvent;
+  if (!pending) return next;
+  const ev = eventById(pending.eventId, next.electionId);
+  next.pendingEvent = null;
+  if (!ev?.choices) return next;
+  const choice = ev.choices.find((c) => c.id === choiceId) ?? ev.choices[0];
+  const target = pending.targetParty;
+  if (choice.appeal) applyAppealNational(next, target, choice.appeal, `${ev.id}: ${choice.text}`);
+  if (choice.momentum && next.resources[target]) {
+    next.resources[target].momentum = clamp(next.resources[target].momentum + choice.momentum, -100, 100);
+  }
+  if (choice.rivalAppeal) {
+    const rival = topRivalParty(next, target);
+    if (rival) applyAppealNational(next, rival, choice.rivalAppeal, `${ev.id}: hit on ${rival.toUpperCase()}`);
+  }
+  next.lastRecap = [
+    { label: ev.headline.replace("{party}", PARTY_BY_ID[target]?.shortName ?? target), detail: choice.resultText, marginDelta: choice.appeal },
+    ...(next.lastRecap ?? []),
+  ].slice(0, 12);
+  // A decision that landed on the final week still ends the campaign.
+  if (next.turn >= next.totalTurns) {
+    next.phase = "result";
+    next.result = computeUkResult(next);
+  }
+  return next;
 }
 
 // Fire this week's events: scheduled story beats from the election's named
@@ -430,6 +504,9 @@ function fireUkEvent(g: UkGameState, rng: Rng) {
     firedList.push(ev.id);
   }
 
+  // Skip the random draw if a player decision is already pending this week.
+  if (g.pendingEvent) return;
+
   const pool = [
     ...deck.filter((e) => e.turn === undefined && !fired.has(e.id)),
     ...UK_EVENTS,
@@ -440,16 +517,66 @@ function fireUkEvent(g: UkGameState, rng: Rng) {
   if (deck.some((d) => d.id === ev.id)) firedList.push(ev.id);
 }
 
+function buildUkRecap(g: UkGameState, turn: number, seatsBefore: number): UkRecapItem[] {
+  const recap: UkRecapItem[] = [];
+  const byCause = new Map<string, { delta: number; regions: Set<string> }>();
+  for (const c of g.causes) {
+    if (c.turn !== turn) continue;
+    const entry = byCause.get(c.cause) ?? { delta: 0, regions: new Set() };
+    entry.delta += c.marginDelta;
+    if (c.stateId) entry.regions.add(c.stateId);
+    byCause.set(c.cause, entry);
+  }
+  for (const [cause, info] of byCause) {
+    recap.push({
+      label: cause,
+      detail: info.regions.size > 0 ? `${info.regions.size} region(s)` : "nationwide",
+      marginDelta: info.delta,
+    });
+  }
+  recap.sort((a, b) => Math.abs(b.marginDelta ?? 0) - Math.abs(a.marginDelta ?? 0));
+  const seatsAfter = computeUkResult(g).seats[g.playerParty] ?? 0;
+  recap.unshift({
+    label: "Projected seats",
+    detail: `${PARTY_BY_ID[g.playerParty]?.shortName ?? g.playerParty} ${seatsAfter} (was ${seatsBefore})`,
+    marginDelta: seatsAfter - seatsBefore,
+  });
+  return recap.slice(0, 12);
+}
+
 // ── Turn loop ──────────────────────────────────────────────────────────────
 export interface UkAdvanceOptions {
   // Suppress the AI parties (used by the calibration anchor: with nobody
   // campaigning, neutral play must reproduce the real result exactly).
   disableAi?: boolean;
+  // Auto-pick the first choice on pending player events (bots / tests).
+  autoResolvePlayerEvents?: boolean;
 }
 
 export function ukAdvanceTurn(g: UkGameState, opts: UkAdvanceOptions = {}): UkGameState {
-  const next: UkGameState = structuredClone(g);
+  let next: UkGameState = structuredClone(g);
+  // Auto-resolve any leftover player decision before the week advances.
+  if (next.pendingEvent && opts.autoResolvePlayerEvents) {
+    const ev = eventById(next.pendingEvent.eventId, next.electionId);
+    const choiceId = ev?.choices?.[0]?.id;
+    if (choiceId) next = resolveUkPlayerEvent(next, choiceId);
+    else next.pendingEvent = null;
+  } else if (next.pendingEvent && !opts.autoResolvePlayerEvents) {
+    // UI must resolve first — refuse to advance.
+    return g;
+  }
+
+  // Pending resolution on the final week may have already closed the campaign.
+  if (next.phase === "result") return next;
+  if (next.turn >= next.totalTurns) {
+    next.phase = "result";
+    next.result = computeUkResult(next);
+    return next;
+  }
+
   const rng = createRng(next.rngState);
+  const seatsBefore = computeUkResult(next).seats[next.playerParty] ?? 0;
+  const turn = next.turn;
 
   // 1. Player's queued actions.
   for (const a of next.queuedActions) applyUkAction(next, a, rng);
@@ -477,8 +604,14 @@ export function ukAdvanceTurn(g: UkGameState, opts: UkAdvanceOptions = {}): UkGa
     for (const bloc of region.blocs) bloc.support = blocPartyShares(bloc) as typeof bloc.support;
   }
 
+  next.lastRecap = buildUkRecap(next, turn, seatsBefore);
   next.turn += 1;
   next.rngState = rng.state();
+
+  // If a player decision queued mid-turn, don't finish the campaign yet —
+  // the UI resolves it, then the next End Week continues.
+  if (next.pendingEvent) return next;
+
   if (next.turn >= next.totalTurns) {
     next.phase = "result";
     next.result = computeUkResult(next);

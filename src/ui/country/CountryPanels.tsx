@@ -4,6 +4,7 @@ import { tallyRegion, allocateRegionSeats } from "@engine/multiparty";
 import type { StateContest } from "@engine/types";
 import { majorityFor, type CountryBundle, type CountryResult } from "@engine/countryGame";
 import { partyColor, partyShort, partyName, sortBySeats, byDisplayOrder } from "./helpers";
+import { MpPollBlock } from "@ui/MpPollBlock";
 import { MapPin } from "lucide-react";
 
 function regionWinner(region: StateContest): { winner: string; seats: Record<string, number>; lead: number } {
@@ -171,6 +172,17 @@ export function CountryStandings() {
       <h3>National Standings</h3>
       <div className="kv"><span className="k">Projected outcome</span><span style={{ color: partyColor(country, live.largestParty) }}>{GOV_LABEL[live.government.kind]}</span></div>
       <div className="kv"><span className="k">Leading</span><span style={{ color: partyColor(country, live.largestParty) }}>{partyName(country, live.largestParty)}</span></div>
+      <div className="kv"><span className="k">Your momentum</span><span>{game.resources[game.playerParty].momentum.toFixed(0)}</span></div>
+
+      <MpPollBlock
+        seed={game.seed}
+        turn={game.turn}
+        regions={game.regions}
+        parties={order}
+        playerParty={game.playerParty}
+        partyLabel={(p) => partyShort(country, p)}
+        partyColor={(p) => partyColor(country, p)}
+      />
 
       <h3 style={{ marginTop: 14 }}>{country.unitNamePlural[0].toUpperCase() + country.unitNamePlural.slice(1)}</h3>
       {order.map((p) => (

@@ -2,6 +2,7 @@ import { useUkStore } from "@store/ukStore";
 import { partyColor, partyShort, sortBySeats } from "./parties";
 import { partyName } from "./parties";
 import { UK_ISSUES_BY_ID } from "@content/uk/issues";
+import { MpPollBlock } from "@ui/MpPollBlock";
 
 const GOV_LABEL: Record<string, string> = {
   majority: "Majority government",
@@ -25,6 +26,17 @@ export function UkStandings() {
       <h3>National Standings</h3>
       <div className="kv"><span className="k">Projected government</span><span style={{ color: partyColor(live.largestParty) }}>{GOV_LABEL[live.government.kind]}</span></div>
       <div className="kv"><span className="k">Largest party</span><span style={{ color: partyColor(live.largestParty) }}>{partyName(live.largestParty)}</span></div>
+      <div className="kv"><span className="k">Your momentum</span><span>{game.resources[game.playerParty].momentum.toFixed(0)}</span></div>
+
+      <MpPollBlock
+        seed={game.seed}
+        turn={game.turn}
+        regions={game.regions}
+        parties={order}
+        playerParty={game.playerParty}
+        partyLabel={partyShort}
+        partyColor={partyColor}
+      />
 
       <h3 style={{ marginTop: 14 }}>Seats</h3>
       {order.map((p) => (

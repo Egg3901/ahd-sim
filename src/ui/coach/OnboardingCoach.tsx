@@ -1,15 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGameStore } from "@store/gameStore";
 import "./coach.css";
 
-// First-run onboarding coach: a spotlight-tooltip walkthrough over the US
-// game. Shows once (localStorage), advances on real player actions where it
-// can, and stays out of the way everywhere else:
-//  - never shows again once done or skipped (coach-done-v1)
+// First-run onboarding coach: a spotlight-tooltip walkthrough. Shows once
+// (localStorage key), advances on real player actions where it can, and stays
+// out of the way everywhere else:
+//  - never shows again once done or skipped
 //  - never shows when resuming a game past turn 0
-//  - only lives in the US GameScreen, so other engines never see it
 //  - bails without window/matchMedia (SSR, jsdom) and arms 600ms after
 //    mount so synchronous test renders never see it.
+//
+// US GameScreen uses the default export with no props (US store + copy).
+// UK / country shells pass engine-specific selectors and win-line copy.
 
 export const COACH_DONE_KEY = "coach-done-v1";
 
@@ -28,59 +30,20 @@ type CoachStep = {
   target: (mobile: boolean) => Element | null;
 };
 
-// Anchors ride on stable classes owned by other components (.mapwrap on the
-// USMap card, .actiongrid inside the ActionPanel card, .sheet for the mobile
-// state sheet) plus one data-coach attribute on the End Week button, which
-// lives in App.tsx where we're allowed to tag it.
-const STEPS: CoachStep[] = [
-  {
-    title: "Welcome to the war room",
-    body: "This is your war room. Win 270 electoral votes in {N} weeks. No pressure.",
-    next: "Show me",
-    target: () => null,
-  },
-  {
-    title: "The battleground",
-    body: "Your battleground. Blue and red show the current lean; the gold-edged states are in play. Click a battleground state.",
-    hint: "Click a state on the map to continue.",
-    next: "Next",
-    waits: true,
-    target: () => document.querySelector(".mapwrap"),
-  },
-  {
-    title: "Coalitions, not colors",
-    body: "Every state is a coalition of voter blocs. Move the ones that are persuadable and stop courting the ones that aren't.",
-    next: "Next",
-    target: (mobile) =>
-      mobile
-        ? document.querySelector(".sheet .card") ?? document.querySelector(".sheet")
-        : document.querySelectorAll(".main .col")[1]?.querySelector(".card") ?? null,
-  },
-  {
-    title: "Plan your week",
-    body: "Queue your week: ads, rallies, ground game. Actions cost slots. Spend all of them; unspent slots win nothing.",
-    hint: "Queue at least one action to continue.",
-    next: "Next",
-    waits: true,
-    // The whole Week Plan card can run taller than the viewport, so the
-    // spotlight rides the action grid itself.
-    target: () => document.querySelector(".actiongrid"),
-  },
-  {
-    title: "Lock it in",
-    body: "Lock it in. The week resolves, events hit, and you pick trade-offs, not right answers.",
-    hint: "Click End Week to continue.",
-    next: "Next",
-    waits: true,
-    target: () => document.querySelector('[data-coach="endweek"]'),
-  },
-  {
-    title: "That's the loop",
-    body: "Watch the projection up top. Election Night decides everything. Good luck.",
-    next: "Done",
-    target: () => null,
-  },
-];
+export interface OnboardingCoachProps {
+  doneKey?: string;
+  winLine?: string;
+  mapHint?: string;
+  mapBody?: string;
+  planBody?: string;
+  /** When provided, drives eligibility + action advances (non-US engines). */
+  selectedId?: string | null;
+  queuedLen?: number;
+  turn?: number;
+  totalTurns?: number;
+  mapSelector?: string;
+  detailSelector?: (mobile: boolean) => Element | null;
+}
 
 const sameRect = (a: Rect | null, b: Rect | null): boolean => {
   if (a === null || b === null) return a === b;
@@ -89,44 +52,113 @@ const sameRect = (a: Rect | null, b: Rect | null): boolean => {
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), Math.max(lo, hi));
 
-export function OnboardingCoach() {
-  // Eligibility is decided once, at mount, against the world as it is then:
-  // a browser-ish environment, no done-flag, and a US game on its first turn.
+function buildSteps(props: OnboardingCoachProps): CoachStep[] {
+  const mapSel = props.mapSelector ?? ".mapwrap";
+  const detail =
+    props.detailSelector ??
+    ((mobile: boolean) =>
+      mobile
+        ? document.querySelector(".sheet .card") ?? document.querySelector(".sheet")
+        : document.querySelectorAll(".main .col")[1]?.querySelector(".card") ?? null);
+
+  return [
+    {
+      title: "Welcome to the war room",
+      body: props.winLine ?? "This is your war room. Win 270 electoral votes in {N} weeks. No pressure.",
+      next: "Show me",
+      target: () => null,
+    },
+    {
+      title: "The battleground",
+      body: props.mapBody ?? "Your battleground. Blue and red show the current lean; the gold-edged states are in play. Click a battleground state.",
+      hint: props.mapHint ?? "Click a state on the map to continue.",
+      next: "Next",
+      waits: true,
+      target: () => document.querySelector(mapSel),
+    },
+    {
+      title: "Coalitions, not colors",
+      body: "Every contest is a coalition of voter blocs. Move the ones that are persuadable and stop courting the ones that aren't.",
+      next: "Next",
+      target: detail,
+    },
+    {
+      title: "Plan your week",
+      body: props.planBody ?? "Queue your week: ads, rallies, ground game. Actions cost slots. Spend all of them; unspent slots win nothing.",
+      hint: "Queue at least one action to continue.",
+      next: "Next",
+      waits: true,
+      target: () => document.querySelector(".actiongrid"),
+    },
+    {
+      title: "Lock it in",
+      body: "Lock it in. The week resolves, events hit, and you pick trade-offs, not right answers.",
+      hint: "Click End Week to continue.",
+      next: "Next",
+      waits: true,
+      target: () => document.querySelector('[data-coach="endweek"]'),
+    },
+    {
+      title: "That's the loop",
+      body: "Watch the projection up top. Election Night decides everything. Good luck.",
+      next: "Done",
+      target: () => null,
+    },
+  ];
+}
+
+export function OnboardingCoach(props: OnboardingCoachProps = {}) {
+  const doneKey = props.doneKey ?? COACH_DONE_KEY;
+  const steps = useMemo(
+    () => buildSteps(props),
+    // Copy strings + selectors; detailSelector identity is stable enough for spotlight.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [props.doneKey, props.winLine, props.mapHint, props.mapBody, props.planBody, props.mapSelector],
+  );
+  const external = props.turn !== undefined;
+
+  // Eligibility is decided once, at mount, against the world as it is then.
   const [eligible] = useState<boolean>(() => {
     if (typeof window === "undefined" || typeof document === "undefined") return false;
     if (typeof window.matchMedia !== "function") return false; // jsdom / non-browser
     try {
-      if (window.localStorage.getItem(COACH_DONE_KEY)) return false;
+      if (window.localStorage.getItem(doneKey)) return false;
     } catch {
       return false;
     }
+    if (external) return (props.turn ?? 0) === 0;
     const g = useGameStore.getState().game;
     return g !== null && g.turn === 0;
   });
 
-  const [armed, setArmed] = useState(false); // becomes true 600ms after mount
+  const [armed, setArmed] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [step, setStep] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
   const [mobile, setMobile] = useState(false);
-  const baseTurn = useRef<number>(useGameStore.getState().game?.turn ?? 0);
+  const baseTurn = useRef<number>(
+    external ? (props.turn ?? 0) : (useGameStore.getState().game?.turn ?? 0),
+  );
 
-  // Read-only store subscriptions drive the action-based advances.
-  const totalTurns = useGameStore((s) => s.game?.totalTurns ?? 0);
-  const selectedStateId = useGameStore((s) => s.selectedStateId);
-  const queuedLen = useGameStore((s) => s.game?.queuedActions.length ?? 0);
-  const turn = useGameStore((s) => s.game?.turn ?? 0);
+  // US store subscriptions (ignored when external props drive the coach).
+  const usTotalTurns = useGameStore((s) => s.game?.totalTurns ?? 0);
+  const usSelected = useGameStore((s) => s.selectedStateId);
+  const usQueued = useGameStore((s) => s.game?.queuedActions.length ?? 0);
+  const usTurn = useGameStore((s) => s.game?.turn ?? 0);
+
+  const totalTurns = external ? (props.totalTurns ?? 0) : usTotalTurns;
+  const selectedId = external ? (props.selectedId ?? null) : usSelected;
+  const queuedLen = external ? (props.queuedLen ?? 0) : usQueued;
+  const turn = external ? (props.turn ?? 0) : usTurn;
 
   const active = eligible && armed && !dismissed;
 
-  // Arm after a beat so act()-wrapped synchronous renders never see the coach.
   useEffect(() => {
     if (!eligible) return;
     const t = window.setTimeout(() => setArmed(true), 600);
     return () => window.clearTimeout(t);
   }, [eligible]);
 
-  // Track the mobile breakpoint (card becomes a bottom sheet under 768px).
   useEffect(() => {
     if (!eligible) return;
     const mq = window.matchMedia("(max-width: 768px)");
@@ -136,10 +168,9 @@ export function OnboardingCoach() {
     return () => mq.removeEventListener("change", fn);
   }, [eligible]);
 
-  // Action-driven advances (each with a Next fallback in the card).
   useEffect(() => {
-    if (active && step === 1 && selectedStateId !== null) setStep(2);
-  }, [active, step, selectedStateId]);
+    if (active && step === 1 && selectedId !== null) setStep(2);
+  }, [active, step, selectedId]);
   useEffect(() => {
     if (active && step === 3 && queuedLen > 0) setStep(4);
   }, [active, step, queuedLen]);
@@ -147,20 +178,16 @@ export function OnboardingCoach() {
     if (active && step === 4 && turn > baseTurn.current) setStep(5);
   }, [active, step, turn]);
 
-  // Bring the step's target into view once when the step starts (the columns
-  // scroll independently and some targets live below the fold).
   useEffect(() => {
     if (!active) return;
-    const el = STEPS[step].target(window.matchMedia("(max-width: 768px)").matches);
+    const el = steps[step].target(window.matchMedia("(max-width: 768px)").matches);
     if (el && typeof el.scrollIntoView === "function") el.scrollIntoView({ block: "nearest" });
-  }, [active, step]);
+  }, [active, step, steps]);
 
-  // Follow the spotlight target: recompute on resize/scroll and poll lightly,
-  // since the panels re-render and reflow under us.
   useEffect(() => {
     if (!active) return;
     const update = () => {
-      const el = STEPS[step].target(window.matchMedia("(max-width: 768px)").matches);
+      const el = steps[step].target(window.matchMedia("(max-width: 768px)").matches);
       const r = el ? el.getBoundingClientRect() : null;
       const next: Rect | null =
         r && r.width > 0 ? { top: r.top, left: r.left, width: r.width, height: r.height } : null;
@@ -175,25 +202,23 @@ export function OnboardingCoach() {
       window.removeEventListener("scroll", update, true);
       window.clearInterval(iv);
     };
-  }, [active, step]);
+  }, [active, step, steps]);
 
   if (!active) return null;
 
   const finish = () => {
     try {
-      window.localStorage.setItem(COACH_DONE_KEY, "1");
+      window.localStorage.setItem(doneKey, "1");
     } catch {
-      /* private mode etc. — just dismiss for this session */
+      /* private mode etc. */
     }
     setDismissed(true);
   };
-  const advance = () => (step >= STEPS.length - 1 ? finish() : setStep(step + 1));
+  const advance = () => (step >= steps.length - 1 ? finish() : setStep(step + 1));
 
-  const s = STEPS[step];
+  const s = steps[step];
   const body = s.body.replace("{N}", String(totalTurns));
 
-  // Desktop card placement: below the target when there's room, else above,
-  // clamped to the viewport. Mobile pins the card to the bottom as a sheet.
   const CARD_W = 340;
   const CARD_H = 200;
   const GAP = 14;
@@ -223,7 +248,7 @@ export function OnboardingCoach() {
         className={`coach-card${mobile ? " sheet-mode" : ""}${!mobile && !rect ? " centered" : ""}`}
         style={cardStyle}
       >
-        <div className="coach-eyebrow">TOUR · {step + 1}/{STEPS.length}</div>
+        <div className="coach-eyebrow">TOUR · {step + 1}/{steps.length}</div>
         <h4 className="coach-title">{s.title}</h4>
         <p className="coach-body">{body}</p>
         {s.hint && <p className="coach-hint">{s.hint}</p>}

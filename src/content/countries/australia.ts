@@ -178,5 +178,41 @@ export const AUSTRALIA: CountryBundle = {
     { id: "costings_hole", headline: "A costings black hole dominates {party}'s week", role: "any", weight: 2, appeal: -0.03, momentum: -7 },
     { id: "premier_endorsement", headline: "State premiers and local mayors rally behind {party}", role: "any", weight: 2, appeal: 0.02, momentum: 5 },
     { id: "debate_win", headline: "{party} judged the winner of the leaders' debate", role: "any", weight: 3, appeal: 0.03, momentum: 10 },
+    {
+      id: "debate_call",
+      headline: "The networks offer {party} a leaders' debate slot",
+      role: "player",
+      weight: 4,
+      prompt: "A head-to-head is on the table. How do you play it?",
+      choices: [
+        { id: "accept_attack", text: "Accept and go on the attack", resultText: "You land blows — and take a few. The overnight polls twitch your way.", appeal: 0.03, momentum: 10, rivalAppeal: -0.015 },
+        { id: "accept_safe", text: "Accept and play it safe", resultText: "A steady, on-message night. No gaffes, no fireworks.", appeal: 0.015, momentum: 4 },
+        { id: "decline", text: "Decline — protect the lead / avoid the ambush", resultText: "You dodge the studio lights. The press calls it caution.", appeal: -0.01, momentum: -4 },
+      ],
+    },
+    {
+      id: "preference_fork",
+      headline: "{party} HQ is split on preference deals",
+      role: "player",
+      weight: 3,
+      prompt: "How-to-vote cards are everything. What's the play?",
+      choices: [
+        { id: "broad", text: "Deal broadly — maximise preferences", resultText: "The arithmetic looks better. Purity politics takes a hit.", appeal: 0.02, momentum: 5 },
+        { id: "pure", text: "Stay pure — no deals with the fringe", resultText: "Your base cheers. A few seats get harder.", appeal: 0.01, momentum: 3 },
+        { id: "contrast", text: "Weaponise the rival's preference deals", resultText: "You change the subject — and it mostly works.", appeal: 0.015, momentum: 4, rivalAppeal: -0.02 },
+      ],
+    },
+    {
+      id: "platform_fork",
+      headline: "{party}'s platform committee is split on the big pledge",
+      role: "player",
+      weight: 3,
+      prompt: "The draft is ready. Which way do you push?",
+      choices: [
+        { id: "bold", text: "Go bold — a defining, risky pledge", resultText: "The base roars. The spreadsheets at HQ look nervous.", appeal: 0.035, momentum: 12 },
+        { id: "cautious", text: "Play it cautious — no hostages to fortune", resultText: "No spark, no self-inflicted wounds.", appeal: 0.01, momentum: 2 },
+        { id: "contrast", text: "Make it a contrast document against the rival", resultText: "You define them more than yourself — and it lands.", appeal: 0.02, momentum: 6, rivalAppeal: -0.02 },
+      ],
+    },
   ],
 };
