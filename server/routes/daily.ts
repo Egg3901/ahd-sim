@@ -131,3 +131,49 @@ dailyRouter.get("/board", optionalAuth, (req: AuthedRequest, res) => {
     me,
   });
 });
+
+interface ChampionRow {
+  username: string;
+  wins: number;     // days finished #1
+  podiums: number;  // days finished top 3
+  played: number;   // days entered
+  total_score: number;
+}
+
+// GET /api/daily/champions — the all-time Daily Challenge standings: who wins
+// the most days. One winner per date (highest score, earliest finish breaks
+// ties), aggregated per player and ranked by wins, then total points.
+dailyRouter.get("/champions", optionalAuth, (req: AuthedRequest, res) => {
+  const rows = getDb().prepare(`
+    WITH ranked AS (
+      SELECT user_id, date, score,
+        ROW_NUMBER() OVER (PARTITION BY date ORDER BY score DESC, finished_at ASC) AS rk
+      FROM daily_scores
+    )
+    SELECT u.username,
+      SUM(CASE WHEN r.rk = 1 THEN 1 ELSE 0 END) AS wins,
+      SUM(CASE WHEN r.rk <= 3 THEN 1 ELSE 0 END) AS podiums,
+      COUNT(*) AS played,
+      SUM(r.score) AS total_score
+    FROM ranked r JOIN users u ON u.id = r.user_id
+    GROUP BY r.user_id
+    ORDER BY wins DESC, total_score DESC, played DESC
+    LIMIT 25
+  `).all() as ChampionRow[];
+
+  const entries = rows.map((r, i) => ({
+    rank: i + 1,
+    username: r.username,
+    wins: r.wins,
+    podiums: r.podiums,
+    played: r.played,
+    totalScore: Math.round(r.total_score),
+  }));
+
+  // Distinct days that have any entry — context for "N wins out of M days".
+  const totalDays = (getDb().prepare(
+    "SELECT COUNT(DISTINCT date) AS d FROM daily_scores",
+  ).get() as { d: number }).d;
+
+  res.json({ totalDays, entries });
+});

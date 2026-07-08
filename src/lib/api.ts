@@ -107,6 +107,8 @@ export const api = {
 
   dailyBoard: (date: string) =>
     call<DailyBoard>(`/api/daily/board?date=${encodeURIComponent(date)}`),
+
+  dailyChampions: () => call<DailyChampions>("/api/daily/champions"),
 };
 
 export interface LeaderboardEntry {
@@ -147,6 +149,21 @@ export interface DailyBoard {
   scenarioId: string;
   entries: DailyBoardEntry[];
   me: { rank: number; score: number } | null;
+}
+
+// GET /api/daily/champions — all-time Daily Challenge standings (most days won).
+export interface DailyChampionEntry {
+  rank: number;
+  username: string;
+  wins: number;      // days finished #1
+  podiums: number;   // days finished top 3
+  played: number;    // days entered
+  totalScore: number;
+}
+
+export interface DailyChampions {
+  totalDays: number;
+  entries: DailyChampionEntry[];
 }
 
 export interface MyRanking {

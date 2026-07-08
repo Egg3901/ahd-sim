@@ -1,13 +1,110 @@
 import { useEffect, useState } from "react";
-import { api, type LeaderboardEntry, type MyRanking } from "@lib/api";
+import {
+  api,
+  type LeaderboardEntry,
+  type MyRanking,
+  type DailyBoard,
+  type DailyChampions,
+} from "@lib/api";
 import { SCENARIO_REGISTRY, SCENARIOS_BY_ID } from "@content/scenarioRegistry";
+import { dailyAssignment, utcDateString } from "@lib/daily";
 import { useAuthStore } from "@store/authStore";
-import { ChevronLeft, Trophy } from "lucide-react";
+import { ChevronLeft, Trophy, CalendarDays } from "lucide-react";
 
 const DIFFS = ["all", "easy", "normal", "hard"] as const;
 
+// ── Daily Challenge view: all-time champions + today's board ──────────────
+function DailyView() {
+  const user = useAuthStore((s) => s.user);
+  const [champions, setChampions] = useState<DailyChampions | null>(null);
+  const [today, setToday] = useState<DailyBoard | null>(null);
+  const [error, setError] = useState("");
+  const assignment = dailyAssignment(utcDateString());
+  const meta = SCENARIOS_BY_ID[assignment.scenarioId];
+
+  useEffect(() => {
+    setError("");
+    api.dailyChampions().then(setChampions).catch((e) => setError(e instanceof Error ? e.message : "Server unreachable"));
+    api.dailyBoard(assignment.date).then(setToday).catch(() => {});
+  }, [assignment.date]);
+
+  return (
+    <>
+      <div className="card" style={{ width: "100%", textAlign: "left" }}>
+        <h3 style={{ marginTop: 0 }}>🏆 Daily Champions {champions ? <span className="muted small" style={{ fontWeight: 500 }}>· {champions.totalDays} day{champions.totalDays === 1 ? "" : "s"} played</span> : null}</h3>
+        {error && <p className="muted small" style={{ color: "var(--rose)" }}>{error} — is the campaign server running?</p>}
+        {!error && champions === null && <p className="muted small">Loading…</p>}
+        {champions && champions.entries.length === 0 && (
+          <p className="muted small">No daily results yet. Play today's challenge and post your score to start the board.</p>
+        )}
+        {champions && champions.entries.length > 0 && (
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <thead>
+              <tr style={{ textAlign: "left", color: "var(--muted)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1 }}>
+                <th style={{ padding: "6px 8px" }}>Rank</th>
+                <th style={{ padding: "6px 8px" }}>Player</th>
+                <th style={{ padding: "6px 8px", textAlign: "right" }}>Wins</th>
+                <th style={{ padding: "6px 8px", textAlign: "right" }}>Podiums</th>
+                <th style={{ padding: "6px 8px", textAlign: "right" }}>Played</th>
+                <th style={{ padding: "6px 8px", textAlign: "right" }}>Total pts</th>
+              </tr>
+            </thead>
+            <tbody>
+              {champions.entries.map((e) => {
+                const isMe = user && e.username === user.username;
+                return (
+                  <tr key={`${e.rank}-${e.username}`} style={{ borderTop: "1px solid var(--border)", background: isMe ? "rgba(212,175,55,0.08)" : undefined }}>
+                    <td style={{ padding: "7px 8px", fontWeight: 700 }}>{e.rank <= 3 ? ["🥇", "🥈", "🥉"][e.rank - 1] : `#${e.rank}`}</td>
+                    <td style={{ padding: "7px 8px", fontWeight: isMe ? 800 : 500, color: isMe ? "var(--gold)" : undefined }}>{e.username}{isMe && " (you)"}</td>
+                    <td style={{ padding: "7px 8px", textAlign: "right", fontWeight: 800, color: "var(--gold)" }}>{e.wins}</td>
+                    <td style={{ padding: "7px 8px", textAlign: "right" }}>{e.podiums}</td>
+                    <td style={{ padding: "7px 8px", textAlign: "right" }} className="muted">{e.played}</td>
+                    <td style={{ padding: "7px 8px", textAlign: "right", color: "var(--green)" }}>{e.totalScore}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="card" style={{ width: "100%", textAlign: "left", marginTop: 12 }}>
+        <h3 style={{ marginTop: 0 }}>Today · {meta?.flag} {meta?.label ?? assignment.scenarioId}</h3>
+        {today === null && <p className="muted small">Loading today's board…</p>}
+        {today && today.entries.length === 0 && <p className="muted small">No entries yet today. Be the first to post.</p>}
+        {today && today.entries.length > 0 && (
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <thead>
+              <tr style={{ textAlign: "left", color: "var(--muted)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1 }}>
+                <th style={{ padding: "6px 8px" }}>Rank</th>
+                <th style={{ padding: "6px 8px" }}>Player</th>
+                <th style={{ padding: "6px 8px", textAlign: "right" }}>Score</th>
+                <th style={{ padding: "6px 8px" }}>Difficulty</th>
+              </tr>
+            </thead>
+            <tbody>
+              {today.entries.map((e) => {
+                const isMe = user && e.username === user.username;
+                return (
+                  <tr key={`${e.rank}-${e.username}`} style={{ borderTop: "1px solid var(--border)", background: isMe ? "rgba(212,175,55,0.08)" : undefined }}>
+                    <td style={{ padding: "7px 8px", fontWeight: 700 }}>{e.rank <= 3 ? ["🥇", "🥈", "🥉"][e.rank - 1] : `#${e.rank}`}</td>
+                    <td style={{ padding: "7px 8px", fontWeight: isMe ? 800 : 500, color: isMe ? "var(--gold)" : undefined }}>{e.username}{isMe && " (you)"}</td>
+                    <td style={{ padding: "7px 8px", textAlign: "right", fontWeight: 800, color: "var(--green)" }}>{Math.round(e.score)}</td>
+                    <td style={{ padding: "7px 8px" }} className="muted">{e.difficulty}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </>
+  );
+}
+
 export function LeaderboardScreen({ onBack }: { onBack: () => void }) {
   const user = useAuthStore((s) => s.user);
+  const [mode, setMode] = useState<"scenario" | "daily">("scenario");
   const [scenarioId, setScenarioId] = useState("us-2024");
   const [difficulty, setDifficulty] = useState<(typeof DIFFS)[number]>("all");
   const [entries, setEntries] = useState<LeaderboardEntry[] | null>(null);
@@ -41,6 +138,16 @@ export function LeaderboardScreen({ onBack }: { onBack: () => void }) {
         <div className="title" style={{ fontSize: 34 }}>Hall of Campaigns</div>
         <p className="sub">Best score per player, per scenario. Post yours from the results screen.</p>
 
+        <div className="row" style={{ gap: 6, margin: "8px 0 4px" }}>
+          <button className={`ghost small${mode === "scenario" ? " active" : ""}`} onClick={() => setMode("scenario")}>
+            <Trophy size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />By scenario
+          </button>
+          <button className={`ghost small${mode === "daily" ? " active" : ""}`} onClick={() => setMode("daily")}>
+            <CalendarDays size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Daily Challenge
+          </button>
+        </div>
+
+        {mode === "daily" ? <DailyView /> : <>
         <div className="row" style={{ gap: 10, width: "100%", margin: "8px 0 12px", flexWrap: "wrap" }}>
           <div className="field" style={{ textAlign: "left", margin: 0, flex: 2, minWidth: 260 }}>
             <label>Scenario</label>
@@ -108,6 +215,7 @@ export function LeaderboardScreen({ onBack }: { onBack: () => void }) {
             ))}
           </div>
         )}
+        </>}
       </div>
     </div>
   );
