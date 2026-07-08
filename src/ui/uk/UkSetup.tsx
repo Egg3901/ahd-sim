@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useUkStore } from "@store/ukStore";
 import { useAuthStore } from "@store/authStore";
+import { DifficultyPicker, type Difficulty } from "@ui/DifficultyPicker";
 import { UK_ELECTIONS, UK_ELECTION_IDS } from "@content/uk/elections";
 import { UK_PLAYABLE, playablePartiesIn } from "@engine/ukGame";
 import { leaderFor } from "@content/uk/leaders";
@@ -66,6 +67,7 @@ export function UkSetup({ onBack, initialElection, initialSeed, initialParty }: 
   const [election, setElection] = useState(initialElection && UK_ELECTIONS[initialElection] ? initialElection : ids[0]);
   const [party, setParty] = useState<PartyId>(initialParty && UK_PLAYABLE.includes(initialParty) ? initialParty : "lab");
   const [seed, setSeed] = useState<string>(() => initialSeed ?? randomSeed());
+  const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const data = UK_ELECTIONS[election];
   const field = contenders(election);
   const playable = playablePartiesIn(election);
@@ -163,6 +165,7 @@ export function UkSetup({ onBack, initialElection, initialSeed, initialParty }: 
 
           {step === 2 && (
             <>
+              <DifficultyPicker value={difficulty} onChange={setDifficulty} />
               <div className="field" style={{ textAlign: "left" }}>
                 <label>Seed — same seed replays the same events & RNG</label>
                 <div className="su-seed">
@@ -200,7 +203,7 @@ export function UkSetup({ onBack, initialElection, initialSeed, initialParty }: 
             <button className="primary su-next" onClick={() => setStep((step + 1) as StepId)}>Next <ChevronRight size={16} /></button>
           ) : (
             <UkBeginButton election={election} party={activeParty} seed={seed} year={data.year}
-              onBegin={() => newGame(election, activeParty, seed)} />
+              onBegin={() => newGame(election, activeParty, seed, difficulty)} />
           )}
         </div>
       </div>

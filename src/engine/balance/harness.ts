@@ -43,8 +43,8 @@ import { computeScoreFromFacts, usScoreFacts, multipartyScoreFacts } from "../sc
 
 export type BotStrategy = "passive" | "focused" | "scattershot";
 export type UsDifficulty = "easy" | "normal" | "hard";
-// UK/country engines have no difficulty system — they run as "base".
-export type GauntletDifficulty = UsDifficulty | "base";
+// All three engines now share the easy/normal/hard handicap system.
+export type GauntletDifficulty = UsDifficulty;
 export type SideRole = "winner" | "underdog" | "minor";
 
 export interface GauntletRow {
@@ -390,6 +390,7 @@ function mpOutcome(
   side: PartyId,
   majority: { total: number; threshold: number },
   baselineWinner: string,
+  difficulty: UsDifficulty,
 ): RunOutcome {
   const mine = seats[side] ?? 0;
   const rival = Math.max(
@@ -403,14 +404,14 @@ function mpOutcome(
     unitMargin: mine - majority.threshold,
     blowout: Math.abs(mine - rival) > majority.total * 0.25,
     score: computeScoreFromFacts(
-      multipartyScoreFacts({ seats, voteShare }, side, majority.threshold, majority.total, "normal"),
+      multipartyScoreFacts({ seats, voteShare }, side, majority.threshold, majority.total, difficulty),
     ),
     matchedHistory: largestParty === baselineWinner,
   };
 }
 
-function runUkGame(meta: ScenarioMeta, side: PartyId, bot: BotStrategy, seed: string, baselineWinner: string): RunOutcome {
-  let g: UkGameState = createUkGame({ election: meta.nativeId, playerParty: side, seed });
+function runUkGame(meta: ScenarioMeta, side: PartyId, bot: BotStrategy, difficulty: UsDifficulty, seed: string, baselineWinner: string): RunOutcome {
+  let g: UkGameState = createUkGame({ election: meta.nativeId, playerParty: side, seed, difficulty });
   let guard = 0;
   while (g.phase !== "result" && guard++ < 30) {
     const view: MpView = {
@@ -424,13 +425,14 @@ function runUkGame(meta: ScenarioMeta, side: PartyId, bot: BotStrategy, seed: st
     g = ukAdvanceTurn(g);
   }
   const r = g.result ?? computeUkResult(g);
-  return mpOutcome(r.seats, r.voteShare, r.largestParty, side, UK_SYSTEM.majority, baselineWinner);
+  return mpOutcome(r.seats, r.voteShare, r.largestParty, side, UK_SYSTEM.majority, baselineWinner, difficulty);
 }
 
 function runCountryGame(
   meta: ScenarioMeta,
   side: PartyId,
   bot: BotStrategy,
+  difficulty: UsDifficulty,
   seed: string,
   baselineWinner: string,
 ): RunOutcome {
@@ -439,6 +441,7 @@ function runCountryGame(
     election: meta.nativeId,
     playerParty: side,
     seed,
+    difficulty,
   });
   const majority = majorityFor(g, bundle);
   let guard = 0;
@@ -454,7 +457,7 @@ function runCountryGame(
     g = countryAdvanceTurn(g, bundle);
   }
   const r = g.result ?? computeCountryResult(g, bundle);
-  return mpOutcome(r.seats, r.voteShare, r.largestParty, side, majority, baselineWinner);
+  return mpOutcome(r.seats, r.voteShare, r.largestParty, side, majority, baselineWinner, difficulty);
 }
 
 // ── The gauntlet ───────────────────────────────────────────────────────────
@@ -488,7 +491,8 @@ function buildCells(config: GauntletConfig): Cell[] {
     if (config.sides === "winner-underdog") {
       sides = [...new Set([baseline.winner, baseline.underdog])];
     }
-    const diffs: GauntletDifficulty[] = meta.engine === "us" ? usDiffs : ["base"];
+    // Every engine now shares the easy/normal/hard handicap system.
+    const diffs: GauntletDifficulty[] = usDiffs;
     for (const side of sides) {
       for (const difficulty of diffs) {
         for (const bot of bots) {
@@ -515,12 +519,12 @@ export function runGauntlet(config: GauntletConfig = {}): GauntletRow[] {
       const seed = `${meta.scenarioId}-${side}-${bot}-${i}`;
       if (meta.engine === "us") {
         outcomes.push(
-          runUsGame(meta, side as CandidateId, bot, difficulty as UsDifficulty, seed, baseline.winner),
+          runUsGame(meta, side as CandidateId, bot, difficulty, seed, baseline.winner),
         );
       } else if (meta.engine === "uk") {
-        outcomes.push(runUkGame(meta, side, bot, seed, baseline.winner));
+        outcomes.push(runUkGame(meta, side, bot, difficulty, seed, baseline.winner));
       } else {
-        outcomes.push(runCountryGame(meta, side, bot, seed, baseline.winner));
+        outcomes.push(runCountryGame(meta, side, bot, difficulty, seed, baseline.winner));
       }
       done++;
       config.onProgress?.(done, total);
@@ -548,12 +552,11 @@ export function runGauntlet(config: GauntletConfig = {}): GauntletRow[] {
 
 // ── Row queries shared by the test + report ───────────────────────────────
 
-export const easiestDifficultyFor = (engine: ScenarioMeta["engine"]): GauntletDifficulty =>
-  engine === "us" ? "easy" : "base";
-export const hardestDifficultyFor = (engine: ScenarioMeta["engine"]): GauntletDifficulty =>
-  engine === "us" ? "hard" : "base";
-export const defaultDifficultyFor = (engine: ScenarioMeta["engine"]): GauntletDifficulty =>
-  engine === "us" ? "normal" : "base";
+// All engines share easy/normal/hard now, so these are engine-independent
+// (the parameter is kept for call-site clarity and future divergence).
+export const easiestDifficultyFor = (_engine?: ScenarioMeta["engine"]): GauntletDifficulty => "easy";
+export const hardestDifficultyFor = (_engine?: ScenarioMeta["engine"]): GauntletDifficulty => "hard";
+export const defaultDifficultyFor = (_engine?: ScenarioMeta["engine"]): GauntletDifficulty => "normal";
 
 export function findRow(
   rows: GauntletRow[],

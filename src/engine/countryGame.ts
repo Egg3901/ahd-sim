@@ -284,6 +284,8 @@ export interface CountryGameState {
   firedEvents?: string[];
   // Winning post for THIS election (chamber sizes vary across cycles).
   majority?: { total: number; threshold: number };
+  // Underdog handicap setting (defaults to "normal" = identity for old saves).
+  difficulty?: Difficulty;
   result?: CountryResult;
 }
 
@@ -317,11 +319,50 @@ function leaderFor(country: CountryBundle, electionId: string, partyId: PartyId)
   );
 }
 
+export type Difficulty = "easy" | "normal" | "hard";
+
+// Underdog handicap. `normal` is the identity element — every lever is a no-op,
+// so neutral play stays byte-identical to the calibration baseline and the
+// history-reproduction tests are untouched. `easy` hands a skilled human the
+// tools to overturn even a landslide (a favorable national climate + a bigger
+// operation + a sloppier opponent); `hard` is a mild headwind for the
+// pure-challenge setting. Levers:
+//   environment  — one-time tilt of every bloc's baseline appeal toward the
+//                  player (logit; ~0.04 ≈ 1 two-party point). The heavy hitter:
+//                  it brings out-of-reach regions into play.
+//   persuasion   — multiplies how far the player's own campaigning moves a bloc.
+//   aiPersuasion — the same multiplier on every rival party's campaigning.
+//   funds/actions— one-time bonuses to the player's starting war chest + slots.
+export interface CountryHandicap {
+  funds: number; actions: number; persuasion: number; aiPersuasion: number; environment: number;
+}
+export const COUNTRY_HANDICAP: Record<Difficulty, CountryHandicap> = {
+  easy:   { funds: 6, actions: 2, persuasion: 1.5, aiPersuasion: 0.5, environment: 0.9 },
+  normal: { funds: 0, actions: 0, persuasion: 1.0, aiPersuasion: 1.0, environment: 0 },
+  // Hard is a campaign-only headwind: no baseline (environment) shift, so a
+  // dominant winner stays dominant — only genuinely knife-edge elections tip.
+  hard:   { funds: 0, actions: 0, persuasion: 0.85, aiPersuasion: 1.1, environment: 0 },
+};
+
+// One-time favorable-climate tilt: add `env` logits to the player's appeal in
+// every bloc, then refresh live support. No-op when env = 0 (normal/hard base).
+function applyCountryEnvironment(regions: StateContest[], player: PartyId, env: number) {
+  if (!env) return;
+  for (const region of regions) {
+    for (const bloc of region.blocs) {
+      if (!bloc.appeal) continue;
+      bloc.appeal[player] = (bloc.appeal[player] ?? 0) + env;
+      bloc.support = blocPartyShares(bloc) as typeof bloc.support;
+    }
+  }
+}
+
 export interface NewCountryGameOptions {
   seed?: number | string;
   election?: string;
   playerParty?: PartyId;
   totalTurns?: number;
+  difficulty?: Difficulty;
 }
 
 export function createCountryGame(country: CountryBundle, opts: NewCountryGameOptions = {}): CountryGameState {
@@ -338,19 +379,27 @@ export function createCountryGame(country: CountryBundle, opts: NewCountryGameOp
       ? opts.playerParty
       : parties.find((p) => country.playable.includes(p)) ?? parties[0];
 
+  const difficulty: Difficulty = opts.difficulty ?? "normal";
+  const hc = COUNTRY_HANDICAP[difficulty];
+
   const leaders: Record<PartyId, CountryLeader> = {};
   for (const p of parties) leaders[p] = leaderFor(country, election.id, p);
 
   const resources: Record<PartyId, CountryResources> = {};
   for (const p of parties) {
     const machine = leaders[p].machine;
+    const bonusF = p === playerParty ? hc.funds : 0;
+    const bonusA = p === playerParty ? hc.actions : 0;
     resources[p] = {
-      funds: 4 + machine / 10,
-      actions: 5 + Math.round(leaders[p].energy / 40),
-      maxActions: 5 + Math.round(leaders[p].energy / 40),
+      funds: 4 + machine / 10 + bonusF,
+      actions: 5 + Math.round(leaders[p].energy / 40) + bonusA,
+      maxActions: 5 + Math.round(leaders[p].energy / 40) + bonusA,
       momentum: 0,
     };
   }
+
+  const regions = buildCountryRegions(country, election);
+  applyCountryEnvironment(regions, playerParty, hc.environment);
 
   return {
     countryId: country.id,
@@ -366,7 +415,7 @@ export function createCountryGame(country: CountryBundle, opts: NewCountryGameOp
     parties,
     leaders,
     salience: { ...election.salience },
-    regions: buildCountryRegions(country, election),
+    regions,
     resources,
     causes: [],
     queuedActions: [],
@@ -374,6 +423,7 @@ export function createCountryGame(country: CountryBundle, opts: NewCountryGameOp
     news: [],
     firedEvents: [],
     majority: { ...(election.majority ?? country.system.majority) },
+    difficulty,
   };
 }
 
@@ -388,11 +438,15 @@ function saturate(bloc: StateContest["blocs"][number], party: PartyId, raw: numb
 }
 
 function addAppeal(g: CountryGameState, region: StateContest, party: PartyId, cause: string, delta: number) {
+  // Difficulty scales campaigning: the player's own effort by `persuasion`,
+  // every rival's by `aiPersuasion`. Both are 1.0 on normal (identity).
+  const hc = COUNTRY_HANDICAP[g.difficulty ?? "normal"];
+  const scaled = delta * (party === g.playerParty ? hc.persuasion : hc.aiPersuasion);
   for (const bloc of region.blocs) {
     if (!bloc.campaignAppeal) bloc.campaignAppeal = {};
-    bloc.campaignAppeal[party] = (bloc.campaignAppeal[party] ?? 0) + saturate(bloc, party, delta);
+    bloc.campaignAppeal[party] = (bloc.campaignAppeal[party] ?? 0) + saturate(bloc, party, scaled);
   }
-  g.causes.push({ turn: g.turn, stateId: region.id, cause, marginDelta: delta });
+  g.causes.push({ turn: g.turn, stateId: region.id, cause, marginDelta: scaled });
 }
 
 const standsIn = (g: CountryGameState, party: PartyId) =>

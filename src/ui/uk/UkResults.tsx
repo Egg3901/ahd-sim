@@ -35,7 +35,8 @@ export function UkResults() {
   const user = useAuthStore((s) => s.user);
   const openModal = useAuthStore((s) => s.openModal);
   const scenarioId = `uk-${game.electionId}`;
-  const facts = useMemo(() => multipartyScoreFacts(r, game.playerParty, 326, 650, "normal"), [r, game.playerParty]);
+  const difficulty = game.difficulty ?? "normal";
+  const facts = useMemo(() => multipartyScoreFacts(r, game.playerParty, 326, 650, difficulty), [r, game.playerParty, difficulty]);
   const score = computeScoreFromFacts(facts);
   const [postState, setPostState] = useState<"idle" | "busy" | "done" | "error">("idle");
   const [postNote, setPostNote] = useState("");
@@ -43,7 +44,7 @@ export function UkResults() {
     setPostState("busy");
     try {
       const out = await api.postScore({
-        scenarioId, difficulty: "normal", score, facts,
+        scenarioId, difficulty, score, facts,
         evMargin: Math.round(facts.unitMargin), popularVoteMargin: facts.popularMargin, turnsPlayed: game.turn,
       });
       setPostState("done");

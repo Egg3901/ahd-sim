@@ -35,30 +35,23 @@ const SMOKE_SCENARIOS = [
   "ca-2025", "de-2025", "fr-2022",
 ];
 
-// ── KNOWN BALANCE GAPS (tracked debt, measured 2026-07-08, N=20 full matrix;
-// see docs/balance/report-2026-07-08.md). These scenarios breach a gauntlet
-// floor today. For each, the suite still enforces the weaker no-regression
-// invariant that skill moves the needle (focused strictly outperforms passive
-// on unit margin); remove a scenario from the set once the gap is fixed and
-// the assertion tightens automatically.
+// ── KNOWN BALANCE GAPS (tracked debt). A scenario here breaches a gauntlet
+// floor; the suite still enforces the weaker no-regression invariant that skill
+// moves the needle (focused strictly outperforms passive). Remove an entry once
+// the gap closes and the assertion tightens automatically.
 //
-// Root cause, not noise: the UK/country engines have NO difficulty/handicap
-// system (their "easiest available setting" is the calibrated baseline), so a
-// landslide year cannot be overturned inside 6 turns of the current action
-// economy; us-1984 is out of reach even with the easy-mode handicap. This is
-// exactly the "any year is winnable" promise the paywall flip depends on —
-// fix candidates: a multiparty handicap, longer campaigns, or stronger
-// underdog action budgets.
+// The 2026-07-08 wave that ported the easy/normal/hard underdog handicap into
+// the UK and country engines cleared every multiparty landslide off this list
+// (see docs/balance/report-2026-07-08.md). Only us-1984 remains: the US engine's
+// easy handicap still can't flip Reagan's 525-EV landslide, and the US engine
+// was out of scope for that wave.
 const KNOWN_UNWINNABLE = new Set([
   "us-1984",
-  "uk-2024", "uk-2019", "uk-2015", "uk-2005", "uk-2001", "uk-1997",
-  "uk-1992", "uk-1987", "uk-1983", "uk-1979", "uk-1951",
-  "de-2025", "de-2021",
-  "fr-2027", "fr-2022", "fr-2017",
-  "au-2025",
 ]);
-// uk-2017 is the hung-parliament coin flip: the baseline winner (con) holds
-// largest-party in only ~35% of focused runs — under the 40% no-pushover bar.
+// uk-2017 is the genuine hung-parliament coin flip: even on hard the baseline
+// winner (con) holds largest-party only ~30% of the time — correctly below the
+// 40% no-pushover bar, because 2017 really was a near-tie. Kept as documented
+// debt, not a bug.
 const KNOWN_PUSHOVER_GAPS = new Set(["uk-2017"]);
 
 const SCENARIOS = FULL ? SCENARIO_REGISTRY.map((m) => m.scenarioId) : SMOKE_SCENARIOS;

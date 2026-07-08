@@ -7,6 +7,7 @@ import { Avatar } from "@ui/Avatar";
 import { Vote, Dices, ChevronLeft, Flag } from "lucide-react";
 import type { PartyId } from "@engine/system";
 import { BRAND } from "../../brand";
+import { DifficultyPicker, type Difficulty } from "@ui/DifficultyPicker";
 
 function randomSeed(): string {
   return String(Math.floor(Math.random() * 1_000_000)).padStart(6, "0");
@@ -27,6 +28,7 @@ export function CountrySetup({ country, onBack, initialElection, initialSeed, in
   const [election, setElection] = useState(initialElection && country.elections[initialElection] ? initialElection : ids[0]);
   const [party, setParty] = useState<PartyId>(initialParty && country.playable.includes(initialParty) ? initialParty : country.playable[0]);
   const [seed, setSeed] = useState<string>(() => initialSeed ?? randomSeed());
+  const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const data = country.elections[election];
   const playable = playablePartiesIn(country, election);
   const activeParty = playable.includes(party) ? party : playable[0];
@@ -86,6 +88,8 @@ export function CountrySetup({ country, onBack, initialElection, initialSeed, in
             )}
           </div>
 
+          <DifficultyPicker value={difficulty} onChange={setDifficulty} />
+
           <div className="field" style={{ textAlign: "left" }}>
             <label>Seed — same seed replays the same events & RNG</label>
             <div className="su-seed">
@@ -114,7 +118,7 @@ export function CountrySetup({ country, onBack, initialElection, initialSeed, in
             onClick={() => {
               const sid = `${country.id.toLowerCase()}-${election}`;
               if (!canPlay(sid)) { openModal(user ? "activate" : "login", sid); return; }
-              newGame(country.id, election, activeParty, seed);
+              newGame(country.id, election, activeParty, seed, difficulty);
             }}
           >
             <Flag size={15} /> {canPlay(`${country.id.toLowerCase()}-${election}`)

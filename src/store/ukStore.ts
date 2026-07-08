@@ -8,6 +8,7 @@ import {
   type UkGameState,
   type UkAction,
   type UkResult,
+  type Difficulty,
 } from "@engine/ukGame";
 import type { PartyId } from "@engine/system";
 
@@ -16,7 +17,7 @@ interface UkStore {
   history: UkGameState[]; // undo ring
   selectedRegionId: string | null;
 
-  newGame: (election: string, party: PartyId, seed?: string) => void;
+  newGame: (election: string, party: PartyId, seed?: string, difficulty?: Difficulty) => void;
   reset: () => void;
   selectRegion: (id: string | null) => void;
 
@@ -38,10 +39,10 @@ export const useUkStore = create<UkStore>((set, get) => ({
   history: [],
   selectedRegionId: null,
 
-  newGame: (election, party, seed) => {
+  newGame: (election, party, seed, difficulty) => {
     const p = UK_PLAYABLE.includes(party) ? party : "lab";
     set({
-      game: createUkGame({ election, playerParty: p, seed: seed ?? `uk-${Date.now()}` }),
+      game: createUkGame({ election, playerParty: p, seed: seed ?? `uk-${Date.now()}`, difficulty }),
       history: [],
       selectedRegionId: null,
     });

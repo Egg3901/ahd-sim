@@ -91,6 +91,8 @@ export interface UkGameState {
   news: { turn: number; text: string }[];
   // Election-deck event ids that already fired (they never repeat in a game).
   firedEvents?: string[];
+  // Underdog handicap setting (defaults to "normal" = identity for old saves).
+  difficulty?: Difficulty;
   result?: UkResult;
 }
 
@@ -115,11 +117,41 @@ export function playablePartiesIn(electionId: string): PartyId[] {
   return UK_PLAYABLE.filter((p) => active.has(p));
 }
 
+export type Difficulty = "easy" | "normal" | "hard";
+
+// Underdog handicap — see the country engine's COUNTRY_HANDICAP for the full
+// rationale. `normal` is the identity element (calibration stays byte-identical);
+// `easy` gives a favorable climate + bigger operation + sloppier opponent so a
+// skilled human can overturn a landslide; `hard` is a mild headwind.
+export interface UkHandicap {
+  funds: number; actions: number; persuasion: number; aiPersuasion: number; environment: number;
+}
+export const UK_HANDICAP: Record<Difficulty, UkHandicap> = {
+  easy:   { funds: 6, actions: 2, persuasion: 1.5, aiPersuasion: 0.5, environment: 0.9 },
+  normal: { funds: 0, actions: 0, persuasion: 1.0, aiPersuasion: 1.0, environment: 0 },
+  // Hard is a campaign-only headwind: no baseline (environment) shift, so a
+  // dominant winner stays dominant — only genuinely knife-edge elections tip.
+  hard:   { funds: 0, actions: 0, persuasion: 0.85, aiPersuasion: 1.1, environment: 0 },
+};
+
+// One-time favorable-climate tilt toward the player, then refresh live support.
+function applyUkEnvironment(regions: StateContest[], player: PartyId, env: number) {
+  if (!env) return;
+  for (const region of regions) {
+    for (const bloc of region.blocs) {
+      if (!bloc.appeal) continue;
+      bloc.appeal[player] = (bloc.appeal[player] ?? 0) + env;
+      bloc.support = blocPartyShares(bloc) as typeof bloc.support;
+    }
+  }
+}
+
 export interface NewUkGameOptions {
   seed?: number | string;
   election?: string;
   playerParty?: PartyId;
   totalTurns?: number;
+  difficulty?: Difficulty;
 }
 
 export function createUkGame(opts: NewUkGameOptions = {}): UkGameState {
@@ -133,19 +165,27 @@ export function createUkGame(opts: NewUkGameOptions = {}): UkGameState {
       ? opts.playerParty
       : parties.find((p) => UK_PLAYABLE.includes(p)) ?? parties[0];
 
+  const difficulty: Difficulty = opts.difficulty ?? "normal";
+  const hc = UK_HANDICAP[difficulty];
+
   const leaders: Record<PartyId, UkLeader> = {};
   for (const p of parties) leaders[p] = leaderFor(election.id, p, p.toUpperCase());
 
   const resources: Record<PartyId, UkResources> = {};
   for (const p of parties) {
     const machine = leaders[p].machine;
+    const bonusF = p === playerParty ? hc.funds : 0;
+    const bonusA = p === playerParty ? hc.actions : 0;
     resources[p] = {
-      funds: 4 + machine / 10,
-      actions: 5 + Math.round(leaders[p].energy / 40),
-      maxActions: 5 + Math.round(leaders[p].energy / 40),
+      funds: 4 + machine / 10 + bonusF,
+      actions: 5 + Math.round(leaders[p].energy / 40) + bonusA,
+      maxActions: 5 + Math.round(leaders[p].energy / 40) + bonusA,
       momentum: 0,
     };
   }
+
+  const regions = buildUkRegions(election);
+  applyUkEnvironment(regions, playerParty, hc.environment);
 
   return {
     systemId: "UK",
@@ -161,13 +201,14 @@ export function createUkGame(opts: NewUkGameOptions = {}): UkGameState {
     parties,
     leaders,
     salience: { ...election.salience },
-    regions: buildUkRegions(election),
+    regions,
     resources,
     causes: [],
     queuedActions: [],
     abstaining: [...UK_ABSTAINING],
     news: [],
     firedEvents: [],
+    difficulty,
   };
 }
 
@@ -184,11 +225,15 @@ function saturate(bloc: StateContest["blocs"][number], party: PartyId, raw: numb
 }
 
 function addAppeal(g: UkGameState, region: StateContest, party: PartyId, cause: string, delta: number) {
+  // Difficulty scales campaigning: player effort by `persuasion`, rivals by
+  // `aiPersuasion`. Both 1.0 on normal (identity).
+  const hc = UK_HANDICAP[g.difficulty ?? "normal"];
+  const scaled = delta * (party === g.playerParty ? hc.persuasion : hc.aiPersuasion);
   for (const bloc of region.blocs) {
     if (!bloc.campaignAppeal) bloc.campaignAppeal = {};
-    bloc.campaignAppeal[party] = (bloc.campaignAppeal[party] ?? 0) + saturate(bloc, party, delta);
+    bloc.campaignAppeal[party] = (bloc.campaignAppeal[party] ?? 0) + saturate(bloc, party, scaled);
   }
-  g.causes.push({ turn: g.turn, stateId: region.id, cause, marginDelta: delta });
+  g.causes.push({ turn: g.turn, stateId: region.id, cause, marginDelta: scaled });
 }
 
 // ── Actions ──────────────────────────────────────────────────────────────

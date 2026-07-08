@@ -9,6 +9,7 @@ import {
   type CountryGameState,
   type CountryAction,
   type CountryResult,
+  type Difficulty,
 } from "@engine/countryGame";
 import { COUNTRIES } from "@content/countries";
 import type { PartyId } from "@engine/system";
@@ -19,7 +20,7 @@ interface CountryStore {
   history: CountryGameState[];
   selectedRegionId: string | null;
 
-  newGame: (countryId: string, election: string, party: PartyId, seed?: string) => void;
+  newGame: (countryId: string, election: string, party: PartyId, seed?: string, difficulty?: Difficulty) => void;
   reset: () => void;
   selectRegion: (id: string | null) => void;
 
@@ -42,14 +43,14 @@ export const useCountryStore = create<CountryStore>((set, get) => ({
   history: [],
   selectedRegionId: null,
 
-  newGame: (countryId, election, party, seed) => {
+  newGame: (countryId, election, party, seed, difficulty) => {
     const country = COUNTRIES[countryId];
     if (!country) return;
     const playable = playablePartiesIn(country, election);
     const p = playable.includes(party) ? party : playable[0];
     set({
       country,
-      game: createCountryGame(country, { election, playerParty: p, seed: seed ?? `${countryId}-${Date.now()}` }),
+      game: createCountryGame(country, { election, playerParty: p, seed: seed ?? `${countryId}-${Date.now()}`, difficulty }),
       history: [],
       selectedRegionId: null,
     });

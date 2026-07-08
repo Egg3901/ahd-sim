@@ -32,10 +32,11 @@ export function CountryResults({ onExit }: { onExit: () => void }) {
 
   const scenarioId = `${country.id.toLowerCase()}-${game.electionId}`;
   const majority = majorityFor(game, country);
+  const difficulty = game.difficulty ?? "normal";
 
   const facts = useMemo(
-    () => multipartyScoreFacts(r, game.playerParty, majority.threshold, majority.total, "normal"),
-    [r, game.playerParty, majority],
+    () => multipartyScoreFacts(r, game.playerParty, majority.threshold, majority.total, difficulty),
+    [r, game.playerParty, majority, difficulty],
   );
   const score = computeScoreFromFacts(facts);
 
@@ -47,7 +48,7 @@ export function CountryResults({ onExit }: { onExit: () => void }) {
     try {
       const out = await api.postScore({
         scenarioId,
-        difficulty: "normal",
+        difficulty,
         score,
         facts,
         evMargin: Math.round(facts.unitMargin),
