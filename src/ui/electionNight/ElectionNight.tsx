@@ -26,6 +26,14 @@ export interface RevealParty {
   color: string;
 }
 
+// Optional real-geography map: SVG paths keyed by unit id. Units without a
+// shape (e.g. ME/NE congressional districts) simply don't appear on the map —
+// their calls still show up in the callout and chip feed.
+export interface RevealMap {
+  viewBox: string;
+  shapes: Record<string, { d: string; label?: [number, number] }>;
+}
+
 export interface RevealProps {
   title: string; // "Election Night · 1984"
   totalUnits: number; // 538 / 650 / 343…
@@ -34,6 +42,7 @@ export interface RevealProps {
   units: RevealUnit[]; // ALL units, with final winners
   playerPartyId: string;
   unitLabel?: string; // "EV" | "seats" | "points"
+  map?: RevealMap; // live-filling map centerpiece; omitted ⇒ chip-only layout
   noMajorityLabel?: string; // hung-parliament / contingent-election banner text
   storageKey?: string; // sessionStorage key so refresh/resume doesn't replay
   onDone: () => void;
@@ -154,7 +163,7 @@ export function buildSchedule(
 type Speed = "1x" | "2x" | "instant";
 
 export function ElectionNight(props: RevealProps) {
-  const { title, totalUnits, threshold, parties, units, playerPartyId, storageKey, onDone } = props;
+  const { title, totalUnits, threshold, parties, units, playerPartyId, storageKey, map, onDone } = props;
   const unitLabel = props.unitLabel ?? "seats";
   const noMajorityLabel = props.noMajorityLabel ?? "NO OVERALL MAJORITY — HUNG PARLIAMENT";
 
@@ -208,10 +217,12 @@ export function ElectionNight(props: RevealProps) {
   const calls = executed.filter((e) => e.kind === "call");
   const tallies: Record<string, number> = {};
   let calledUnits = 0;
+  const calledById = new Map<string, RevealUnit>();
   for (const c of calls) {
     const u = c.unit!;
     tallies[u.winnerId] = (tallies[u.winnerId] ?? 0) + u.units;
     calledUnits += u.units;
+    calledById.set(u.id, u);
   }
   const knownSum = parties.reduce((s, p) => (p.id === OTHERS_ID ? s : s + (tallies[p.id] ?? 0)), 0);
   const othersTotal = Math.max(0, calledUnits - knownSum);
@@ -244,7 +255,7 @@ export function ElectionNight(props: RevealProps) {
 
   return (
     <div className="en-root">
-      <div className="card sheen en-stage">
+      <div className={`card sheen en-stage${map ? " with-map" : ""}`}>
         <div className="en-top">
           <div>
             <div className="en-eyebrow">
@@ -268,6 +279,34 @@ export function ElectionNight(props: RevealProps) {
         </div>
 
         <div className={`en-status${inCliff && !finished ? " gold" : ""}`}>{status}</div>
+
+        {map && (
+          <div className={`en-map${speed === "instant" ? " instant" : ""}`}>
+            <svg viewBox={map.viewBox} preserveAspectRatio="xMidYMid meet" role="img" aria-label="Election map">
+              {units.map((u) => {
+                const shape = map.shapes[u.id];
+                if (!shape) return null;
+                const called = calledById.get(u.id);
+                return (
+                  <path
+                    key={u.id}
+                    d={shape.d}
+                    className={`en-map-unit${called ? " called" : ""}`}
+                    style={called ? { fill: called.winnerColor } : undefined}
+                  >
+                    <title>{called ? `${u.name} — ${called.winnerShort}` : u.name}</title>
+                  </path>
+                );
+              })}
+              {/* Upset rings render in a second pass so the gold pulse sits on top. */}
+              {units.map((u) => {
+                const called = calledById.get(u.id);
+                if (!called?.upset || !map.shapes[u.id]) return null;
+                return <path key={`ring-${u.id}`} d={map.shapes[u.id].d} className="en-map-upset-ring" />;
+              })}
+            </svg>
+          </div>
+        )}
 
         <div className="en-callout">
           {lastCall ? (

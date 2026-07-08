@@ -17,7 +17,7 @@ describe("buildShareText", () => {
       "Electioneer Daily · 2026-07-08\n" +
       "🇩🇪 2021 · Scholz v. Laschet — as SPD\n" +
       "🏆 371 seats · Score 8,420\n" +
-      "electioneer.game",
+      BRAND.domain, // interim staging host until the real domain is purchased
     );
   });
 

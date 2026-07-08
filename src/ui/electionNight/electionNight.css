@@ -42,6 +42,27 @@
 }
 .en-status.gold { color: var(--gold); animation: en-status-blink 1.2s ease-in-out infinite; }
 
+/* ── Live-filling map (centerpiece when geometry is available) ──────── */
+.en-stage.with-map { max-width: 900px; }
+.en-map { margin-top: 14px; display: flex; justify-content: center; }
+.en-map svg { width: 100%; height: auto; max-height: 40vh; display: block; }
+.en-map-unit {
+  fill: var(--navy-600); /* uncalled: neutral slate */
+  stroke: var(--navy-900);
+  stroke-width: 0.75;
+  stroke-linejoin: round;
+  transition: fill 0.25s var(--ease);
+}
+.en-map-unit.called { animation: en-map-flash 0.6s var(--ease); }
+/* Instant / already-finished boards paint fully with no per-unit theatrics. */
+.en-map.instant .en-map-unit.called { animation: none; }
+.en-map-upset-ring {
+  fill: none; pointer-events: none;
+  stroke: var(--gold); stroke-width: 2; stroke-linejoin: round;
+  animation: en-map-ring 1s var(--ease) 2;
+}
+.en-map.instant .en-map-upset-ring { animation: none; stroke-width: 1.5; }
+
 /* ── Big call-out (latest call) ─────────────────────────────────────── */
 .en-callout {
   min-height: 58px; margin-top: 6px; text-align: center;
@@ -150,6 +171,15 @@
   100% { transform: none; opacity: 1; filter: none; }
 }
 @keyframes en-scan { 0% { background-position: 0 0; } 100% { background-position: 0 60px; } }
+@keyframes en-map-flash {
+  0% { filter: brightness(2.6) saturate(1.4); }
+  100% { filter: none; }
+}
+@keyframes en-map-ring {
+  0% { stroke-opacity: 0.2; stroke-width: 3.5; }
+  50% { stroke-opacity: 1; }
+  100% { stroke-opacity: 0.85; stroke-width: 2; }
+}
 @keyframes en-sweep { to { transform: translateX(100%); } }
 
 @media (prefers-reduced-motion: reduce) {

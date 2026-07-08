@@ -7,13 +7,31 @@ import { majorityFor, type CountryBundle, type CountryGameState } from "@engine/
 import type { PartyId } from "@engine/system";
 import type { SeatResult, StateContest } from "@engine/types";
 import { SCENARIOS } from "@content/scenarios";
+import { STATE_PATHS } from "@content/statePaths";
+import { REGION_PATHS, UK_VIEWBOX } from "@content/uk/regionPaths";
 import { partyColor as ukColor, partyShort as ukShort, sortBySeats as ukSortBySeats } from "../uk/parties";
 import { partyColor as coColor, partyShort as coShort, sortBySeats as coSortBySeats } from "../country/helpers";
-import { OTHERS_ID, type RevealParty, type RevealProps, type RevealUnit } from "./ElectionNight";
+import { OTHERS_ID, type RevealMap, type RevealParty, type RevealProps, type RevealUnit } from "./ElectionNight";
 
 type RevealData = Omit<RevealProps, "onDone">;
 
 const OTHERS_COLOR = "#5b6b8c";
+
+// Same viewBox USMap.tsx uses to render STATE_PATHS in geo mode.
+const US_MAP_VIEWBOX = "0 0 1000 650";
+
+// Map geometry for the US reveal. At-large split units (ME-AL / NE-AL) reuse
+// the parent state outline; the numbered congressional districts have no
+// geometry of their own and stay chips-only.
+function usRevealMap(units: RevealUnit[]): RevealMap {
+  const shapes: RevealMap["shapes"] = {};
+  for (const u of units) {
+    const d =
+      STATE_PATHS[u.id] ?? (u.id.endsWith("-AL") ? STATE_PATHS[u.id.split("-")[0]] : undefined);
+    if (d) shapes[u.id] = { d };
+  }
+  return { viewBox: US_MAP_VIEWBOX, shapes };
+}
 
 // ── US (two-party electoral college) ─────────────────────────────────────
 export function usReveal(game: GameState): RevealData {
@@ -51,6 +69,7 @@ export function usReveal(game: GameState): RevealData {
     units,
     playerPartyId: game.playerCandidate,
     unitLabel: "EV",
+    map: usRevealMap(units),
     noMajorityLabel: "269–269 — ELECTION GOES TO THE HOUSE",
     storageKey: `reveal-${game.seed}-us-${scenarioId}`,
   };
@@ -122,6 +141,7 @@ export function ukReveal(game: UkGameState): RevealData {
     units,
     playerPartyId: game.playerParty,
     unitLabel: "seats",
+    map: { viewBox: UK_VIEWBOX, shapes: REGION_PATHS },
     noMajorityLabel: "NO OVERALL MAJORITY — HUNG PARLIAMENT",
     storageKey: `reveal-${game.seed}-uk-${game.electionId}`,
   };
@@ -142,6 +162,7 @@ export function countryReveal(country: CountryBundle, game: CountryGameState): R
     units,
     playerPartyId: game.playerParty,
     unitLabel: country.unitNamePlural,
+    map: country.map, // all shipped bundles carry one; undefined ⇒ chip-only
     noMajorityLabel: "NO OVERALL MAJORITY — HUNG PARLIAMENT",
     storageKey: `reveal-${game.seed}-${country.id.toLowerCase()}-${game.electionId}`,
   };
