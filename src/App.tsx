@@ -19,6 +19,7 @@ import { getScenario } from "@content/scenarios";
 import { money, turnLabel } from "@ui/format";
 import { lazy, Suspense } from "react";
 import { LandingPage, type LandingDestination } from "@ui/LandingPage";
+import { LegalPage } from "@ui/LegalPage";
 import { dailyAssignment, markDailyPlayed, utcDateString } from "@lib/daily";
 import { SCENARIOS_BY_ID } from "@content/scenarioRegistry";
 
@@ -194,7 +195,8 @@ type View =
   | { kind: "us"; scenarioId?: string; initialSeed?: string; initialParty?: string }
   | { kind: "uk"; electionId?: string; initialSeed?: string; initialParty?: string }
   | { kind: "country"; countryId: string; electionId?: string; initialSeed?: string; initialParty?: string }
-  | { kind: "leaderboard" };
+  | { kind: "leaderboard" }
+  | { kind: "legal"; tab?: "privacy" | "terms" };
 
 export function App() {
   const game = useGameStore((s) => s.game);
@@ -257,6 +259,10 @@ export function App() {
 
   if (view.kind === "leaderboard") {
     return withModals(<Suspense fallback={<LazyFallback />}><LeaderboardScreen onBack={home} /></Suspense>);
+  }
+
+  if (view.kind === "legal") {
+    return withModals(<LegalPage initialTab={view.tab} onBack={home} />);
   }
 
   return withModals(<LandingPage onGo={go} />);

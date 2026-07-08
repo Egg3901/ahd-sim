@@ -30,7 +30,8 @@ export type LandingDestination =
   | { kind: "uk"; electionId?: string }
   | { kind: "country"; countryId: string; electionId?: string }
   | { kind: "leaderboard" }
-  | { kind: "daily" };                   // App resolves via dailyAssignment()
+  | { kind: "daily" }                    // App resolves via dailyAssignment()
+  | { kind: "legal"; tab?: "privacy" | "terms" };
 
 const DIFF_COLOR: Record<ScenarioMeta["difficulty"], string> = {
   easy: "var(--green)",
@@ -231,6 +232,13 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
               );
             })}
           </div>
+        </div>
+
+        {/* Footer: legal + attribution */}
+        <div className="row muted small" style={{ justifyContent: "center", gap: 14, width: "100%", margin: "22px 0 8px", flexWrap: "wrap" }}>
+          <button className="ghost small" onClick={() => onGo({ kind: "legal", tab: "privacy" })}>Privacy</button>
+          <button className="ghost small" onClick={() => onGo({ kind: "legal", tab: "terms" })}>Terms</button>
+          <span style={{ alignSelf: "center" }}>{BRAND.from}</span>
         </div>
       </div>
     </div>
