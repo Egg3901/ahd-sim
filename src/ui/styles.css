@@ -665,8 +665,15 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
   .setup .title { font-size: 28px; }
   .pick { grid-template-columns: 1fr; }
   .candcard { padding: 12px; }
-  .scenario-grid { grid-template-columns: repeat(2, 1fr); }
-  .su-step { padding: 8px; gap: 7px; }
+  /* !important: several screens set grid-template-columns inline (3-up year
+     grids, minmax(280px) card walls) — on a phone they must collapse to two
+     min-0 columns or the min-content of nowrap labels blows out the page. */
+  .scenario-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .scenario-card { min-width: 0; }
+  .scenario-card .scenario-match { white-space: normal; }
+  /* The wizard step strip scrolls sideways instead of shoving the page wide. */
+  .su-stepper { overflow-x: auto; padding-bottom: 2px; }
+  .su-step { flex: 1 0 auto; padding: 8px; gap: 7px; }
   .su-step-hint { display: none; }
   .su-step-label { font-size: 11px; }
   .su-optgrid, .su-optgrid-3 { grid-template-columns: 1fr; }

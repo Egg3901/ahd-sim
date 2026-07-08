@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useGameStore, type Difficulty } from "@store/gameStore";
 import { useAuthStore } from "@store/authStore";
 import { SCENARIOS, SCENARIO_IDS } from "@content/scenarios";
+import { PAYWALL_ENABLED } from "@content/scenarioRegistry";
 import { defaultRunningMate } from "@content/runningMates";
 import { STAFF_POOL, MAX_STAFF, STAFF_BY_ID } from "@content/staff";
 import { GuidePage } from "@ui/GuidePage";
@@ -178,9 +179,11 @@ export function SetupScreen({ initialScenarioId, onExit }: { initialScenarioId?:
                   );
                 })}
               </div>
-              <p className="muted small" style={{ marginTop: 8 }}>
-                🔒 Locked years are part of the <strong>US Historical Elections</strong> pack — redeem a code to unlock.
-              </p>
+              {PAYWALL_ENABLED && (
+                <p className="muted small" style={{ marginTop: 8 }}>
+                  🔒 Locked years are part of the <strong>US Historical Elections</strong> pack — redeem a code to unlock.
+                </p>
+              )}
             </div>
           )}
 

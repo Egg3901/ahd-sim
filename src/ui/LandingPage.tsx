@@ -123,7 +123,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
     <div className="center" style={{ alignItems: "flex-start", paddingTop: 18 }}>
       <div className="setup" style={{ maxWidth: 980 }}>
         {/* Top bar: brand left, auth right */}
-        <div className="row" style={{ justifyContent: "space-between", width: "100%", marginBottom: 6 }}>
+        <div className="row" style={{ justifyContent: "space-between", flexWrap: "wrap", width: "100%", marginBottom: 6 }}>
           <div className="setup-eyebrow" style={{ margin: 0 }}>
             <span className="mark"><Vote size={18} /></span>{BRAND.nameCaps} — {BRAND.eyebrow}
           </div>
