@@ -16,11 +16,19 @@ import { StatsScreen } from "@ui/StatsScreen";
 import { NewsTicker } from "@ui/NewsTicker";
 import { getScenario } from "@content/scenarios";
 import { money, turnLabel } from "@ui/format";
-import { UkApp } from "@ui/uk/UkApp";
-import { CountryApp } from "@ui/country/CountryApp";
-import { COUNTRIES } from "@content/countries";
+import { lazy, Suspense } from "react";
 import { LandingPage, type LandingDestination } from "@ui/LandingPage";
-import { LeaderboardScreen } from "@ui/LeaderboardScreen";
+
+// The UK and country shells carry their engines, content, and map geometry —
+// they load on demand so the main bundle stays lean (the US game is the
+// default/resume path and stays eager).
+const UkApp = lazy(() => import("@ui/uk/UkApp").then((m) => ({ default: m.UkApp })));
+const CountryApp = lazy(() => import("@ui/country/CountryApp").then((m) => ({ default: m.CountryApp })));
+const LeaderboardScreen = lazy(() => import("@ui/LeaderboardScreen").then((m) => ({ default: m.LeaderboardScreen })));
+
+const LazyFallback = () => (
+  <div className="app screen center"><div className="setup"><p className="sub">Loading…</p></div></div>
+);
 import { AuthModals } from "@ui/auth/AuthModals";
 import { Vote, X } from "lucide-react";
 import { BRAND } from "./brand";
@@ -212,16 +220,15 @@ export function App() {
   }
 
   if (view.kind === "uk") {
-    return withModals(<UkApp onExit={home} initialElection={view.electionId} />);
+    return withModals(<Suspense fallback={<LazyFallback />}><UkApp onExit={home} initialElection={view.electionId} /></Suspense>);
   }
 
   if (view.kind === "country") {
-    const country = COUNTRIES[view.countryId];
-    if (country) return withModals(<CountryApp country={country} onExit={home} initialElection={view.electionId} />);
+    return withModals(<Suspense fallback={<LazyFallback />}><CountryApp countryId={view.countryId} onExit={home} initialElection={view.electionId} /></Suspense>);
   }
 
   if (view.kind === "leaderboard") {
-    return withModals(<LeaderboardScreen onBack={home} />);
+    return withModals(<Suspense fallback={<LazyFallback />}><LeaderboardScreen onBack={home} /></Suspense>);
   }
 
   return withModals(<LandingPage onGo={go} />);

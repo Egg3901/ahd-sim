@@ -1,5 +1,5 @@
 import { useCountryStore } from "@store/countryStore";
-import type { CountryBundle } from "@engine/countryGame";
+import { COUNTRIES } from "@content/countries";
 import { CountrySetup } from "./CountrySetup";
 import { CountryMap, CountrySeatBar, CountryStandings, CountryRegionPanel } from "./CountryPanels";
 import { CountryActionPanel } from "./CountryActionPanel";
@@ -9,7 +9,10 @@ import { Vote } from "lucide-react";
 import { BRAND } from "../../brand";
 
 // The generic country shell — the UkApp pattern, parameterized by bundle.
-export function CountryApp({ country, onExit, initialElection }: { country: CountryBundle; onExit: () => void; initialElection?: string }) {
+// Takes the country ID (not the bundle) so the bundles + map data stay inside
+// this lazy chunk instead of the main bundle.
+export function CountryApp({ countryId, onExit, initialElection }: { countryId: string; onExit: () => void; initialElection?: string }) {
+  const country = COUNTRIES[countryId];
   const storeCountry = useCountryStore((s) => s.country);
   const game = useCountryStore((s) => s.game);
   const endTurn = useCountryStore((s) => s.endTurn);
@@ -18,6 +21,16 @@ export function CountryApp({ country, onExit, initialElection }: { country: Coun
   const live = useCountryStore((s) => s.liveProjection)();
 
   // A game from a different country in the store doesn't belong to this shell.
+  if (!country) {
+    return (
+      <div className="app screen center">
+        <div className="setup">
+          <p className="sub">Unknown country.</p>
+          <button className="primary" onClick={onExit}>Back to all scenarios</button>
+        </div>
+      </div>
+    );
+  }
   const activeGame = storeCountry?.id === country.id ? game : null;
 
   if (!activeGame) return <div className="app screen"><CountrySetup country={country} onBack={onExit} initialElection={initialElection} /></div>;

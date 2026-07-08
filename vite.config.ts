@@ -16,6 +16,14 @@ export default defineConfig({
       "@lib": fileURLToPath(new URL("./src/lib", import.meta.url)),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Long-cache vendor chunk; app code churns, React doesn't.
+        manualChunks: (id) => (id.includes("node_modules") ? "vendor" : undefined),
+      },
+    },
+  },
   server: {
     // Dev-mode API passthrough to the campaign backend (npm run server).
     proxy: {
