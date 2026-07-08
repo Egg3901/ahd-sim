@@ -4,20 +4,20 @@ import { COUNTRIES } from "@content/countries";
 import { computeScoreFromFacts, multipartyScoreFacts } from "../scoring";
 
 describe("country bundles", () => {
-  it("every region's baseline seats sum to its pool, chambers total correctly", () => {
-    const chamber: Record<string, number> = { CA: 343, DE: 630, FR: 100 };
+  it("every election's seats total its chamber; every result region has meta", () => {
+    // The bundle's newest election matches system.majority; older cycles may
+    // override (Canada 2021: 338, Bundestag 2021: 735 with overhang).
     for (const [cid, country] of Object.entries(COUNTRIES)) {
       for (const election of Object.values(country.elections)) {
+        const majority = election.majority ?? country.system.majority;
+        expect(majority.threshold, `${cid} ${election.id} threshold`).toBe(Math.floor(majority.total / 2) + 1);
         let total = 0;
         for (const [rid, res] of Object.entries(election.regions)) {
-          const meta = country.regions.find((r) => r.id === rid)!;
+          const meta = country.regions.find((r) => r.id === rid);
           expect(meta, `${cid}: region meta ${rid}`).toBeDefined();
-          const seats = Object.values(res.s).reduce((s, x) => s + x, 0);
-          expect(seats, `${cid} ${election.id} ${rid} seats`).toBe(meta.seats);
-          total += seats;
+          total += Object.values(res.s).reduce((s, x) => s + x, 0);
         }
-        expect(total, `${cid} chamber`).toBe(chamber[cid]);
-        expect(country.system.majority.total).toBe(chamber[cid]);
+        expect(total, `${cid} ${election.id} chamber`).toBe(majority.total);
       }
     }
   });
