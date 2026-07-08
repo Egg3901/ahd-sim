@@ -4,16 +4,19 @@
 // self-consistent and inside the game's physical bounds.
 
 import { computeScoreFromFacts, DIFFICULTY_MULTIPLIER, type ScoreDifficulty, type ScoreFacts } from "../src/engine/scoring.js";
-import { SCENARIOS_BY_ID, type CountryCode } from "../src/content/scenarioRegistry.js";
+import { SCENARIOS_BY_ID, type ScenarioMeta } from "../src/content/scenarioRegistry.js";
+import { COUNTRIES } from "../src/content/countries/index.js";
 
-// The chamber every country's game plays for — a submitted chamberSize must match.
-const CHAMBER_BY_COUNTRY: Record<CountryCode, number> = {
-  US: 538,
-  UK: 650,
-  CA: 343,
-  DE: 630,
-  FR: 100, // two-round runoff, modeled as a 100-point electoral pool
-};
+// The chamber a scenario's game plays for — a submitted chamberSize must
+// match. Country chambers resolve per ELECTION (Canada 2021 = 338 next to
+// 2025 = 343; the 2021 Bundestag = 735 with overhang).
+function chamberFor(meta: ScenarioMeta): number | undefined {
+  if (meta.engine === "us") return 538;
+  if (meta.engine === "uk") return 650;
+  const country = COUNTRIES[meta.country];
+  const election = country?.elections[meta.nativeId];
+  return (election?.majority ?? country?.system.majority)?.total;
+}
 
 export interface ScoreSubmission {
   scenarioId: string;
@@ -36,8 +39,9 @@ export function validateSubmission(sub: ScoreSubmission): { ok: true } | { ok: f
   }
   if (f.difficulty !== sub.difficulty) return { ok: false, error: "Difficulty mismatch between score and facts" };
 
-  const chamber = CHAMBER_BY_COUNTRY[meta.country];
-  if (f.chamberSize !== chamber) return { ok: false, error: `Chamber size must be ${chamber} for ${meta.country}` };
+  const chamber = chamberFor(meta);
+  if (!chamber) return { ok: false, error: `No chamber known for ${sub.scenarioId}` };
+  if (f.chamberSize !== chamber) return { ok: false, error: `Chamber size must be ${chamber} for ${sub.scenarioId}` };
   if (Math.abs(f.unitMargin) > chamber) return { ok: false, error: "Unit margin out of bounds" };
   if (Math.abs(f.popularMargin) > 100) return { ok: false, error: "Popular margin out of bounds" };
   if (typeof sub.turnsPlayed === "number" && (sub.turnsPlayed < 1 || sub.turnsPlayed > 30)) {
