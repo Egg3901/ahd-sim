@@ -8,6 +8,7 @@ import { UkStandings } from "./UkStandings";
 import { UkResults } from "./UkResults";
 import { partyName, partyColor } from "./parties";
 import { Vote } from "lucide-react";
+import { BRAND } from "../../brand";
 
 export function UkApp({ onExit, initialElection }: { onExit: () => void; initialElection?: string }) {
   const game = useUkStore((s) => s.game);
@@ -30,7 +31,7 @@ export function UkApp({ onExit, initialElection }: { onExit: () => void; initial
         <div className="brand-lockup">
           <span className="mark"><Vote size={22} /></span>
           <div>
-            <div className="brand-name">A HOUSE DIVIDED</div>
+            <div className="brand-name">{BRAND.nameCaps}</div>
             <div className="brand-yr">UK · {game.label}</div>
           </div>
         </div>

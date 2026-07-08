@@ -23,6 +23,7 @@ import { LandingPage, type LandingDestination } from "@ui/LandingPage";
 import { LeaderboardScreen } from "@ui/LeaderboardScreen";
 import { AuthModals } from "@ui/auth/AuthModals";
 import { Vote, X } from "lucide-react";
+import { BRAND } from "./brand";
 
 // True when the viewport is in the single-column mobile layout. Re-renders on
 // viewport changes so State Detail can switch between inline and bottom-sheet.
@@ -117,7 +118,7 @@ function GameScreen() {
         <div className="brand-lockup">
           <span className="mark"><Vote size={22} /></span>
           <div>
-            <div className="brand-name">A HOUSE DIVIDED</div>
+            <div className="brand-name">{BRAND.nameCaps}</div>
             <div className="brand-yr">CAMPAIGN {year}</div>
           </div>
         </div>

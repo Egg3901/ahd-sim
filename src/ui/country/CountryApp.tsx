@@ -6,6 +6,7 @@ import { CountryActionPanel } from "./CountryActionPanel";
 import { CountryResults } from "./CountryResults";
 import { partyColor, partyName } from "./helpers";
 import { Vote } from "lucide-react";
+import { BRAND } from "../../brand";
 
 // The generic country shell — the UkApp pattern, parameterized by bundle.
 export function CountryApp({ country, onExit, initialElection }: { country: CountryBundle; onExit: () => void; initialElection?: string }) {
@@ -33,7 +34,7 @@ export function CountryApp({ country, onExit, initialElection }: { country: Coun
         <div className="brand-lockup">
           <span className="mark"><Vote size={22} /></span>
           <div>
-            <div className="brand-name">A HOUSE DIVIDED</div>
+            <div className="brand-name">{BRAND.nameCaps}</div>
             <div className="brand-yr">{country.flag} {country.label.toUpperCase()} · {activeGame.label}</div>
           </div>
         </div>

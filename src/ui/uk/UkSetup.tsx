@@ -8,6 +8,7 @@ import { partyName, partyColor, partyShort } from "./parties";
 import { Avatar } from "@ui/Avatar";
 import { Vote, Dices, ChevronLeft, ChevronRight, Check, Flag } from "lucide-react";
 import type { PartyId } from "@engine/system";
+import { BRAND } from "../../brand";
 
 function randomSeed(): string {
   return String(Math.floor(Math.random() * 1_000_000)).padStart(6, "0");
@@ -79,7 +80,7 @@ export function UkSetup({ onBack, initialElection }: { onBack: () => void; initi
         <div className="setup-eyebrow">
           <span className="mark"><Vote size={18} /></span>UNITED KINGDOM — GENERAL ELECTION
         </div>
-        <div className="title">A House Divided</div>
+        <div className="title">{BRAND.name}</div>
         <p className="sub">{data.tagline}</p>
 
         <div className="su-stepper" role="tablist">

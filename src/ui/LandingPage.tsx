@@ -4,6 +4,7 @@ import { PACKS } from "@content/packs";
 import { useAuthStore } from "@store/authStore";
 import { UserMenu } from "@ui/auth/UserMenu";
 import { Vote, Lock, Play, Trophy, KeyRound, ChevronLeft, ChevronRight } from "lucide-react";
+import { BRAND } from "../brand";
 
 const COUNTRY_NAMES: Record<CountryCode, string> = {
   US: "United States",
@@ -124,7 +125,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
         {/* Top bar: brand left, auth right */}
         <div className="row" style={{ justifyContent: "space-between", width: "100%", marginBottom: 6 }}>
           <div className="setup-eyebrow" style={{ margin: 0 }}>
-            <span className="mark"><Vote size={18} /></span>CAMPAIGN — RUN THE RACE
+            <span className="mark"><Vote size={18} /></span>{BRAND.nameCaps} — {BRAND.eyebrow}
           </div>
           <div className="row" style={{ gap: 6 }}>
             <button className="ghost small" onClick={() => onGo({ kind: "leaderboard" })}>
@@ -134,7 +135,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
           </div>
         </div>
 
-        <div className="title">A House Divided</div>
+        <div className="title">{BRAND.name}</div>
         <p className="sub">
           {SCENARIO_REGISTRY.length} elections across {new Set(SCENARIO_REGISTRY.map((s) => s.country)).size} countries — presidential duels, multiparty brawls, two-round runoffs.
           {PAYWALL_ENABLED

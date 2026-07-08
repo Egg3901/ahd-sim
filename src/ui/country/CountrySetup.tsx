@@ -6,6 +6,7 @@ import { partyColor, partyName, partyShort } from "./helpers";
 import { Avatar } from "@ui/Avatar";
 import { Vote, Dices, ChevronLeft, Flag } from "lucide-react";
 import type { PartyId } from "@engine/system";
+import { BRAND } from "../../brand";
 
 function randomSeed(): string {
   return String(Math.floor(Math.random() * 1_000_000)).padStart(6, "0");
@@ -31,7 +32,7 @@ export function CountrySetup({ country, onBack, initialElection }: { country: Co
         <div className="setup-eyebrow">
           <span className="mark"><Vote size={18} /></span>{country.flag} {country.label.toUpperCase()} — {data.year}
         </div>
-        <div className="title">A House Divided</div>
+        <div className="title">{BRAND.name}</div>
         <p className="sub">{data.tagline}</p>
 
         <div className="su-panel">

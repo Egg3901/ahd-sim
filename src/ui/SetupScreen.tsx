@@ -9,6 +9,7 @@ import { CandidateScreen } from "@ui/CandidateScreen";
 import { mateBonusChips } from "@ui/labels";
 import { Avatar } from "@ui/Avatar";
 import type { CandidateId, GameState } from "@engine/index";
+import { BRAND } from "../brand";
 import {
   Vote,
   Dices,
@@ -127,7 +128,7 @@ export function SetupScreen({ initialScenarioId, onExit }: { initialScenarioId?:
         <div className="setup-eyebrow">
           <span className="mark"><Vote size={18} /></span>PRESIDENTIAL CAMPAIGN
         </div>
-        <div className="title">A House Divided</div>
+        <div className="title">{BRAND.name}</div>
         <p className="sub">{scenario.tagline}</p>
 
         {/* ── Stepper ──────────────────────────────────────────────── */}
