@@ -6,14 +6,12 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 export const BRAND = {
-  // Working title — replace when the real name lands.
-  name: "Campaign",
-  nameCaps: "CAMPAIGN",
+  name: "Electioneer",
+  nameCaps: "ELECTIONEER",
   tagline: "Run the race. Rewrite history.",
   eyebrow: "RUN THE RACE",
-  // Domain / canonical URL (set when the domain is purchased).
-  domain: "",
-  url: "",
+  domain: "electioneer.game",
+  url: "https://electioneer.game",
   // Attribution line for footers/about.
   from: "From the maker of A House Divided",
 } as const;
