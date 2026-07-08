@@ -87,6 +87,15 @@ export const SCENARIOS_BY_ID: Record<string, ScenarioMeta> = Object.fromEntries(
 
 export const FREE_SCENARIO_IDS = SCENARIO_REGISTRY.filter((s) => s.free).map((s) => s.scenarioId);
 
+// Master paywall switch, shared by the client (locks, copy) and the server
+// (entitlement checks). While false, every scenario is playable by everyone;
+// the packs/activation machinery stays intact so flipping this back on
+// restores the paid tiers without further changes.
+export const PAYWALL_ENABLED = false;
+
 export function isFreeScenario(scenarioId: string): boolean {
-  return SCENARIOS_BY_ID[scenarioId]?.free ?? false;
+  const meta = SCENARIOS_BY_ID[scenarioId];
+  if (!meta) return false; // unknown ids stay locked (leaderboard rejects them)
+  if (!PAYWALL_ENABLED) return true;
+  return meta.free;
 }

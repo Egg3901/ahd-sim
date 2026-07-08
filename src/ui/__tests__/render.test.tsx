@@ -8,6 +8,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "../../App";
 import { useGameStore } from "@store/gameStore";
+import { PAYWALL_ENABLED } from "@content/scenarioRegistry";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -37,8 +38,8 @@ describe("App renders without crashing", () => {
 
   it("shows the landing scenario browser on first load, then the U.S. setup wizard", () => {
     const m = mount();
-    // The landing page: free tier up top, full catalog, packs strip.
-    expect(m.html()).toContain("Play free");
+    // The landing page: featured tier up top, full catalog, packs strip.
+    expect(m.html()).toContain(PAYWALL_ENABLED ? "Play free" : "Start here");
     expect(m.html()).toContain("Harris v. Trump");
     expect(m.html()).toContain("Scenario packs");
     // Entering a free U.S. scenario shows the setup wizard on that year.
@@ -49,13 +50,20 @@ describe("App renders without crashing", () => {
     m.cleanup();
   });
 
-  it("locked scenarios open the auth/paywall modal instead of a game", () => {
+  it(PAYWALL_ENABLED
+      ? "locked scenarios open the auth/paywall modal instead of a game"
+      : "paywall off: pack scenarios go straight to the setup wizard", () => {
     const m = mount();
-    // 2016 US is paid; a signed-out click routes to login.
+    // 2016 US is pack content; behavior depends on the master paywall switch.
     clickButton(m.container, "Clinton v. Trump");
     const html = m.html();
-    expect(html).toContain("Log In"); // login modal opened
-    expect(m.html()).not.toContain("The War Room"); // no setup wizard
+    if (PAYWALL_ENABLED) {
+      expect(html).toContain("Log In"); // signed-out click routes to login
+      expect(m.html()).not.toContain("The War Room"); // no setup wizard
+    } else {
+      expect(html).toContain("The Election"); // setup wizard, no gate
+      expect(html).not.toContain("Log In");
+    }
     m.cleanup();
   });
 

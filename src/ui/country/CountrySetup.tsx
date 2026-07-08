@@ -11,13 +11,13 @@ function randomSeed(): string {
   return String(Math.floor(Math.random() * 1_000_000)).padStart(6, "0");
 }
 
-export function CountrySetup({ country, onBack }: { country: CountryBundle; onBack: () => void }) {
+export function CountrySetup({ country, onBack, initialElection }: { country: CountryBundle; onBack: () => void; initialElection?: string }) {
   const newGame = useCountryStore((s) => s.newGame);
   const canPlay = useAuthStore((s) => s.canPlay);
   const openModal = useAuthStore((s) => s.openModal);
   const user = useAuthStore((s) => s.user);
   const ids = Object.keys(country.elections).sort((a, b) => Number(b) - Number(a));
-  const [election, setElection] = useState(ids[0]);
+  const [election, setElection] = useState(initialElection && country.elections[initialElection] ? initialElection : ids[0]);
   const [party, setParty] = useState<PartyId>(country.playable[0]);
   const [seed, setSeed] = useState<string>(randomSeed);
   const data = country.elections[election];

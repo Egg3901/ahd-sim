@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useCountryStore } from "@store/countryStore";
 import { tallyRegion, allocateRegionSeats } from "@engine/multiparty";
 import type { StateContest } from "@engine/types";
@@ -5,13 +6,15 @@ import type { CountryBundle, CountryResult } from "@engine/countryGame";
 import { partyColor, partyShort, partyName, sortBySeats, byDisplayOrder } from "./helpers";
 import { MapPin } from "lucide-react";
 
-function regionWinner(region: StateContest): { winner: string; seats: Record<string, number> } {
+function regionWinner(region: StateContest): { winner: string; seats: Record<string, number>; lead: number } {
   const { shareByParty } = tallyRegion(region);
   const seats = allocateRegionSeats(region, shareByParty);
   let winner = "";
   let best = -1;
-  for (const p of Object.keys(seats)) if (seats[p] > best) { best = seats[p]; winner = p; }
-  return { winner, seats };
+  let total = 0;
+  for (const p of Object.keys(seats)) { total += seats[p]; if (seats[p] > best) { best = seats[p]; winner = p; } }
+  const lead = total > 0 ? best / total : 0.5; // dominance → fill opacity
+  return { winner, seats, lead };
 }
 
 // ── Seat bar (majority marker at the country's threshold) ──────────────────
@@ -40,24 +43,85 @@ export function CountrySeatBar({ country, result }: { country: CountryBundle; re
   );
 }
 
-// ── Tile cartogram (new countries ship no SVG paths — the square map IS the map) ──
+// ── Country map: real geography when the bundle ships SVG shapes, tile
+// cartogram otherwise (and always available as the Square view). ──
 export function CountryMap() {
   const country = useCountryStore((s) => s.country)!;
   const game = useCountryStore((s) => s.game)!;
   const selected = useCountryStore((s) => s.selectedRegionId);
   const select = useCountryStore((s) => s.selectRegion);
+  const hasGeo = !!country.map;
+  const [mode, setMode] = useState<"geo" | "square">(hasGeo ? "geo" : "square");
 
   const metaById = Object.fromEntries(country.regions.map((r) => [r.id, r]));
   const rows = Math.max(...country.regions.map((r) => r.tile.row)) + 1;
   const cols = Math.max(...country.regions.map((r) => r.tile.col)) + 1;
 
+  const header = (
+    <div className="mapcontrols" style={{ justifyContent: "space-between" }}>
+      <h3 style={{ margin: 0, fontSize: 13, textTransform: "uppercase", letterSpacing: 0.8, color: "var(--muted)" }}>
+        {country.flag} {country.label} · {country.system.majority.total} {country.unitNamePlural}
+      </h3>
+      {hasGeo && (
+        <div className="row" style={{ gap: 4 }}>
+          <button className={`ghost small${mode === "geo" ? " active" : ""}`} onClick={() => setMode("geo")}>Geo</button>
+          <button className={`ghost small${mode === "square" ? " active" : ""}`} onClick={() => setMode("square")}>Square</button>
+        </div>
+      )}
+    </div>
+  );
+
+  const legend = (
+    <div className="legend" style={{ flexWrap: "wrap", gap: 8 }}>
+      {game.parties.filter((p) => country.playable.includes(p)).map((p) => (
+        <span key={p} className="row" style={{ gap: 4, alignItems: "center" }}>
+          <span style={{ width: 10, height: 10, borderRadius: 2, background: partyColor(country, p) }} />
+          {partyShort(country, p)}
+        </span>
+      ))}
+    </div>
+  );
+
+  if (mode === "geo" && country.map) {
+    const { viewBox, shapes } = country.map;
+    return (
+      <div className="card mapwrap sheen">
+        {header}
+        <svg viewBox={viewBox} className="geo-map" preserveAspectRatio="xMidYMid meet">
+          {game.regions.map((region) => {
+            const shape = shapes[region.id];
+            if (!shape) return null;
+            const { winner, seats, lead } = regionWinner(region);
+            const isSel = selected === region.id;
+            return (
+              <g key={region.id} style={{ cursor: "pointer" }} onClick={() => select(isSel ? null : region.id)}>
+                <path
+                  d={shape.d}
+                  fill={partyColor(country, winner)}
+                  fillOpacity={0.45 + lead * 0.55}
+                  stroke={isSel ? "var(--gold)" : "#0c1322"}
+                  strokeWidth={isSel ? 3 : 1}
+                />
+                <text x={shape.label[0]} y={shape.label[1]} textAnchor="middle"
+                  style={{ fontSize: 17, fontWeight: 800, fill: "#fff", pointerEvents: "none", paintOrder: "stroke", stroke: "rgba(0,0,0,0.45)", strokeWidth: 3 }}>
+                  {region.abbr}
+                </text>
+                <text x={shape.label[0]} y={shape.label[1] + 18} textAnchor="middle"
+                  style={{ fontSize: 13, fontWeight: 700, fill: "#fff", pointerEvents: "none", paintOrder: "stroke", stroke: "rgba(0,0,0,0.45)", strokeWidth: 3 }}>
+                  {winner ? `${partyShort(country, winner)} ${seats[winner]}` : ""}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+        {legend}
+      </div>
+    );
+  }
+
   return (
     <div className="card mapwrap sheen">
-      <div className="mapcontrols" style={{ justifyContent: "space-between" }}>
-        <h3 style={{ margin: 0, fontSize: 13, textTransform: "uppercase", letterSpacing: 0.8, color: "var(--muted)" }}>
-          {country.flag} {country.label} · {country.system.majority.total} {country.unitNamePlural}
-        </h3>
-      </div>
+      {header}
       <div className="tilegrid" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${rows}, 1fr)`, aspectRatio: `${cols} / ${rows}` }}>
         {game.regions.map((region) => {
           const meta = metaById[region.id];
@@ -78,14 +142,7 @@ export function CountryMap() {
           );
         })}
       </div>
-      <div className="legend" style={{ flexWrap: "wrap", gap: 8 }}>
-        {game.parties.filter((p) => country.playable.includes(p)).map((p) => (
-          <span key={p} className="row" style={{ gap: 4, alignItems: "center" }}>
-            <span style={{ width: 10, height: 10, borderRadius: 2, background: partyColor(country, p) }} />
-            {partyShort(country, p)}
-          </span>
-        ))}
-      </div>
+      {legend}
     </div>
   );
 }

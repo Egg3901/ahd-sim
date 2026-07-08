@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { SCENARIO_REGISTRY, type ScenarioMeta } from "@content/scenarioRegistry";
+import { PAYWALL_ENABLED, SCENARIO_REGISTRY, type ScenarioMeta } from "@content/scenarioRegistry";
 import { PACKS } from "@content/packs";
 import { useAuthStore } from "@store/authStore";
 import { UserMenu } from "@ui/auth/UserMenu";
@@ -8,7 +8,7 @@ import { Vote, Lock, Play, Trophy, KeyRound } from "lucide-react";
 export type LandingDestination =
   | { kind: "us"; scenarioId: string }   // native id, e.g. "2024"
   | { kind: "uk"; electionId?: string }
-  | { kind: "country"; countryId: string }
+  | { kind: "country"; countryId: string; electionId?: string }
   | { kind: "leaderboard" };
 
 const DIFF_COLOR: Record<ScenarioMeta["difficulty"], string> = {
@@ -36,7 +36,7 @@ function ScenarioCard({ s, unlocked, onPlay, onLocked }: {
         <span className="scenario-year" style={{ fontSize: 15 }}>{s.label.split("·")[0].trim()}</span>
         <span style={{ marginLeft: "auto", display: "inline-flex", gap: 6, alignItems: "center" }}>
           <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: DIFF_COLOR[s.difficulty] }}>{s.difficulty}</span>
-          {s.free ? (
+          {s.free && PAYWALL_ENABLED ? (
             <span style={{ fontSize: 10, fontWeight: 800, color: "var(--green)", border: "1px solid var(--green)", borderRadius: 4, padding: "1px 5px" }}>FREE</span>
           ) : !unlocked ? (
             <Lock size={13} style={{ color: "var(--gold)" }} />
@@ -75,7 +75,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
   const play = (s: ScenarioMeta) => {
     if (s.engine === "us") onGo({ kind: "us", scenarioId: s.nativeId });
     else if (s.engine === "uk") onGo({ kind: "uk", electionId: s.nativeId });
-    else onGo({ kind: "country", countryId: s.country });
+    else onGo({ kind: "country", countryId: s.country, electionId: s.nativeId });
   };
 
   const locked = (s: ScenarioMeta) => {
@@ -100,13 +100,15 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
 
         <div className="title">A House Divided</div>
         <p className="sub">
-          Twenty-three elections across five countries — presidential duels, multiparty brawls, a French runoff.
-          Two are free forever. The rest unlock with a pack code.
+          {SCENARIO_REGISTRY.length} elections across {new Set(SCENARIO_REGISTRY.map((s) => s.country)).size} countries — presidential duels, multiparty brawls, two-round runoffs.
+          {PAYWALL_ENABLED
+            ? " Two are free forever. The rest unlock with a pack code."
+            : " All of them are free to play right now."}
         </p>
 
-        {/* Free tier, front and center */}
+        {/* Featured starters, front and center */}
         <div className="field" style={{ textAlign: "left", margin: "10px 0 4px" }}>
-          <label>Play free — no account needed</label>
+          <label>{PAYWALL_ENABLED ? "Play free — no account needed" : "Start here — no account needed"}</label>
           <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
             {free.map((s) => (
               <ScenarioCard key={s.scenarioId} s={s} unlocked onPlay={() => play(s)} onLocked={() => {}} />
@@ -139,7 +141,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
 
         {/* Packs strip */}
         <div className="field" style={{ textAlign: "left", margin: "16px 0 0" }}>
-          <label>Scenario packs — redeem a code to unlock</label>
+          <label>{PAYWALL_ENABLED ? "Scenario packs — redeem a code to unlock" : "Scenario packs — everything is playable free while we're in open beta"}</label>
           <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))" }}>
             {PACKS.map((p) => {
               const owned = unlocked.packIds.includes(p.id);

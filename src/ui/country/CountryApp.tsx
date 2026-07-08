@@ -8,7 +8,7 @@ import { partyColor, partyName } from "./helpers";
 import { Vote } from "lucide-react";
 
 // The generic country shell — the UkApp pattern, parameterized by bundle.
-export function CountryApp({ country, onExit }: { country: CountryBundle; onExit: () => void }) {
+export function CountryApp({ country, onExit, initialElection }: { country: CountryBundle; onExit: () => void; initialElection?: string }) {
   const storeCountry = useCountryStore((s) => s.country);
   const game = useCountryStore((s) => s.game);
   const endTurn = useCountryStore((s) => s.endTurn);
@@ -19,7 +19,7 @@ export function CountryApp({ country, onExit }: { country: CountryBundle; onExit
   // A game from a different country in the store doesn't belong to this shell.
   const activeGame = storeCountry?.id === country.id ? game : null;
 
-  if (!activeGame) return <div className="app screen"><CountrySetup country={country} onBack={onExit} /></div>;
+  if (!activeGame) return <div className="app screen"><CountrySetup country={country} onBack={onExit} initialElection={initialElection} /></div>;
   if (activeGame.phase === "result") return <div className="app screen"><CountryResults onExit={onExit} /></div>;
 
   const weeksLeft = activeGame.totalTurns - activeGame.turn;

@@ -177,7 +177,7 @@ type View =
   | { kind: "landing" }
   | { kind: "us"; scenarioId?: string }
   | { kind: "uk"; electionId?: string }
-  | { kind: "country"; countryId: string }
+  | { kind: "country"; countryId: string; electionId?: string }
   | { kind: "leaderboard" };
 
 export function App() {
@@ -216,7 +216,7 @@ export function App() {
 
   if (view.kind === "country") {
     const country = COUNTRIES[view.countryId];
-    if (country) return withModals(<CountryApp country={country} onExit={home} />);
+    if (country) return withModals(<CountryApp country={country} onExit={home} initialElection={view.electionId} />);
   }
 
   if (view.kind === "leaderboard") {
