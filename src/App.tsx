@@ -14,6 +14,7 @@ import { GuidePage } from "@ui/GuidePage";
 import { CandidateScreen } from "@ui/CandidateScreen";
 import { StatsScreen } from "@ui/StatsScreen";
 import { NewsTicker } from "@ui/NewsTicker";
+import { OnboardingCoach } from "@ui/coach/OnboardingCoach";
 import { getScenario } from "@content/scenarios";
 import { money, turnLabel } from "@ui/format";
 import { lazy, Suspense } from "react";
@@ -142,7 +143,7 @@ function GameScreen() {
         <button className="ghost small" onClick={() => setCandOpen(true)}>Candidates</button>
         <button className="ghost small" onClick={() => setGuideOpen(true)}>Guide</button>
         <button onClick={undo} disabled={!canUndo}>↶ Undo</button>
-        <button className="primary" onClick={handleEndTurn} disabled={hasPendingEvent}>
+        <button className="primary" data-coach="endweek" onClick={handleEndTurn} disabled={hasPendingEvent}>
           {hasPendingEvent ? "Resolve event first" : "End Week →"}
         </button>
       </div>
@@ -178,6 +179,9 @@ function GameScreen() {
       {guideOpen && <GuidePage onClose={() => setGuideOpen(false)} />}
       {candOpen && <CandidateScreen scenarioId={game.scenarioId} onClose={() => setCandOpen(false)} />}
       {statsOpen && <StatsScreen onClose={() => setStatsOpen(false)} />}
+
+      {/* First-run guided tour; self-gating (localStorage, turn 0, US only). */}
+      <OnboardingCoach />
     </div>
   );
 }

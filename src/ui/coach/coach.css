@@ -1,0 +1,116 @@
+/* ── Onboarding coach ─────────────────────────────────────────────────
+   Spotlight + tooltip layer over the first US game. The wrapper is
+   pointer-events: none so the player can click the highlighted target
+   (map, action grid, End Week) straight through the dim; only the
+   tooltip card takes pointer events. Sits above the topbar (30), the
+   mobile sheet (45), and modals (50). */
+
+.coach {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+}
+
+/* Full-screen dim for the centered welcome/finale cards. */
+.coach-dim {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 8, 18, 0.62);
+  animation: coach-fade 0.25s var(--ease, ease);
+}
+
+/* Spotlight ring: sits over the target rect, the giant box-shadow dims
+   everything around it (the cutout trick), gold ring marks the target. */
+.coach-spot {
+  position: fixed;
+  border-radius: 14px;
+  box-shadow:
+    0 0 0 200vmax rgba(4, 8, 18, 0.62),
+    0 0 0 1.5px var(--gold),
+    0 0 22px rgba(245, 185, 66, 0.35);
+  transition: top 0.2s ease, left 0.2s ease, width 0.2s ease, height 0.2s ease;
+}
+
+.coach-card {
+  position: fixed;
+  pointer-events: auto;
+  background: var(--grad-card, var(--panel));
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 14px 16px;
+  animation: coach-fade 0.22s var(--ease, ease);
+}
+
+.coach-card.centered {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(380px, calc(100vw - 32px));
+}
+
+.coach-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+
+.coach-title {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.coach-body {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-300, var(--text));
+}
+
+.coach-hint {
+  margin: 8px 0 0;
+  font-size: 11px;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.coach-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.coach-skip {
+  color: var(--muted);
+}
+
+/* Mobile: the card pins to the bottom of the screen as a sheet; the
+   spotlight still rides the target above it. */
+@media (max-width: 768px) {
+  .coach-card.sheet-mode {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    transform: none;
+    border-radius: 16px 16px 0 0;
+    border-left: 1px solid var(--border);
+    border-top: 3px solid var(--gold);
+    padding: 16px 18px calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@keyframes coach-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
