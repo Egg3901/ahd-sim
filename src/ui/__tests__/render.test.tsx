@@ -54,7 +54,9 @@ describe("App renders without crashing", () => {
       ? "locked scenarios open the auth/paywall modal instead of a game"
       : "paywall off: pack scenarios go straight to the setup wizard", () => {
     const m = mount();
-    // 2016 US is pack content; behavior depends on the master paywall switch.
+    // Country-first browsing: open the United States, then a pack scenario.
+    // Behavior past the card depends on the master paywall switch.
+    clickButton(m.container, "United States");
     clickButton(m.container, "Clinton v. Trump");
     const html = m.html();
     if (PAYWALL_ENABLED) {

@@ -1,9 +1,27 @@
 import { useMemo, useState } from "react";
-import { PAYWALL_ENABLED, SCENARIO_REGISTRY, type ScenarioMeta } from "@content/scenarioRegistry";
+import { PAYWALL_ENABLED, SCENARIO_REGISTRY, type CountryCode, type ScenarioMeta } from "@content/scenarioRegistry";
 import { PACKS } from "@content/packs";
 import { useAuthStore } from "@store/authStore";
 import { UserMenu } from "@ui/auth/UserMenu";
-import { Vote, Lock, Play, Trophy, KeyRound } from "lucide-react";
+import { Vote, Lock, Play, Trophy, KeyRound, ChevronLeft, ChevronRight } from "lucide-react";
+
+const COUNTRY_NAMES: Record<CountryCode, string> = {
+  US: "United States",
+  UK: "United Kingdom",
+  CA: "Canada",
+  DE: "Germany",
+  FR: "France",
+  AU: "Australia",
+};
+
+const COUNTRY_BLURBS: Record<CountryCode, string> = {
+  US: "Winner-take-all duels for 270 electoral votes.",
+  UK: "Multiparty FPTP — coalitions, landslides, hung parliaments.",
+  CA: "343 seats, five parties, coast to coast to coast.",
+  DE: "Proportional Bundestag politics and the firewall.",
+  FR: "The two-round runoff for the Élysée.",
+  AU: "Preferential voting across 150 seats.",
+};
 
 export type LandingDestination =
   | { kind: "us"; scenarioId: string }   // native id, e.g. "2024"
@@ -61,14 +79,32 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
   const unlocked = useAuthStore((s) => s.unlocked);
   const openModal = useAuthStore((s) => s.openModal);
   const user = useAuthStore((s) => s.user);
-  const [tab, setTab] = useState<"all" | "US" | "UK" | "global">("all");
+  const [country, setCountry] = useState<CountryCode | null>(null);
 
-  const scenarios = useMemo(() => {
-    if (tab === "US") return SCENARIO_REGISTRY.filter((s) => s.country === "US");
-    if (tab === "UK") return SCENARIO_REGISTRY.filter((s) => s.country === "UK");
-    if (tab === "global") return SCENARIO_REGISTRY.filter((s) => !["US", "UK"].includes(s.country));
-    return SCENARIO_REGISTRY;
-  }, [tab]);
+  // Country-first browsing: one card per country, then that country's
+  // elections (newest first) once picked.
+  const countries = useMemo(() => {
+    const order: CountryCode[] = [];
+    for (const s of SCENARIO_REGISTRY) if (!order.includes(s.country)) order.push(s.country);
+    return order.map((code) => {
+      const rows = SCENARIO_REGISTRY.filter((s) => s.country === code);
+      const years = rows.map((r) => r.year);
+      return {
+        code,
+        flag: rows[0].flag,
+        name: COUNTRY_NAMES[code],
+        blurb: COUNTRY_BLURBS[code],
+        count: rows.length,
+        from: Math.min(...years),
+        to: Math.max(...years),
+      };
+    });
+  }, []);
+
+  const scenarios = useMemo(
+    () => (country ? SCENARIO_REGISTRY.filter((s) => s.country === country).sort((a, b) => b.year - a.year) : []),
+    [country],
+  );
 
   const free = SCENARIO_REGISTRY.filter((s) => s.free);
 
@@ -116,27 +152,56 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
           </div>
         </div>
 
-        {/* Full catalog */}
+        {/* Full catalog: pick a country, then a date */}
         <div className="field" style={{ textAlign: "left", margin: "14px 0 0" }}>
           <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
-            <label>Browse all scenarios</label>
-            <div className="row" style={{ gap: 4 }}>
-              {([["all", "All"], ["US", "🇺🇸 US"], ["UK", "🇬🇧 UK"], ["global", "🌍 Global"]] as const).map(([id, label]) => (
-                <button key={id} className={`ghost small${tab === id ? " active" : ""}`} onClick={() => setTab(id)}>{label}</button>
+            <label>
+              {country
+                ? `${COUNTRY_NAMES[country]} — pick an election`
+                : "Browse by country"}
+            </label>
+            {country && (
+              <button className="ghost small" onClick={() => setCountry(null)}>
+                <ChevronLeft size={13} style={{ verticalAlign: "-2px" }} /> All countries
+              </button>
+            )}
+          </div>
+
+          {!country ? (
+            <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
+              {countries.map((c) => (
+                <button
+                  key={c.code}
+                  type="button"
+                  className="scenario-card"
+                  style={{ textAlign: "left", alignItems: "flex-start", minHeight: 88 }}
+                  onClick={() => setCountry(c.code)}
+                >
+                  <span className="row" style={{ gap: 10, alignItems: "center", width: "100%" }}>
+                    <span style={{ fontSize: 24 }}>{c.flag}</span>
+                    <span className="scenario-year" style={{ fontSize: 16 }}>{c.name}</span>
+                    <ChevronRight size={15} style={{ marginLeft: "auto", color: "var(--muted)" }} />
+                  </span>
+                  <span className="scenario-match" style={{ fontWeight: 700 }}>
+                    {c.count === 1 ? `1 election · ${c.to}` : `${c.count} elections · ${c.from}–${c.to}`}
+                  </span>
+                  <span className="muted small" style={{ fontSize: 11, lineHeight: 1.4 }}>{c.blurb}</span>
+                </button>
               ))}
             </div>
-          </div>
-          <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
-            {scenarios.map((s) => (
-              <ScenarioCard
-                key={s.scenarioId}
-                s={s}
-                unlocked={canPlay(s.scenarioId)}
-                onPlay={() => play(s)}
-                onLocked={() => locked(s)}
-              />
-            ))}
-          </div>
+          ) : (
+            <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
+              {scenarios.map((s) => (
+                <ScenarioCard
+                  key={s.scenarioId}
+                  s={s}
+                  unlocked={canPlay(s.scenarioId)}
+                  onPlay={() => play(s)}
+                  onLocked={() => locked(s)}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Packs strip */}
