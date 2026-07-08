@@ -11,7 +11,7 @@ import { BRAND } from "../../brand";
 // The generic country shell — the UkApp pattern, parameterized by bundle.
 // Takes the country ID (not the bundle) so the bundles + map data stay inside
 // this lazy chunk instead of the main bundle.
-export function CountryApp({ countryId, onExit, initialElection }: { countryId: string; onExit: () => void; initialElection?: string }) {
+export function CountryApp({ countryId, onExit, initialElection, initialSeed, initialParty }: { countryId: string; onExit: () => void; initialElection?: string; initialSeed?: string; initialParty?: string }) {
   const country = COUNTRIES[countryId];
   const storeCountry = useCountryStore((s) => s.country);
   const game = useCountryStore((s) => s.game);
@@ -33,7 +33,7 @@ export function CountryApp({ countryId, onExit, initialElection }: { countryId: 
   }
   const activeGame = storeCountry?.id === country.id ? game : null;
 
-  if (!activeGame) return <div className="app screen"><CountrySetup country={country} onBack={onExit} initialElection={initialElection} /></div>;
+  if (!activeGame) return <div className="app screen"><CountrySetup country={country} onBack={onExit} initialElection={initialElection} initialSeed={initialSeed} initialParty={initialParty} /></div>;
   if (activeGame.phase === "result") return <div className="app screen"><CountryResults onExit={onExit} /></div>;
 
   const weeksLeft = activeGame.totalTurns - activeGame.turn;

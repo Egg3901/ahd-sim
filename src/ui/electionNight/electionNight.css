@@ -1,0 +1,160 @@
+/* ============================================================================
+   ELECTION NIGHT — staged results reveal.
+   Owns every .en-* class. Consumes the design tokens defined in ui/styles.css
+   (--navy*, --gold, --green, --rose, --muted, --font-mono, --ease, radii) but
+   never redefines them. Broadcast-desk look: uppercase eyebrows, tracking,
+   JetBrains Mono numbers, scanline projection banner.
+   ============================================================================ */
+
+.en-root { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+.en-stage { width: 100%; max-width: 780px; position: relative; overflow: hidden; }
+
+/* ── Header ─────────────────────────────────────────────────────────── */
+.en-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.en-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--gold);
+}
+.en-live {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--gop-bright);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+  animation: en-live-pulse 1.4s ease-in-out infinite;
+}
+.en-title { margin: 4px 0 0; font-size: 21px; font-weight: 800; letter-spacing: 0.3px; color: var(--text); }
+
+.en-controls { display: flex; gap: 6px; align-items: center; }
+.en-speed, .en-skip {
+  background: var(--navy-600); border: 1px solid var(--border); color: var(--muted);
+  border-radius: var(--radius-sm); padding: 5px 10px; font-size: 11px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+  font-family: var(--font-mono);
+  transition: background 0.15s var(--ease), color 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+.en-speed:hover, .en-skip:hover { background: var(--navy-500); color: var(--text); border-color: var(--border-hover); }
+.en-speed.active { color: var(--gold); border-color: var(--gold); background: var(--navy-800); }
+
+/* ── Status strip ───────────────────────────────────────────────────── */
+.en-status {
+  margin-top: 16px; text-align: center;
+  font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--muted);
+}
+.en-status.gold { color: var(--gold); animation: en-status-blink 1.2s ease-in-out infinite; }
+
+/* ── Big call-out (latest call) ─────────────────────────────────────── */
+.en-callout {
+  min-height: 58px; margin-top: 6px; text-align: center;
+  display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+}
+.en-call-flash { animation: en-call-in 0.4s var(--ease); display: inline-flex; align-items: baseline; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.en-call-label {
+  font-size: 11px; font-weight: 800; letter-spacing: 2px; color: var(--navy-900);
+  background: var(--gold); border-radius: 3px; padding: 2px 7px; align-self: center;
+}
+.en-call-name { font-size: 22px; font-weight: 800; color: var(--text); }
+.en-call-winner { font-size: 22px; font-weight: 800; }
+.en-call-margin { font-size: 13px; color: var(--muted); }
+.en-polls-closing { font-size: 17px; font-weight: 700; letter-spacing: 4px; color: var(--muted); animation: en-status-blink 1.2s ease-in-out infinite; }
+
+/* ── Running tally board ────────────────────────────────────────────── */
+.en-board { margin: 14px 0 6px; display: grid; gap: 9px; }
+.en-row { display: grid; grid-template-columns: 74px 1fr 58px; align-items: center; gap: 10px; }
+.en-party {
+  font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.en-row.mine .en-party::before { content: "▸ "; color: var(--gold); }
+.en-track {
+  position: relative; height: 20px; border-radius: var(--radius-sm);
+  background: var(--navy-800); border: 1px solid var(--border); overflow: hidden;
+}
+.en-fill { height: 100%; width: 0; transition: width 0.55s var(--ease); }
+.en-thresh { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--gold); opacity: 0.9; }
+.en-num {
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+  font-weight: 800; font-size: 17px; text-align: right; color: var(--text);
+}
+.en-remaining {
+  margin-top: 4px; text-align: center; font-size: 12px; color: var(--muted);
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: 1px;
+}
+
+/* ── Call feed chips ────────────────────────────────────────────────── */
+.en-feed { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 30px; }
+.en-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+  padding: 4px 9px; border-radius: var(--radius-pill);
+  background: var(--navy-800); border: 1px solid var(--border); color: var(--text);
+  animation: en-chip-in 0.3s var(--ease);
+}
+.en-chip .en-chip-call { color: var(--muted); letter-spacing: 1.5px; font-size: 10px; }
+.en-chip.upset { border-color: var(--gold); animation: en-chip-in 0.3s var(--ease), en-upset-flash 1.1s var(--ease); }
+.en-chip .en-chip-upset-tag {
+  background: var(--gold); color: var(--navy-900); border-radius: 3px;
+  padding: 1px 5px; font-size: 9px; font-weight: 800; letter-spacing: 1px;
+}
+.en-chip.tctc {
+  border-color: var(--gold); color: var(--gold); background: transparent;
+  animation: en-status-blink 1.3s ease-in-out infinite;
+}
+
+/* ── Projection banner ──────────────────────────────────────────────── */
+.en-banner {
+  position: relative; overflow: hidden; margin: 16px 0 4px;
+  padding: 16px 12px; border-radius: var(--radius-md); text-align: center;
+  font-size: 19px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase;
+  color: #fff; animation: en-banner-in 0.55s var(--ease);
+}
+.en-banner::before {
+  /* scanlines */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.09) 0 1px, transparent 1px 3px);
+  animation: en-scan 7s linear infinite;
+}
+.en-banner::after {
+  /* sweep flash */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.35) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: en-sweep 1.4s var(--ease) 0.2s 1 forwards;
+}
+.en-banner.hung {
+  background: var(--navy-800); border: 1px solid var(--gold); color: var(--gold);
+}
+
+/* ── Footer CTA ─────────────────────────────────────────────────────── */
+.en-cta { width: 100%; margin-top: 14px; padding: 12px; animation: en-chip-in 0.4s var(--ease); }
+
+/* ── Keyframes ──────────────────────────────────────────────────────── */
+@keyframes en-live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+@keyframes en-status-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes en-call-in {
+  0% { transform: translateY(8px) scale(0.96); opacity: 0; }
+  100% { transform: none; opacity: 1; }
+}
+@keyframes en-chip-in {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: none; opacity: 1; }
+}
+@keyframes en-upset-flash {
+  0% { background: var(--gold); color: var(--navy-900); }
+  100% { background: var(--navy-800); color: var(--text); }
+}
+@keyframes en-banner-in {
+  0% { transform: scaleY(0.2); opacity: 0; filter: brightness(2.2); }
+  60% { filter: brightness(1.6); }
+  100% { transform: none; opacity: 1; filter: none; }
+}
+@keyframes en-scan { 0% { background-position: 0 0; } 100% { background-position: 0 60px; } }
+@keyframes en-sweep { to { transform: translateX(100%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .en-root *, .en-root *::before, .en-root *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

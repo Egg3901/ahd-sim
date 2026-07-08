@@ -314,7 +314,9 @@ export function createGame(opts: NewGameOptions = {}): GameState {
   };
 }
 
-function hashStr(s: string): number {
+// Exported so daily-challenge detection can recompute the numeric seed a
+// string seed produced (the UK/country engines use rng.hashSeed instead).
+export function hashStr(s: string): number {
   let h = 2166136261 >>> 0;
   for (let i = 0; i < s.length; i++) {
     h ^= s.charCodeAt(i);

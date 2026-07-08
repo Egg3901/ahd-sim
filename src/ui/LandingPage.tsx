@@ -3,6 +3,7 @@ import { PAYWALL_ENABLED, SCENARIO_REGISTRY, type CountryCode, type ScenarioMeta
 import { PACKS } from "@content/packs";
 import { useAuthStore } from "@store/authStore";
 import { UserMenu } from "@ui/auth/UserMenu";
+import { DailyCard } from "@ui/DailyCard";
 import { Vote, Lock, Play, Trophy, KeyRound, ChevronLeft, ChevronRight } from "lucide-react";
 import { BRAND } from "../brand";
 
@@ -28,7 +29,8 @@ export type LandingDestination =
   | { kind: "us"; scenarioId: string }   // native id, e.g. "2024"
   | { kind: "uk"; electionId?: string }
   | { kind: "country"; countryId: string; electionId?: string }
-  | { kind: "leaderboard" };
+  | { kind: "leaderboard" }
+  | { kind: "daily" };                   // App resolves via dailyAssignment()
 
 const DIFF_COLOR: Record<ScenarioMeta["difficulty"], string> = {
   easy: "var(--green)",
@@ -142,6 +144,11 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
             ? " Two are free forever. The rest unlock with a pack code."
             : " All of them are free to play right now."}
         </p>
+
+        {/* Daily Challenge — one seeded race, same for everyone, every day */}
+        <div className="field" style={{ textAlign: "left", margin: "10px 0 4px" }}>
+          <DailyCard onPlay={() => onGo({ kind: "daily" })} />
+        </div>
 
         {/* Featured starters, front and center */}
         <div className="field" style={{ textAlign: "left", margin: "10px 0 4px" }}>

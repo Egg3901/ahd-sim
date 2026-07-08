@@ -97,6 +97,16 @@ export const api = {
 
   syncAchievements: (scenarioId: string, achievementIds: string[]) =>
     call<{ added: number }>("/api/achievements", { method: "POST", body: JSON.stringify({ scenarioId, achievementIds }) }),
+
+  // ── Daily Challenge ──
+  daily: () => call<DailyInfo>("/api/daily"),
+
+  postDaily: (submission: unknown) =>
+    call<{ posted: boolean; personalBest: number; rank: number; date: string }>(
+      "/api/daily", { method: "POST", body: JSON.stringify(submission) }),
+
+  dailyBoard: (date: string) =>
+    call<DailyBoard>(`/api/daily/board?date=${encodeURIComponent(date)}`),
 };
 
 export interface LeaderboardEntry {
@@ -108,6 +118,35 @@ export interface LeaderboardEntry {
   turnsPlayed: number | null;
   difficulty: string;
   finishedAt: number;
+}
+
+export interface DailyBoardEntry {
+  rank: number;
+  username: string;
+  score: number;
+  evMargin: number | null;
+  popularVoteMargin: number | null;
+  difficulty: string;
+  finishedAt: number;
+}
+
+// GET /api/daily — the assignment (date/scenarioId/seed/role) plus display
+// metadata and today's top 10.
+export interface DailyInfo {
+  date: string;
+  scenarioId: string;
+  seed: string;
+  role: string;
+  label: string;
+  flag: string;
+  board: DailyBoardEntry[];
+}
+
+export interface DailyBoard {
+  date: string;
+  scenarioId: string;
+  entries: DailyBoardEntry[];
+  me: { rank: number; score: number } | null;
 }
 
 export interface MyRanking {

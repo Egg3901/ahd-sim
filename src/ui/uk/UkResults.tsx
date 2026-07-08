@@ -6,6 +6,9 @@ import { computeScoreFromFacts, multipartyScoreFacts } from "@engine/scoring";
 import type { Government } from "@engine/types";
 import { UkSeatBar } from "./UkSeatBar";
 import { partyName, partyShort, sortBySeats, partyColor } from "./parties";
+import { ElectionNight, hasSeenReveal, revealSupported } from "../electionNight/ElectionNight";
+import { ukReveal } from "../electionNight/adapters";
+import { DailyResultPanel } from "../DailyResultPanel";
 
 function govText(g: Government): string {
   switch (g.kind) {
@@ -51,6 +54,13 @@ export function UkResults() {
     }
   };
 
+  // ── Election Night reveal — plays instead of the results until done ──
+  const reveal = useMemo(() => ukReveal(game), [game]);
+  const [nightDone, setNightDone] = useState(() => !revealSupported() || hasSeenReveal(reveal.storageKey ?? ""));
+  if (!nightDone) {
+    return <ElectionNight {...reveal} onDone={() => setNightDone(true)} />;
+  }
+
   return (
     <div className="card" style={{ maxWidth: 780, margin: "24px auto" }}>
       <div className={`win270 ${won ? "dem" : ""}`} style={{ textAlign: "center" }}>
@@ -61,6 +71,10 @@ export function UkResults() {
       <p>You led <strong style={{ color: partyColor(game.playerParty) }}>{partyName(game.playerParty)}</strong> to <strong>{playerSeats}</strong> seats.</p>
 
       <div style={{ margin: "16px 0" }}><UkSeatBar result={r} /></div>
+
+      <DailyResultPanel gameSeed={game.seed} scenarioId={scenarioId} engine="uk" won={won}
+        unitLine={`${playerSeats} seats`} score={score} facts={facts}
+        evMargin={Math.round(facts.unitMargin)} popularVoteMargin={facts.popularMargin} />
 
       <div className="kv" style={{ alignItems: "center", margin: "0 0 14px" }}>
         <span className="k">

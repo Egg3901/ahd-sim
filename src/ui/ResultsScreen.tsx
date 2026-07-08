@@ -12,6 +12,9 @@ import { EvBar } from "./EvBar";
 import { StatsScreen } from "./StatsScreen";
 import { pct, votes } from "./format";
 import { Trophy, Lock } from "lucide-react";
+import { ElectionNight, hasSeenReveal, revealSupported } from "./electionNight/ElectionNight";
+import { usReveal } from "./electionNight/adapters";
+import { DailyResultPanel } from "./DailyResultPanel";
 
 // Light scenario branching: after the race, suggest where to go next.
 const NEXT_SCENARIO: Record<string, { id: string; blurb: string }> = {
@@ -23,11 +26,6 @@ const NEXT_SCENARIO: Record<string, { id: string; blurb: string }> = {
   "2020": { id: "2024", blurb: "Continue the timeline — the 2024 rematch" },
   "2024": { id: "2000", blurb: "Try a different era — the Florida recount awaits" },
 };
-
-const prefersReduced = () =>
-  typeof window === "undefined" ||
-  typeof window.matchMedia !== "function" ||
-  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 export function ResultsScreen() {
   const game = useGameStore((s) => s.game)!;
@@ -47,7 +45,9 @@ export function ResultsScreen() {
     [result],
   );
 
-  const [revealed, setRevealed] = useState(() => (prefersReduced() ? calls.length : 0));
+  // The staged Election Night reveal (below) plays first, so the map itself
+  // mounts fully called — no second reveal pass.
+  const [revealed, setRevealed] = useState(calls.length);
   const [mapMode, setMapMode] = useState<"geo" | "square">("geo");
   const [statsOpen, setStatsOpen] = useState(false);
   const done = revealed >= calls.length;
@@ -73,6 +73,10 @@ export function ResultsScreen() {
   const winnerName = result.winner === "tie" ? "No one — 269–269" : cands[result.winner].name;
   const playerWon = result.winner === game.playerCandidate;
 
+  // ── Election Night reveal — plays instead of the results until done ──
+  const reveal = useMemo(() => usReveal(game), [game]);
+  const [nightDone, setNightDone] = useState(() => !revealSupported() || hasSeenReveal(reveal.storageKey ?? ""));
+
   const tile = (id: string, size?: number) => {
     const sr = byState.get(id);
     const st = game.states.find((s) => s.id === id);
@@ -90,6 +94,10 @@ export function ResultsScreen() {
       </div>
     );
   };
+
+  if (!nightDone) {
+    return <ElectionNight {...reveal} onDone={() => setNightDone(true)} />;
+  }
 
   return (
     <div className="center">
@@ -273,6 +281,9 @@ function ScoreAndAchievements() {
 
   return (
     <>
+      <DailyResultPanel gameSeed={game.seed} scenarioId={scenarioId} engine="us" won={result.winner === player}
+        unitLine={`${result.electoralVotes[player]} EV`} score={score} facts={facts}
+        evMargin={Math.round(facts.unitMargin)} popularVoteMargin={facts.popularMargin} />
       <div className="card">
         <div className="row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
           <div>

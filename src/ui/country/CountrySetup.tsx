@@ -12,15 +12,21 @@ function randomSeed(): string {
   return String(Math.floor(Math.random() * 1_000_000)).padStart(6, "0");
 }
 
-export function CountrySetup({ country, onBack, initialElection }: { country: CountryBundle; onBack: () => void; initialElection?: string }) {
+export function CountrySetup({ country, onBack, initialElection, initialSeed, initialParty }: {
+  country: CountryBundle;
+  onBack: () => void;
+  initialElection?: string;
+  initialSeed?: string;    // prefill only — the player can still edit/reroll
+  initialParty?: string;   // party id, e.g. "lpc" / "spd" (Daily Challenge routing)
+}) {
   const newGame = useCountryStore((s) => s.newGame);
   const canPlay = useAuthStore((s) => s.canPlay);
   const openModal = useAuthStore((s) => s.openModal);
   const user = useAuthStore((s) => s.user);
   const ids = Object.keys(country.elections).sort((a, b) => Number(b) - Number(a));
   const [election, setElection] = useState(initialElection && country.elections[initialElection] ? initialElection : ids[0]);
-  const [party, setParty] = useState<PartyId>(country.playable[0]);
-  const [seed, setSeed] = useState<string>(randomSeed);
+  const [party, setParty] = useState<PartyId>(initialParty && country.playable.includes(initialParty) ? initialParty : country.playable[0]);
+  const [seed, setSeed] = useState<string>(() => initialSeed ?? randomSeed());
   const data = country.elections[election];
   const playable = playablePartiesIn(country, election);
   const activeParty = playable.includes(party) ? party : playable[0];

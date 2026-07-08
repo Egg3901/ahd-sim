@@ -18,6 +18,8 @@ import { getScenario } from "@content/scenarios";
 import { money, turnLabel } from "@ui/format";
 import { lazy, Suspense } from "react";
 import { LandingPage, type LandingDestination } from "@ui/LandingPage";
+import { dailyAssignment, markDailyPlayed, utcDateString } from "@lib/daily";
+import { SCENARIOS_BY_ID } from "@content/scenarioRegistry";
 
 // The UK and country shells carry their engines, content, and map geometry —
 // they load on demand so the main bundle stays lean (the US game is the
@@ -181,12 +183,13 @@ function GameScreen() {
 }
 
 // Where the app currently is: the landing scenario browser, one of the game
-// shells (US / UK / a generic country), or the leaderboard.
+// shells (US / UK / a generic country), or the leaderboard. The optional
+// initialSeed/initialParty prefill the setup screens (Daily Challenge).
 type View =
   | { kind: "landing" }
-  | { kind: "us"; scenarioId?: string }
-  | { kind: "uk"; electionId?: string }
-  | { kind: "country"; countryId: string; electionId?: string }
+  | { kind: "us"; scenarioId?: string; initialSeed?: string; initialParty?: string }
+  | { kind: "uk"; electionId?: string; initialSeed?: string; initialParty?: string }
+  | { kind: "country"; countryId: string; electionId?: string; initialSeed?: string; initialParty?: string }
   | { kind: "leaderboard" };
 
 export function App() {
@@ -195,7 +198,23 @@ export function App() {
   const [view, setView] = useState<View>({ kind: "landing" });
   useEffect(() => { void refreshSaves(); }, [refreshSaves]);
 
-  const go = (dest: LandingDestination) => setView(dest as View);
+  const go = (dest: LandingDestination) => {
+    // The daily destination resolves locally (client and server share the
+    // same deterministic assignment) and lands on the right engine's setup
+    // with the day's seed + side prefilled.
+    if (dest.kind === "daily") {
+      const assignment = dailyAssignment(utcDateString());
+      const meta = SCENARIOS_BY_ID[assignment.scenarioId];
+      if (!meta) return;
+      markDailyPlayed(assignment.date);
+      const prefill = { initialSeed: assignment.seed, initialParty: assignment.role };
+      if (meta.engine === "us") setView({ kind: "us", scenarioId: meta.nativeId, ...prefill });
+      else if (meta.engine === "uk") setView({ kind: "uk", electionId: meta.nativeId, ...prefill });
+      else setView({ kind: "country", countryId: meta.country, electionId: meta.nativeId, ...prefill });
+      return;
+    }
+    setView(dest as View);
+  };
   const home = () => setView({ kind: "landing" });
 
   // Everything renders above the shared auth/paywall modals.
@@ -211,7 +230,12 @@ export function App() {
     if (!game) {
       return withModals(
         <div className="app screen" key="setup">
-          <SetupScreen initialScenarioId={view.kind === "us" ? view.scenarioId : undefined} onExit={home} />
+          <SetupScreen
+            initialScenarioId={view.kind === "us" ? view.scenarioId : undefined}
+            initialSeed={view.kind === "us" ? view.initialSeed : undefined}
+            initialParty={view.kind === "us" ? view.initialParty : undefined}
+            onExit={home}
+          />
         </div>,
       );
     }
@@ -220,11 +244,11 @@ export function App() {
   }
 
   if (view.kind === "uk") {
-    return withModals(<Suspense fallback={<LazyFallback />}><UkApp onExit={home} initialElection={view.electionId} /></Suspense>);
+    return withModals(<Suspense fallback={<LazyFallback />}><UkApp onExit={home} initialElection={view.electionId} initialSeed={view.initialSeed} initialParty={view.initialParty} /></Suspense>);
   }
 
   if (view.kind === "country") {
-    return withModals(<Suspense fallback={<LazyFallback />}><CountryApp countryId={view.countryId} onExit={home} initialElection={view.electionId} /></Suspense>);
+    return withModals(<Suspense fallback={<LazyFallback />}><CountryApp countryId={view.countryId} onExit={home} initialElection={view.electionId} initialSeed={view.initialSeed} initialParty={view.initialParty} /></Suspense>);
   }
 
   if (view.kind === "leaderboard") {

@@ -54,6 +54,19 @@ export function getDb(): Database.Database {
       UNIQUE(user_id, scenario_id)
     );
 
+    CREATE TABLE IF NOT EXISTS daily_scores (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id),
+      date TEXT NOT NULL,
+      scenario_id TEXT NOT NULL,
+      score REAL NOT NULL,
+      ev_margin INTEGER,
+      popular_margin REAL,
+      difficulty TEXT NOT NULL,
+      finished_at INTEGER NOT NULL,
+      UNIQUE(user_id, date)
+    );
+
     CREATE TABLE IF NOT EXISTS achievements (
       user_id TEXT NOT NULL REFERENCES users(id),
       scenario_id TEXT NOT NULL,

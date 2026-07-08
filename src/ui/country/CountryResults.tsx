@@ -8,6 +8,9 @@ import type { Government } from "@engine/types";
 import { CountrySeatBar } from "./CountryPanels";
 import { partyColor, partyName, partyShort, sortBySeats } from "./helpers";
 import { Trophy } from "lucide-react";
+import { ElectionNight, hasSeenReveal, revealSupported } from "../electionNight/ElectionNight";
+import { countryReveal } from "../electionNight/adapters";
+import { DailyResultPanel } from "../DailyResultPanel";
 
 function defaultGovText(g: Government, name: (p: string) => string): string {
   switch (g.kind) {
@@ -69,6 +72,13 @@ export function CountryResults({ onExit }: { onExit: () => void }) {
   const name = (p: string) => partyName(country, p);
   const govText = country.governmentText?.(r.government, name) ?? defaultGovText(r.government, name);
 
+  // ── Election Night reveal — plays instead of the results until done ──
+  const reveal = useMemo(() => countryReveal(country, game), [country, game]);
+  const [nightDone, setNightDone] = useState(() => !revealSupported() || hasSeenReveal(reveal.storageKey ?? ""));
+  if (!nightDone) {
+    return <ElectionNight {...reveal} onDone={() => setNightDone(true)} />;
+  }
+
   return (
     <div className="card" style={{ maxWidth: 780, margin: "24px auto" }}>
       <div className={`win270 ${won ? "dem" : ""}`} style={{ textAlign: "center" }}>
@@ -82,6 +92,10 @@ export function CountryResults({ onExit }: { onExit: () => void }) {
       </p>
 
       <div style={{ margin: "16px 0" }}><CountrySeatBar country={country} result={r} /></div>
+
+      <DailyResultPanel gameSeed={game.seed} scenarioId={scenarioId} engine="country" won={won}
+        unitLine={`${playerSeats} ${country.unitNamePlural}`} score={score} facts={facts}
+        evMargin={Math.round(facts.unitMargin)} popularVoteMargin={facts.popularMargin} />
 
       {/* Campaign score + leaderboard */}
       <div className="card" style={{ background: "var(--navy-600)", margin: "0 0 14px" }}>

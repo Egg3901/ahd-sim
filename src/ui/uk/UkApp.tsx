@@ -10,14 +10,14 @@ import { partyName, partyColor } from "./parties";
 import { Vote } from "lucide-react";
 import { BRAND } from "../../brand";
 
-export function UkApp({ onExit, initialElection }: { onExit: () => void; initialElection?: string }) {
+export function UkApp({ onExit, initialElection, initialSeed, initialParty }: { onExit: () => void; initialElection?: string; initialSeed?: string; initialParty?: string }) {
   const game = useUkStore((s) => s.game);
   const endTurn = useUkStore((s) => s.endTurn);
   const undo = useUkStore((s) => s.undo);
   const canUndo = useUkStore((s) => s.history.length > 0);
   const live = useUkStore((s) => s.liveProjection)();
 
-  if (!game) return <div className="app screen"><UkSetup onBack={onExit} initialElection={initialElection} /></div>;
+  if (!game) return <div className="app screen"><UkSetup onBack={onExit} initialElection={initialElection} initialSeed={initialSeed} initialParty={initialParty} /></div>;
   if (game.phase === "result") return <div className="app screen"><UkResults /></div>;
 
   const weeksLeft = game.totalTurns - game.turn;

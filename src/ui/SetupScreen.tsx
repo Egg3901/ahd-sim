@@ -56,24 +56,29 @@ const DIFFICULTIES: {
 // The seven battlegrounds offered for the "What If" prior flip, plus two fun ones.
 const WHAT_IF_STATES = ["", "TX", "FL", "OH", "PA", "MI", "WI", "GA", "AZ", "NC", "NY"];
 
-export function SetupScreen({ initialScenarioId, onExit }: { initialScenarioId?: string; onExit?: () => void }) {
+export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onExit }: {
+  initialScenarioId?: string;
+  initialSeed?: string;    // prefill only — the player can still edit/reroll
+  initialParty?: string;   // "dem" | "rep" (Daily Challenge routing)
+  onExit?: () => void;
+}) {
   const newGame = useGameStore((s) => s.newGame);
   const canPlay = useAuthStore((s) => s.canPlay);
   const openModal = useAuthStore((s) => s.openModal);
   const user = useAuthStore((s) => s.user);
   const [step, setStep] = useState<StepId>(0);
   const [scenarioId, setScenarioId] = useState<string>(initialScenarioId ?? "2024");
-  const [pick, setPick] = useState<CandidateId>("dem");
+  const [pick, setPick] = useState<CandidateId>(initialParty === "rep" ? "rep" : "dem");
   const scenario = SCENARIOS[scenarioId];
   const ticket = pick === "dem" ? scenario.dem : scenario.rep;
-  const [mate, setMate] = useState<string>(defaultRunningMate(scenario.dem.runningMates).id);
+  const [mate, setMate] = useState<string>(() => defaultRunningMate((initialParty === "rep" ? scenario.rep : scenario.dem).runningMates).id);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
   const [eventMode, setEventMode] = useState<"historical" | "plausible">("historical");
   const [staff, setStaff] = useState<string[]>([]);
   const [whatIfState, setWhatIfState] = useState<string>("");
   const [mirrorMatch, setMirrorMatch] = useState(false);
   const [pandemic, setPandemic] = useState(false);
-  const [seed, setSeed] = useState<string>(randomSeed);
+  const [seed, setSeed] = useState<string>(() => initialSeed ?? randomSeed());
   const [guideOpen, setGuideOpen] = useState(false);
   const [candOpen, setCandOpen] = useState(false);
 

@@ -12,6 +12,7 @@ import { getDb } from "./db.js";
 import { ensureSeedCodes, generateCodes } from "./activation.js";
 import { authRouter } from "./routes/auth.js";
 import { leaderboardRouter, achievementsRouter } from "./routes/leaderboard.js";
+import { dailyRouter } from "./routes/daily.js";
 
 const PORT = Number(process.env.PORT ?? 3401);
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -30,6 +31,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/leaderboard", leaderboardRouter);
 app.use("/api/achievements", achievementsRouter);
+app.use("/api/daily", dailyRouter);
 
 // Ops backdoor for minting more codes (never exposed in the client).
 app.post("/api/admin/codes", (req, res) => {

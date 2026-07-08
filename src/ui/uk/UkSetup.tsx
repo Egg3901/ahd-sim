@@ -54,13 +54,18 @@ function contenders(electionId: string): { party: PartyId; leader: string }[] {
     .map((p) => ({ party: p as PartyId, leader: leaderFor(electionId, p, partyName(p)).name }));
 }
 
-export function UkSetup({ onBack, initialElection }: { onBack: () => void; initialElection?: string }) {
+export function UkSetup({ onBack, initialElection, initialSeed, initialParty }: {
+  onBack: () => void;
+  initialElection?: string;
+  initialSeed?: string;    // prefill only — the player can still edit/reroll
+  initialParty?: string;   // party id, e.g. "lab" / "con" (Daily Challenge routing)
+}) {
   const newGame = useUkStore((s) => s.newGame);
   const ids = [...UK_ELECTION_IDS].sort((a, b) => Number(b) - Number(a));
   const [step, setStep] = useState<StepId>(0);
   const [election, setElection] = useState(initialElection && UK_ELECTIONS[initialElection] ? initialElection : ids[0]);
-  const [party, setParty] = useState<PartyId>("lab");
-  const [seed, setSeed] = useState<string>(randomSeed);
+  const [party, setParty] = useState<PartyId>(initialParty && UK_PLAYABLE.includes(initialParty) ? initialParty : "lab");
+  const [seed, setSeed] = useState<string>(() => initialSeed ?? randomSeed());
   const data = UK_ELECTIONS[election];
   const field = contenders(election);
   const playable = playablePartiesIn(election);
