@@ -10,8 +10,11 @@ export const BRAND = {
   nameCaps: "ELECTIONEER",
   tagline: "Run the race. Rewrite history.",
   eyebrow: "RUN THE RACE",
-  domain: "electioneer.game",
-  url: "https://electioneer.game",
+  // Interim: the staging host. Swap both when the real domain is purchased
+  // (electioneer.app recommended — never point share text at a domain we
+  // don't own).
+  domain: "sim.ahousedividedgame.com",
+  url: "https://sim.ahousedividedgame.com",
   // Attribution line for footers/about.
   from: "From the maker of A House Divided",
 } as const;
