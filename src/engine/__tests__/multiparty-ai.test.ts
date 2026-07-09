@@ -69,4 +69,29 @@ describe("multiparty AI + polls + player events", () => {
     expect(g.lastRecap.length).toBeGreaterThan(0);
     expect(g.lastRecap[0].label).toMatch(/Projected seats/i);
   });
+
+  it("coalition-awareness pass fires in the final two turns of a hung map", () => {
+    // uk-2017 is the hung-parliament coin flip — late-game focused AI should
+    // still fill the pool, and with majority context it biases toward partner
+    // / rival-vulnerable regions (coalitionBoost path in multipartyAi).
+    const g = createUkGame({ election: "2017", seed: 42, playerParty: "con", totalTurns: 6 });
+    g.turn = 4; // two turns left
+    const res = g.resources.con;
+    const actions = mpFocusedActions(
+      {
+        regions: g.regions,
+        turn: g.turn,
+        totalTurns: g.totalTurns,
+        funds: res.funds,
+        actions: res.actions,
+        majority: { total: 650, threshold: 326 },
+        abstaining: g.abstaining,
+        compatible: (a, b) => !(new Set(["con", "lab"]).has(a) && new Set(["con", "lab"]).has(b)),
+      },
+      "con",
+      MP_DIFFICULTY.hard,
+    );
+    expect(actions.length).toBe(res.actions);
+    expect(actions.some((a) => a.regionId)).toBe(true);
+  });
 });

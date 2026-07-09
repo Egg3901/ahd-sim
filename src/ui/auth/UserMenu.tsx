@@ -1,16 +1,27 @@
 import { useState } from "react";
 import { useAuthStore } from "@store/authStore";
 import { PACKS_BY_ID } from "@content/packs";
-import { CircleUser, KeyRound, LogOut } from "lucide-react";
+import { CircleUser, KeyRound, LogOut, WifiOff } from "lucide-react";
 
 // Top-right auth affordance: Login/Register buttons when signed out, a
-// username dropdown (activations, redeem, logout) when signed in.
+// username dropdown (activations, redeem, logout) when signed in. When the
+// API is unreachable, hide login and show an offline chip instead.
 export function UserMenu() {
   const user = useAuthStore((s) => s.user);
   const unlocked = useAuthStore((s) => s.unlocked);
+  const serverDown = useAuthStore((s) => s.serverDown);
   const openModal = useAuthStore((s) => s.openModal);
   const logout = useAuthStore((s) => s.logout);
   const [open, setOpen] = useState(false);
+
+  if (serverDown && !user) {
+    return (
+      <div className="muted small" title="The campaign server is unreachable — free scenarios still play locally."
+        style={{ display: "flex", alignItems: "center", gap: 5 }}>
+        <WifiOff size={14} /> Play offline
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -34,6 +45,11 @@ export function UserMenu() {
           onMouseLeave={() => setOpen(false)}
         >
           <div className="muted small" style={{ marginBottom: 8 }}>{user.email}</div>
+          {serverDown && (
+            <div className="muted small" style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}>
+              <WifiOff size={13} /> Offline — scores won't sync
+            </div>
+          )}
           <div className="tag muted small">MY ACTIVATIONS</div>
           {unlocked.packIds.length === 0 && unlocked.scenarioIds.length === 0 ? (
             <p className="muted small" style={{ margin: "6px 0 10px" }}>Free scenarios only — redeem a code to unlock more.</p>

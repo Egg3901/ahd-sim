@@ -126,8 +126,11 @@ const HANDICAP: Record<"easy" | "normal" | "hard", PlayerHandicap> = {
   // `environment` is a one-time pro-player shift to every bloc's baseline (logit;
   // ~0.04 ≈ 1pt two-party) — a favorable national climate that brings otherwise
   // out-of-reach states into play, so a skilled human can win even an adverse
-  // year. Normal/hard leave the baseline historically calibrated (environment 0).
-  easy: { actions: 4, cash: 90_000_000, persuasion: 1.4, environment: 0.24 },
+  // year. Tuned to clear the gauntlet winnability floor on landslides (us-1984)
+  // while leaving normal/hard historically calibrated (environment 0). UK/country
+  // easy uses environment 0.9 on a multiparty appeal scale; US logits need a
+  // larger shift because a 525-EV Reagan map starts ~25pts underwater.
+  easy: { actions: 5, cash: 110_000_000, persuasion: 1.55, environment: 0.55 },
   normal: { actions: 1, cash: 25_000_000, persuasion: 1.15, environment: 0 },
   hard: { actions: 0, cash: 0, persuasion: 1.0, environment: 0 },
 };

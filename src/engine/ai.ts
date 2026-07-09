@@ -57,51 +57,73 @@ function aiShareOf(demShare: number, ai: CandidateId): number {
   return ai === "dem" ? demShare : 1 - demShare;
 }
 
-// Ranks contests by tipping-point value to the AI: close races worth more EV in
-// cheaper media markets float to the top (Section 8).
-interface Target {
+// Competitive band (distance from 50/50) flexes with the scoreboard: trailers
+// reach further; comfortable leaders defend only real tossups.
+export function competitiveBand(evMargin: number): number {
+  if (evMargin < -80) return 0.11;
+  if (evMargin < -40) return 0.09;
+  if (evMargin < -15) return 0.07;
+  if (evMargin > 60) return 0.03;
+  if (evMargin > 30) return 0.04;
+  return 0.055;
+}
+
+// Ranks contests by expected EV gain per ad dollar — close, cheap, high-EV
+// states float to the top (Section 8). Exported so the gauntlet focused bot
+// can share the same ranking and stay ≥ scattershot.
+export interface Target {
   stateId: string;
   ev: number;
   aiShare: number;
   mediaCost: number;
+  // Expected EV flipped per $1M of media, given current closeness.
+  evPerDollar: number;
   priority: number;
 }
 
-function rankTargets(game: GameState, ai: CandidateId, cfg: AiConfig): Target[] {
+export function rankTargets(game: GameState, ai: CandidateId, cfg: AiConfig): Target[] {
   const proj = projectElection(game);
-  // Margin on *awarded* EV (tossups excluded from both sides, so it's a fair
-  // read of who's ahead — unlike a raw EV threshold, which is deflated early
-  // when most states are still inside the tossup band).
   const evMargin = proj.ev[ai] - proj.ev[OPPONENT_OF[ai]];
-  // The competitive band flexes with the scoreboard: a trailing campaign reaches
-  // further down the map for states it's losing (it has to gamble), while a
-  // comfortable front-runner tightens up and defends only its real tossups.
-  const band = evMargin < -30 ? 0.075 : evMargin > 40 ? 0.035 : 0.05;
+  const band = competitiveBand(evMargin);
   const targets: Target[] = [];
   for (const sr of proj.contests) {
     const st = game.states.find((s) => s.id === sr.stateId);
     if (!st || st.blocs.length === 0) continue;
     const aiShare = aiShareOf(sr.demShare, ai);
-    const closeness = 1 - Math.abs(aiShare - 0.5) * 2; // 1 = a coin flip
-    // Only contest states within reach. A campaign doesn't dump its budget into
-    // a state it trails by 11+ (NY) or 17 (CA) — that over-investment is what
-    // was flipping safe states — but a loser widens the net to find a path.
-    if (Math.abs(sr.demShare - 0.5) > band) continue;
-    // Tipping-point value: EV per dollar of media, weighted by how flippable.
-    const priority = (st.electoralVotes * closeness) / st.mediaMarketCost;
+    const dist = Math.abs(sr.demShare - 0.5);
+    if (dist > band) continue;
+    const closeness = 1 - dist * 2; // 1 = coin flip
+    // Soft diminishing returns past ~$8M media cost so CA/NY don't dominate
+    // just because they have huge EV when somehow inside a widened band.
+    const costScale = Math.max(0.35, Math.min(1.4, 8 / Math.max(1, st.mediaMarketCost)));
+    // Rough EV-gain-per-dollar: flippable EV × closeness / media cost.
+    // A state the AI already leads slightly is still worth defending (closeness
+    // stays high near 50); deep leads/trails are filtered by `band`.
+    const evPerDollar = (st.electoralVotes * closeness * costScale) / Math.max(0.5, st.mediaMarketCost);
     targets.push({
       stateId: st.id,
       ev: st.electoralVotes,
       aiShare,
       mediaCost: st.mediaMarketCost,
-      priority,
+      evPerDollar,
+      priority: evPerDollar,
     });
   }
   targets.sort((a, b) => b.priority - a.priority);
   return targets.slice(0, cfg.foresight);
 }
 
-// Builds the AI's action list for this turn. Pure given (game, rng, cfg).
+// Cap how many non-ad "overhead" actions can eat the weekly pool before ads
+// and rallies get their turn. Hard AIs keep almost every slot for persuasion.
+function overheadCap(cfg: AiConfig, slots: number): number {
+  if (cfg.efficiency >= 0.95) return Math.min(2, Math.max(1, Math.floor(slots * 0.2)));
+  if (cfg.efficiency >= 0.75) return Math.min(3, Math.max(1, Math.floor(slots * 0.3)));
+  return Math.min(4, Math.max(2, Math.floor(slots * 0.4)));
+}
+
+// Builds the AI's action list for this turn. Budget-first: reserve most slots
+// for ads/rallies, spend a paced cash slice, and only then fill overhead
+// (fundraise / ground / debate prep) into the leftover cap.
 export function planAiActions(game: GameState, rng: Rng, cfg: AiConfig): CampaignAction[] {
   const ai = OPPONENT_OF[game.playerCandidate];
   const res = game.resources[ai];
@@ -116,83 +138,100 @@ export function planAiActions(game: GameState, rng: Rng, cfg: AiConfig): Campaig
     [targets[i], targets[j]] = [targets[j], targets[i]];
   }
 
-  // Every action costs one slot from the weekly pool — the AI plays within the
-  // same budget the player does (energy-derived). Build a prioritized plan and
-  // take as many as the pool allows.
-  let budget = res.actions;
+  const slots = res.actions;
+  let budget = slots;
   const turnsLeft = game.totalTurns - game.turn;
-  // Pace ad spend across the weeks that remain instead of front-loading 45% of
-  // the war chest in week one (which left the AI broke and toothless by October).
-  // Spend ~ cash / weeks-left, scaled by how disciplined this difficulty is.
-  const adBudget = (res.cash / Math.max(2, turnsLeft)) * (0.8 + cfg.efficiency);
+  const maxOverhead = overheadCap(cfg, slots);
+  // Pace ad spend across remaining weeks; efficiency scales how aggressively
+  // the AI empties the war chest.
+  const adBudget = (res.cash / Math.max(2, turnsLeft)) * (0.85 + cfg.efficiency * 0.35);
   const prioritySum = targets.reduce((s, t) => s + t.priority, 0) || 1;
   const proj = projectElection(game);
-  // Behind by a clear EV margin on awarded states → time to gamble.
   const losing = proj.ev[ai] < proj.ev[OPPONENT_OF[ai]] - 20;
 
-  // Keep the war chest topped up: fundraise against a reserve floor that's
-  // deeper early (more weeks to spend) so ad pressure stays roughly constant
-  // through Election Day rather than decaying.
-  const cashFloor = 30_000_000 * Math.min(4, Math.max(1, turnsLeft));
-  if (res.cash < cashFloor && budget > 1) {
-    const richest = [...targets].sort((a, b) => b.ev - a.ev)[0];
-    actions.push({ type: "fundraise", candidate: ai, stateId: richest.stateId });
-    budget -= 1;
-  }
-  // A trailing campaign rolls the dice on opposition research — a national hit
-  // that can reshape the race (gated by difficulty so easy AIs rarely find it).
-  if (losing && res.cash > 2_000_000 && budget > 2 && rng.chance(0.2 + cfg.efficiency * 0.25)) {
-    actions.push({ type: "oppo_research", candidate: ai });
-    budget -= 1;
-  }
-  if (turnsLeft > 3 && res.staffCapacity > 0 && budget > 0) {
-    actions.push({ type: "ground_game", candidate: ai, stateId: targets[0].stateId });
-    budget -= 1;
-  }
-  // Prep for a debate that's within two weeks: top up the weaker of the two
-  // tracks (stagecraft vs substance), unless already sharp. Disciplined AIs
-  // prep more reliably.
-  if (debateWithin(game, 2) && budget > 1) {
-    const t = game.candidates[ai].traits;
-    if (Math.min(t.debatePrep, t.policyKnowledge) < 86 && rng.chance(0.5 + cfg.efficiency * 0.45)) {
-      actions.push({ type: t.debatePrep <= t.policyKnowledge ? "debate_prep" : "policy_prep", candidate: ai });
-      budget -= 1;
+  // ── Persuasion first (ads + rallies + late GOTV) ────────────────────────
+  // Interleave rally then ad per target so the map marker lands and the spend
+  // spreads across the competitive band instead of dumping into one state.
+  const persuasion: CampaignAction[] = [];
+  for (const t of targets) {
+    persuasion.push({ type: "rally", candidate: ai, stateId: t.stateId });
+    const spend = (adBudget * t.priority) / prioritySum;
+    if (spend >= 200_000 && res.cash >= spend) {
+      const mode = t.aiShare < 0.49 ? "contrast" : "positive";
+      persuasion.push({ type: "advertise", candidate: ai, stateId: t.stateId, adMode: mode, spend });
     }
   }
-  // With slots to spare, drive the conversation onto the AI's best issue.
-  if (budget > 1 && res.cash > 6_000_000 && rng.chance(0.25 + cfg.efficiency * 0.25)) {
+  // Issue ad on the AI's best frame when there's cash and a clear issue edge.
+  if (res.cash > 6_000_000 && rng.chance(0.2 + cfg.efficiency * 0.3)) {
     const issueId = bestIssueForAi(game, ai);
     if (issueId) {
-      actions.push({ type: "advertise", candidate: ai, stateId: targets[0].stateId, adMode: "issue", issueId, spend: 6_000_000 });
-      budget -= 1;
-    }
-  }
-
-  // Interleave an ad and a rally per target, in priority order, until the pool
-  // runs out — so the budget spreads across the map instead of all into one ad.
-  const queue: CampaignAction[] = [];
-  for (const t of targets) {
-    // Rally first so the principal's stop (and the map marker) is reliably set.
-    queue.push({ type: "rally", candidate: ai, stateId: t.stateId });
-    const spend = (adBudget * t.priority) / prioritySum;
-    if (spend >= 200_000) {
-      const mode = t.aiShare < 0.49 ? "contrast" : "positive";
-      queue.push({ type: "advertise", candidate: ai, stateId: t.stateId, adMode: mode, spend });
+      persuasion.unshift({
+        type: "advertise",
+        candidate: ai,
+        stateId: targets[0].stateId,
+        adMode: "issue",
+        issueId,
+        spend: 6_000_000,
+      });
     }
   }
   if (turnsLeft <= 2) {
     for (const t of targets.slice(0, 3)) {
       const st = game.states.find((s) => s.id === t.stateId);
       if (st && st.groundGame[ai] > 0.05) {
-        queue.push({ type: "gotv", candidate: ai, stateId: t.stateId });
+        persuasion.push({ type: "gotv", candidate: ai, stateId: t.stateId });
       }
     }
   }
-  for (const a of queue) {
-    if (budget <= 0) break;
+
+  // Reserve enough slots that overhead can't starve persuasion. At least half
+  // the pool (rounded up) goes to persuasion when there is anything to do.
+  const persuasionReserve = Math.min(persuasion.length, Math.max(Math.ceil(slots * 0.55), slots - maxOverhead));
+  for (const a of persuasion) {
+    if (actions.length >= persuasionReserve || budget <= 0) break;
     actions.push(a);
     budget -= 1;
   }
 
-  return actions;
+  // ── Overhead into the remaining cap ─────────────────────────────────────
+  let overheadUsed = 0;
+  const canOverhead = () => overheadUsed < maxOverhead && budget > 0;
+
+  const cashFloor = 30_000_000 * Math.min(4, Math.max(1, turnsLeft));
+  if (res.cash < cashFloor && canOverhead()) {
+    const richest = [...targets].sort((a, b) => b.ev - a.ev)[0];
+    actions.push({ type: "fundraise", candidate: ai, stateId: richest.stateId });
+    budget -= 1;
+    overheadUsed += 1;
+  }
+  if (losing && res.cash > 2_000_000 && canOverhead() && rng.chance(0.2 + cfg.efficiency * 0.25)) {
+    actions.push({ type: "oppo_research", candidate: ai });
+    budget -= 1;
+    overheadUsed += 1;
+  }
+  // Ground game early only — sticky field offices, not a weekly habit that
+  // crowds out ads. Cap at one per turn.
+  if (turnsLeft > 3 && res.staffCapacity > 0 && canOverhead()) {
+    actions.push({ type: "ground_game", candidate: ai, stateId: targets[0].stateId });
+    budget -= 1;
+    overheadUsed += 1;
+  }
+  if (debateWithin(game, 2) && canOverhead()) {
+    const t = game.candidates[ai].traits;
+    if (Math.min(t.debatePrep, t.policyKnowledge) < 86 && rng.chance(0.5 + cfg.efficiency * 0.45)) {
+      actions.push({ type: t.debatePrep <= t.policyKnowledge ? "debate_prep" : "policy_prep", candidate: ai });
+      budget -= 1;
+      overheadUsed += 1;
+    }
+  }
+
+  // Fill any leftover slots with more persuasion (never more overhead).
+  for (const a of persuasion) {
+    if (budget <= 0) break;
+    if (actions.includes(a)) continue;
+    actions.push(a);
+    budget -= 1;
+  }
+
+  return actions.slice(0, slots);
 }

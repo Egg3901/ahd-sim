@@ -1,16 +1,49 @@
-// FRANCE — the presidential runoff, approximated as a two-party fight over
-// a 100-point electoral pool (each région's points ∝ its electorate; elasticity
-// 1.0 so points track the popular vote). 51 points wins the Élysée. Three
-// runoffs ship: the speculative 2027 (a polling-informed Philippe–Bardella
-// fight: centre 53, RN 47 — closer than any runoff the RN has ever fought),
-// the real 2022 rematch (Macron 58.55 / Le Pen 41.45), and the real 2017
-// landslide (Macron 66.1 / 33.9). Per-région v are the real second-round
-// shares; s splits each région's point pool so neutral play reproduces the
-// real map — Le Pen carries HDF, PACA and Corse in 2022, nothing in 2017.
+// FRANCE — the presidential runoff. The playable campaign is the
+// entre-deux-tours (two finalists over a 100-point electoral pool; 51 wins
+// the Élysée). Round-1 → round-2 advancement lives in engine/runoff.ts:
+// first-round shares + a transfer matrix (front républicain / abstention)
+// produce the second-round map. The authored per-région `v` below are the
+// real second-round shares (calibration anchors); `FIRST_ROUND` +
+// `TRANSFERS` document how those maps arise and are checked in runoff tests.
+// Three runoffs ship: speculative 2027 (Philippe–Bardella), real 2022
+// (Macron 58.55 / Le Pen 41.45), real 2017 (Macron 66.1 / 33.9).
 
 import type { CountryBundle } from "@engine/countryGame";
 import { FR_MAP } from "./paths/fr";
 import type { Government } from "@engine/types";
+import type { TransferMatrix, RoundShares } from "@engine/runoff";
+
+/** National first-round shares (real 2017/2022; polling-informed 2027). */
+export const FR_FIRST_ROUND: Record<string, RoundShares> = {
+  // 2017 first round (approx.): Macron 24.0, Le Pen 21.3, Fillon 20.0, Mélenchon 19.6, Hamon 6.4, …
+  "2017": { ens: 0.240, rn: 0.213, lfi: 0.196, lr: 0.200, other: 0.151 },
+  // 2022 first round: Macron 27.9, Le Pen 23.2, Mélenchon 22.0, Zemmour 7.1, Pécresse 4.8, …
+  "2022": { ens: 0.279, rn: 0.232, lfi: 0.220, lr: 0.048, other: 0.221 },
+  // 2027 speculative: centre and RN clear, left fragmented, right collapsed.
+  "2027": { ens: 0.26, rn: 0.25, lfi: 0.18, lr: 0.10, other: 0.21 },
+};
+
+/** Bloc-transfer matrices from eliminated first-round candidates into the runoff. */
+export const FR_TRANSFERS: Record<string, TransferMatrix> = {
+  // 2017: a firm front républicain — Fillon/Hamon voters break hard for Macron.
+  "2017": {
+    lfi: { ens: 0.52, rn: 0.12, _abstain: 0.36 },
+    lr: { ens: 0.72, rn: 0.18, _abstain: 0.10 },
+    other: { ens: 0.58, rn: 0.22, _abstain: 0.20 },
+  },
+  // 2022: softer transfers — Mélenchon's "troisième tour" frame, a drilled RN.
+  "2022": {
+    lfi: { ens: 0.42, rn: 0.18, _abstain: 0.40 },
+    lr: { ens: 0.55, rn: 0.30, _abstain: 0.15 },
+    other: { ens: 0.48, rn: 0.28, _abstain: 0.24 },
+  },
+  // 2027: front républicain fatigue — transfers still favour the centre, barely.
+  "2027": {
+    lfi: { ens: 0.35, rn: 0.25, _abstain: 0.40 },
+    lr: { ens: 0.45, rn: 0.40, _abstain: 0.15 },
+    other: { ens: 0.40, rn: 0.35, _abstain: 0.25 },
+  },
+};
 
 export const FRANCE: CountryBundle = {
   id: "FR",
@@ -31,7 +64,7 @@ export const FRANCE: CountryBundle = {
       { id: "ens", name: "The Centre (Ensemble & allies)", shortName: "Centre", color: "#f2b41c" },
       { id: "rn", name: "Rassemblement National", shortName: "RN", color: "#0f3b8c" },
     ],
-    allocation: { id: "regional_seats_curve", label: "Two-round runoff (regional points)", unit: "point" },
+    allocation: { id: "regional_seats_curve", label: "Two-round runoff (entre-deux-tours points)", unit: "point" },
     majority: { total: 100, threshold: 51 },
   },
   playable: ["ens", "rn"],

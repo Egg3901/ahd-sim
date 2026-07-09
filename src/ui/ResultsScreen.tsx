@@ -226,6 +226,7 @@ function ScoreAndAchievements() {
   const game = useGameStore((s) => s.game)!;
   const difficulty = useGameStore((s) => s.difficulty);
   const user = useAuthStore((s) => s.user);
+  const serverDown = useAuthStore((s) => s.serverDown);
   const openModal = useAuthStore((s) => s.openModal);
   const result = game.result!;
   const player = game.playerCandidate;
@@ -258,6 +259,9 @@ function ScoreAndAchievements() {
         difficulty,
         score,
         facts,
+        electoralVotes: result.electoralVotes,
+        popularShare: result.popularShare,
+        playerSide: player,
         evMargin: Math.round(facts.unitMargin),
         popularVoteMargin: facts.popularMargin,
         turnsPlayed: game.turn,
@@ -292,9 +296,11 @@ function ScoreAndAchievements() {
           </div>
           <div style={{ textAlign: "right" }}>
             {user ? (
-              <button className="primary" disabled={postState === "busy" || postState === "done"} onClick={post}>
-                {postState === "done" ? "Posted ✓" : postState === "busy" ? "Posting…" : "Post to Leaderboard"}
+              <button className="primary" disabled={postState === "busy" || postState === "done" || serverDown} onClick={post}>
+                {postState === "done" ? "Posted ✓" : postState === "busy" ? "Posting…" : serverDown ? "Offline" : "Post to Leaderboard"}
               </button>
+            ) : serverDown ? (
+              <span className="muted small">Play offline — scores sync when the server is back</span>
             ) : (
               <button className="primary" onClick={() => openModal("login")}>
                 <Lock size={13} style={{ verticalAlign: "-2px", marginRight: 5 }} />Log in to post

@@ -59,6 +59,7 @@ export function CountryResults({ onExit }: { onExit: () => void }) {
   const game = useCountryStore((s) => s.game)!;
   const reset = useCountryStore((s) => s.reset);
   const user = useAuthStore((s) => s.user);
+  const serverDown = useAuthStore((s) => s.serverDown);
   const openModal = useAuthStore((s) => s.openModal);
   const r = game.result!;
 
@@ -83,6 +84,9 @@ export function CountryResults({ onExit }: { onExit: () => void }) {
         difficulty,
         score,
         facts,
+        seats: r.seats,
+        voteShare: r.voteShare,
+        playerSide: game.playerParty,
         evMargin: Math.round(facts.unitMargin),
         popularVoteMargin: facts.popularMargin,
         turnsPlayed: game.turn,
@@ -142,9 +146,11 @@ export function CountryResults({ onExit }: { onExit: () => void }) {
           </div>
           <div style={{ textAlign: "right" }}>
             {user ? (
-              <button className="primary" disabled={postState === "busy" || postState === "done"} onClick={postScore}>
-                {postState === "done" ? "Posted ✓" : postState === "busy" ? "Posting…" : "Post to Leaderboard"}
+              <button className="primary" disabled={postState === "busy" || postState === "done" || serverDown} onClick={postScore}>
+                {postState === "done" ? "Posted ✓" : postState === "busy" ? "Posting…" : serverDown ? "Offline" : "Post to Leaderboard"}
               </button>
+            ) : serverDown ? (
+              <span className="muted small">Play offline</span>
             ) : (
               <button className="primary" onClick={() => openModal("login")}>Log in to post</button>
             )}

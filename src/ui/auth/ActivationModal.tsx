@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuthStore } from "@store/authStore";
 import { SCENARIOS_BY_ID } from "@content/scenarioRegistry";
 import { packForScenario, PACKS } from "@content/packs";
+import { isValidActivationCode, normalizeActivationCode } from "@lib/activationCode";
 import { X, KeyRound } from "lucide-react";
 
 export function ActivationModal() {
@@ -17,13 +18,19 @@ export function ActivationModal() {
 
   const scenario = paywallScenarioId ? SCENARIOS_BY_ID[paywallScenarioId] : undefined;
   const pack = paywallScenarioId ? packForScenario(paywallScenarioId) : undefined;
+  const normalized = normalizeActivationCode(code);
+  const formatOk = normalized.length === 0 || isValidActivationCode(normalized);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setBusy(true);
     setError("");
     setSuccess("");
-    const out = await activate(code);
+    if (!isValidActivationCode(normalized)) {
+      setError("Invalid format — expected CAMP-XXXX-XXXX-XXXX");
+      return;
+    }
+    setBusy(true);
+    const out = await activate(normalized);
     setBusy(false);
     if (out.error) { setError(out.error); return; }
     setCode("");
@@ -59,12 +66,18 @@ export function ActivationModal() {
                 <input
                   type="text" value={code} required autoFocus placeholder="CAMP-…"
                   onChange={(e) => setCode(e.target.value.toUpperCase())}
+                  aria-invalid={!formatOk}
                   style={{ width: "100%", fontFamily: "monospace", letterSpacing: 1 }}
                 />
               </div>
+              {!formatOk && (
+                <p className="muted small" style={{ color: "var(--rose)" }}>
+                  Use the form CAMP-XXXX-XXXX-XXXX (letters A–Z except O/I/L, digits 2–9).
+                </p>
+              )}
               {error && <p className="muted small" style={{ color: "var(--rose)" }}>{error}</p>}
               {success && <p className="muted small" style={{ color: "var(--green)" }}>{success}</p>}
-              <button className="primary" type="submit" disabled={busy} style={{ width: "100%", marginTop: 8 }}>
+              <button className="primary" type="submit" disabled={busy || !formatOk || !normalized} style={{ width: "100%", marginTop: 8 }}>
                 {busy ? "Redeeming…" : "Redeem"}
               </button>
             </form>
