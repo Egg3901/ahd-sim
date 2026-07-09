@@ -57,7 +57,8 @@ const COUNTRY_CHAINS: Record<string, { id: string; blurb: string }[]> = {
     { id: "2027", blurb: "Continue the timeline — the Republic's runoff" },
   ],
   AU: [
-    { id: "2025", blurb: "Run it again — hold the middle" },
+    { id: "2022", blurb: "Continue the timeline — the teal wave" },
+    { id: "2025", blurb: "Continue the timeline — hold the middle" },
   ],
 };
 

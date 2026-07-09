@@ -27,7 +27,8 @@ describe("next-scenario retention chains", () => {
     expect(countryNextScenario("CA", "2025")?.id).toBe("2021");
     expect(countryNextScenario("FR", "2017")?.id).toBe("2022");
     expect(countryNextScenario("FR", "2027")?.id).toBe("2017");
-    expect(countryNextScenario("AU", "2025")?.id).toBe("2025");
+    expect(countryNextScenario("AU", "2022")?.id).toBe("2025");
+    expect(countryNextScenario("AU", "2025")?.id).toBe("2022");
     for (const [cid, country] of Object.entries(COUNTRIES)) {
       for (const eid of Object.keys(country.elections)) {
         const next = countryNextScenario(cid, eid);

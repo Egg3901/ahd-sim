@@ -155,6 +155,12 @@ export const SCENARIO_REGISTRY: ScenarioMeta[] = [
     label: "2025 · Albanese v. Dutton",
     description: "Preferential voting, a cyclone-delayed budget, and a Trump-shaped shadow over 150 seats.",
   },
+  {
+    scenarioId: "au-2022", country: "AU", engine: "country", nativeId: "2022", year: 2022,
+    free: false, packId: "global", difficulty: "medium", flag: "🇦🇺",
+    label: "2022 · Albanese v. Morrison",
+    description: "Nine years of Coalition rule, a teal wave on the harbourside, and a PM who doesn't hold a hose.",
+  },
 ];
 
 export const SCENARIOS_BY_ID: Record<string, ScenarioMeta> = Object.fromEntries(
