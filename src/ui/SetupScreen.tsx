@@ -3,6 +3,7 @@ import { useGameStore, type Difficulty } from "@store/gameStore";
 import { useAuthStore } from "@store/authStore";
 import { SCENARIOS, SCENARIO_IDS } from "@content/scenarios";
 import { PAYWALL_ENABLED } from "@content/scenarioRegistry";
+import { usNativeCover } from "@content/covers";
 import { defaultRunningMate } from "@content/runningMates";
 import { STAFF_POOL, MAX_STAFF, STAFF_BY_ID } from "@content/staff";
 import { GuidePage } from "@ui/GuidePage";
@@ -170,14 +171,16 @@ export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onEx
                 {SCENARIO_IDS.map((id) => {
                   const s = SCENARIOS[id];
                   const open = canPlay(globalId(id));
+                  const cover = usNativeCover(id);
                   return (
                     <button
                       key={id}
                       type="button"
-                      className={`scenario-card${scenarioId === id ? " sel" : ""}`}
-                      style={open ? undefined : { opacity: 0.6 }}
+                      className={`scenario-card${scenarioId === id ? " sel" : ""}${cover ? " has-cover" : ""}`}
+                      style={{ ...(open ? undefined : { opacity: 0.6 }), ...(cover ? { alignItems: "stretch", textAlign: "left" } : undefined) }}
                       onClick={() => chooseScenario(id)}
                     >
+                      {cover && <img className="scenario-cover" src={cover} alt="" loading="lazy" decoding="async" />}
                       <span className="scenario-year" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                         {s.year}{!open && <Lock size={13} style={{ color: "var(--gold)" }} />}
                       </span>

@@ -145,3 +145,19 @@ describe("country elections: full-fat content", () => {
     }
   });
 });
+
+describe("scenario & country cover images", () => {
+  it("every registry scenario and country has a cover mapping", async () => {
+    const { SCENARIO_COVERS, COUNTRY_COVERS, PACK_COVERS } = await import("@content/covers");
+    const { PACKS } = await import("@content/packs");
+    for (const s of SCENARIO_REGISTRY) {
+      expect(SCENARIO_COVERS[s.scenarioId], `cover for ${s.scenarioId}`).toBeTruthy();
+    }
+    for (const code of ["US", "UK", "CA", "DE", "FR", "AU"] as const) {
+      expect(COUNTRY_COVERS[code], `country cover ${code}`).toBeTruthy();
+    }
+    for (const p of PACKS) {
+      expect(PACK_COVERS[p.id], `pack cover ${p.id}`).toBeTruthy();
+    }
+  });
+});

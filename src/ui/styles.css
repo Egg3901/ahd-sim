@@ -438,8 +438,14 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
 /* ── Scenario picker (setup) ────────────────────────────────────────── */
 .scenario-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .scenario-card { display: flex; flex-direction: column; align-items: center; gap: 2px;
-  padding: 10px 6px; border-radius: var(--radius-md); line-height: 1.1; }
+  padding: 10px 6px; border-radius: var(--radius-md); line-height: 1.1; overflow: hidden; }
 .scenario-card.sel { border-color: var(--gold); background: var(--surface-hover); box-shadow: var(--glow-gold); }
+.scenario-card.has-cover { padding: 0 0 10px; align-items: stretch; text-align: left; }
+.scenario-card.has-cover > :not(.scenario-cover) { padding-left: 10px; padding-right: 10px; }
+.scenario-card.has-cover > .scenario-cover + * { padding-top: 8px; }
+.scenario-cover { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover;
+  background: var(--panel-2); border-bottom: 1px solid var(--border); }
+.scenario-cover.tall { aspect-ratio: 2 / 1; }
 .scenario-year { font-size: 17px; font-weight: 800; font-family: var(--font-mono); }
 .scenario-match { font-size: 10px; color: var(--muted); white-space: nowrap; }
 
