@@ -10,7 +10,7 @@
 // bot underdog win rate vs the authored easy/medium/hard label).
 // ─────────────────────────────────────────────────────────────────────────
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -26,6 +26,9 @@ import {
 import { SCENARIO_REGISTRY } from "@content/scenarioRegistry";
 
 const SEEDS = Number(process.env.GAUNTLET_SEEDS ?? 20);
+// WRITE_REGISTRY=1 rewrites difficulty fields in scenarioRegistry.ts from the
+// measured suggested labels (keeps the picker honest after a gauntlet run).
+const WRITE_REGISTRY = process.env.WRITE_REGISTRY === "1";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
@@ -195,8 +198,43 @@ mkdirSync(outDir, { recursive: true });
 const outPath = join(outDir, `report-${date}.md`);
 writeFileSync(outPath, lines.join("\n"));
 
+// Machine-readable labels — the registry-sync test and WRITE_REGISTRY consume this.
+const labelsJson = Object.fromEntries(
+  labels.map((l) => [l.scenarioId, { suggested: l.suggested, authored: l.authored, underdogWinRate: l.winRate }]),
+);
+const labelsPath = join(outDir, "suggested-labels.json");
+writeFileSync(labelsPath, JSON.stringify({ date, seeds: SEEDS, labels: labelsJson }, null, 2) + "\n");
+
+if (WRITE_REGISTRY && mismatches.length > 0) {
+  const registryPath = join(root, "src", "content", "scenarioRegistry.ts");
+  let src = readFileSync(registryPath, "utf8");
+  for (const l of mismatches) {
+    // Replace the difficulty string on the row that mentions this scenarioId.
+    // US/UK helpers pass difficulty as the last arg; country rows use difficulty: "…".
+    const esc = l.scenarioId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const helperRe = new RegExp(`((?:us|uk)\\(${l.scenarioId.replace(/^(us|uk)-/, "")}[\\s\\S]*?)"${l.authored}"\\)`);
+    // Prefer the explicit difficulty: "…" form (country rows + any future style).
+    const fieldRe = new RegExp(`(scenarioId:\\s*"${esc}"[\\s\\S]*?difficulty:\\s*)"${l.authored}"`);
+    if (fieldRe.test(src)) {
+      src = src.replace(fieldRe, `$1"${l.suggested}"`);
+    } else {
+      // Fall back: last quoted difficulty on the us()/uk() call for this year.
+      const year = l.scenarioId.replace(/^(us|uk)-/, "");
+      const callRe = new RegExp(
+        `((?:us|uk)\\(${year},\\s*"[^"]*",\\s*"[^"]*",(?:\\s*true,|\\s*false,)?\\s*)"${l.authored}"\\)`,
+      );
+      if (callRe.test(src)) src = src.replace(callRe, `$1"${l.suggested}"`);
+      else console.warn(`  could not patch registry row for ${l.scenarioId}`);
+    }
+    void helperRe;
+  }
+  writeFileSync(registryPath, src);
+  console.log(`\nWRITE_REGISTRY=1: patched ${mismatches.length} difficulty label(s) in scenarioRegistry.ts`);
+}
+
 // ── stdout summary ─────────────────────────────────────────────────────────
-console.log(`Report written to ${outPath}\n`);
+console.log(`Report written to ${outPath}`);
+console.log(`Labels JSON written to ${labelsPath}\n`);
 console.log(`Flags (${flags.length}):`);
 if (flags.length === 0) console.log("  none");
 for (const f of flags) console.log(`  - ${f.scenarioId} [${f.kind}]: ${f.detail}`);

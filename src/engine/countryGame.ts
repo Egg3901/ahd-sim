@@ -600,7 +600,7 @@ export function applyCountryAction(g: CountryGameState, a: CountryAction, rng: R
 }
 
 // ── AI + events + turn loop (country-parameterized) ────────────────────────
-function planAiActions(g: CountryGameState, party: PartyId, rng: Rng): CountryAction[] {
+function planAiActions(g: CountryGameState, country: CountryBundle, party: PartyId, rng: Rng): CountryAction[] {
   const res = g.resources[party];
   const difficulty = (g.difficulty ?? "normal") as MpDifficulty;
   return planMultipartyAi(
@@ -610,6 +610,9 @@ function planAiActions(g: CountryGameState, party: PartyId, rng: Rng): CountryAc
       totalTurns: g.totalTurns,
       funds: res.funds,
       actions: res.actions,
+      majority: majorityFor(g, country),
+      abstaining: g.abstaining,
+      compatible: country.compatible,
     },
     party,
     difficulty,
@@ -787,7 +790,7 @@ export function countryAdvanceTurn(g: CountryGameState, country: CountryBundle, 
   if (!opts.disableAi) {
     for (const p of next.parties) {
       if (p === next.playerParty || !country.playable.includes(p)) continue;
-      for (const a of planAiActions(next, p, rng)) applyCountryAction(next, a, rng);
+      for (const a of planAiActions(next, country, p, rng)) applyCountryAction(next, a, rng);
     }
     fireCountryEvent(next, country, rng);
   }

@@ -72,14 +72,24 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   refresh: async () => {
-    if (!getToken()) return;
+    // Always probe the server so offline guests get the "play offline" UX
+    // instead of lock/login prompts that can't succeed.
+    if (!getToken()) {
+      try {
+        await api.daily();
+        set({ serverDown: false });
+      } catch {
+        set({ serverDown: true });
+      }
+      return;
+    }
     try {
       const { user, unlocked } = await api.me();
       set({ user, unlocked, serverDown: false });
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
         clearSession();
-        set({ user: null, unlocked: { scenarioIds: [], packIds: [] } });
+        set({ user: null, unlocked: { scenarioIds: [], packIds: [] }, serverDown: false });
       } else {
         set({ serverDown: true });
       }

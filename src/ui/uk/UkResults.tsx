@@ -66,6 +66,7 @@ export function UkResults() {
 
   // ── Campaign score + leaderboard post ──
   const user = useAuthStore((s) => s.user);
+  const serverDown = useAuthStore((s) => s.serverDown);
   const openModal = useAuthStore((s) => s.openModal);
   const scenarioId = `uk-${game.electionId}`;
   const difficulty = game.difficulty ?? "normal";
@@ -81,6 +82,7 @@ export function UkResults() {
     try {
       const out = await api.postScore({
         scenarioId, difficulty, score, facts,
+        seats: r.seats, voteShare: r.voteShare, playerSide: game.playerParty,
         evMargin: Math.round(facts.unitMargin), popularVoteMargin: facts.popularMargin, turnsPlayed: game.turn,
       });
       setPostState("done");
@@ -119,9 +121,11 @@ export function UkResults() {
           <span className="muted small"> · seat margin {facts.unitMargin >= 0 ? "+" : ""}{Math.round(facts.unitMargin)} vs {maj.threshold}</span>
         </span>
         {user ? (
-          <button className="secondary" disabled={postState === "busy" || postState === "done"} onClick={post}>
-            {postState === "done" ? "Posted ✓" : postState === "busy" ? "Posting…" : "Post to Leaderboard"}
+          <button className="secondary" disabled={postState === "busy" || postState === "done" || serverDown} onClick={post}>
+            {postState === "done" ? "Posted ✓" : postState === "busy" ? "Posting…" : serverDown ? "Offline" : "Post to Leaderboard"}
           </button>
+        ) : serverDown ? (
+          <span className="muted small">Play offline</span>
         ) : (
           <button className="secondary" onClick={() => openModal("login")}>Log in to post</button>
         )}

@@ -411,6 +411,9 @@ function planAiActions(g: UkGameState, party: PartyId, rng: Rng): UkAction[] {
       totalTurns: g.totalTurns,
       funds: res.funds,
       actions: res.actions,
+      majority: majorityForUk(g),
+      abstaining: g.abstaining,
+      compatible: ukCompatible,
     },
     party,
     difficulty,
@@ -605,7 +608,7 @@ export function ukAdvanceTurn(g: UkGameState, opts: UkAdvanceOptions = {}): UkGa
 
 // Coalition compatibility: the two main UK rivals (Conservative & Labour) never
 // govern together; everyone else is fair game (the Lib Dems have partnered both).
-function ukCompatible(lead: PartyId, partner: PartyId): boolean {
+export function ukCompatible(lead: PartyId, partner: PartyId): boolean {
   const rivals = new Set(["con", "lab"]);
   if (rivals.has(lead) && rivals.has(partner)) return false;
   return true;

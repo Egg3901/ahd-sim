@@ -3,10 +3,10 @@
 // planner those bots now call, with difficulty tiers (easy/normal/hard) that
 // mirror the US AI's efficiency / mistake / foresight knobs.
 
-import type { PartyId } from "./system";
+import type { PartyId, MajorityRule } from "./system";
 import type { StateContest } from "./types";
 import type { Rng } from "./rng";
-import { tallyRegion } from "./multiparty";
+import { tallyRegion, computeSeatsResult, formGovernment } from "./multiparty";
 
 export type MpDifficulty = "easy" | "normal" | "hard";
 
@@ -41,12 +41,25 @@ export interface MpView {
   totalTurns: number;
   funds: number;
   actions: number;
+  // Optional government-formation context — when present in the final stretch,
+  // the planner biases toward coalition math instead of pure largest-party.
+  majority?: MajorityRule;
+  abstaining?: PartyId[];
+  compatible?: (lead: PartyId, partner: PartyId) => boolean;
+}
+
+interface MpTarget {
+  region: StateContest;
+  margin: number;
+  rivalParty: PartyId | undefined;
+  // Extra weight from the late-game coalition pass (0 when not applicable).
+  coalitionBoost: number;
 }
 
 // Regions ranked by how close the party sits to the local top rival.
-export function mpTargets(view: MpView, party: PartyId, max: number) {
+export function mpTargets(view: MpView, party: PartyId, max: number): MpTarget[] {
   const standing = view.regions.filter((r) => r.baselineShare?.[party] !== undefined);
-  const rows = standing.map((r) => {
+  const rows: MpTarget[] = standing.map((r) => {
     const { shareByParty } = tallyRegion(r);
     const mine = shareByParty[party] ?? 0;
     const rival = Math.max(
@@ -55,7 +68,12 @@ export function mpTargets(view: MpView, party: PartyId, max: number) {
         .filter((p) => p !== party)
         .map((p) => shareByParty[p] ?? 0),
     );
-    return { region: r, margin: mine - rival, rivalParty: topRival(shareByParty, party) };
+    return {
+      region: r,
+      margin: mine - rival,
+      rivalParty: topRival(shareByParty, party),
+      coalitionBoost: 0,
+    };
   });
   // Winnable = within striking distance of the local lead; fall back to the
   // closest contests so small parties still campaign somewhere.
@@ -77,13 +95,105 @@ function topRival(shareByParty: Record<string, number>, party: PartyId): PartyId
   return best;
 }
 
+// Late-campaign coalition pass: when no single party can reach majority, bias
+// targets toward (a) regions where a natural partner is weak / flippable toward
+// the partner, and (b) regions where the leading rival is vulnerable — so the
+// AI improves government-formation math, not just largest-party seat count.
+function applyCoalitionBias(
+  view: MpView,
+  party: PartyId,
+  targets: MpTarget[],
+  foresight: number,
+): MpTarget[] {
+  if (!view.majority) return targets;
+  const turnsLeft = view.totalTurns - view.turn;
+  if (turnsLeft > 2) return targets;
+
+  const abstaining = view.abstaining ?? [];
+  const compatible = view.compatible ?? (() => true);
+  const projected = computeSeatsResult(view.regions, view.majority, abstaining, compatible);
+  const seats = projected.seats;
+  const mySeats = seats[party] ?? 0;
+  const gov = formGovernment(seats, view.majority, abstaining, projected.largestParty, compatible);
+
+  // Already on course for a majority (ours or anyone's firm majority) — no need.
+  if (gov.kind === "majority") return targets;
+
+  // Natural partners: compatible parties ranked by current seats (largest first).
+  const partners = Object.keys(seats)
+    .filter((p) => p !== party && !abstaining.includes(p) && compatible(party, p))
+    .sort((a, b) => (seats[b] ?? 0) - (seats[a] ?? 0));
+  const bestPartner = partners[0];
+  if (!bestPartner) return targets;
+
+  // Leading rival = largest incompatible (or simply largest other) party.
+  const rival = Object.keys(seats)
+    .filter((p) => p !== party)
+    .sort((a, b) => (seats[b] ?? 0) - (seats[a] ?? 0))[0];
+
+  // Coalition path is viable if we + partner clear the effective threshold.
+  const abstainSeats = abstaining.reduce((s, p) => s + (seats[p] ?? 0), 0);
+  const threshold =
+    view.majority.effectiveThreshold ??
+    Math.floor((view.majority.total - abstainSeats) / 2) + 1;
+  const coalitionSeats = mySeats + (seats[bestPartner] ?? 0);
+  // Near a solo majority → keep seat-maxing (don't divert to partner regions).
+  // Only switch to coalition math when a majority alone is clearly out of reach
+  // but a partner still gets us over the line (classic hung-parliament path).
+  const soloGap = threshold - mySeats;
+  if (mySeats >= threshold) return targets;
+  if (soloGap <= 15) return targets;
+  if (coalitionSeats < threshold) return targets;
+
+  // Re-score every standing region with a coalition boost, then re-pick top N.
+  const standing = view.regions.filter((r) => r.baselineShare?.[party] !== undefined);
+  const rescored: MpTarget[] = standing.map((r) => {
+    const { shareByParty } = tallyRegion(r);
+    const mine = shareByParty[party] ?? 0;
+    const rivalShare = Math.max(
+      0,
+      ...Object.keys(shareByParty)
+        .filter((p) => p !== party)
+        .map((p) => shareByParty[p] ?? 0),
+    );
+    const margin = mine - rivalShare;
+    const partnerShare = shareByParty[bestPartner] ?? 0;
+    const leadingRivalShare = rival ? (shareByParty[rival] ?? 0) : 0;
+    // Partner-weak regions: partner is close behind a rival → help them (or
+    // take the seat ourselves if we're closer). Rival-vulnerable: rival leads
+    // narrowly and we or the partner can contest.
+    let boost = 0;
+    if (partnerShare > 0.08 && partnerShare + 0.12 >= rivalShare && margin < 0.05) {
+      boost += 0.04; // partner can take or hold this with a push
+    }
+    if (leadingRivalShare > mine && leadingRivalShare - Math.max(mine, partnerShare) < 0.1) {
+      boost += 0.05; // knock the rival off a knife-edge seat
+    }
+    if (margin > -0.08 && margin < 0.08) boost += 0.02; // still value our own tossups
+    return {
+      region: r,
+      margin,
+      rivalParty: topRival(shareByParty, party),
+      coalitionBoost: boost,
+    };
+  });
+
+  // Sort by (closeness + coalition boost); prefer boosted regions.
+  rescored.sort((a, b) => {
+    const scoreA = -Math.abs(a.margin) + a.coalitionBoost;
+    const scoreB = -Math.abs(b.margin) + b.coalitionBoost;
+    return scoreB - scoreA;
+  });
+  return rescored.slice(0, foresight);
+}
+
 export function mpFocusedActions(
   view: MpView,
   party: PartyId,
   cfg: MpAiConfig = MP_DIFFICULTY.normal,
   rng?: Rng,
 ): MpActionLike[] {
-  let targets = mpTargets(view, party, cfg.foresight);
+  let targets = applyCoalitionBias(view, party, mpTargets(view, party, cfg.foresight), cfg.foresight);
   if (targets.length === 0) return [];
 
   // Occasional misallocation: shuffle priority (a "mistake").

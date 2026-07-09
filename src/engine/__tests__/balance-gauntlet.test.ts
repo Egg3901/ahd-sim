@@ -40,11 +40,9 @@ const SMOKE_SCENARIOS = [
 // moves the needle (focused strictly outperforms passive). Remove an entry once
 // the gap closes and the assertion tightens automatically.
 //
-// The 2026-07-08 wave that ported the easy/normal/hard underdog handicap into
-// the UK and country engines cleared every multiparty landslide off this list
-// (see docs/balance/report-2026-07-08.md). Only us-1984 remains: the US engine's
-// easy handicap still can't flip Reagan's 525-EV landslide, and the US engine
-// was out of scope for that wave.
+// Tracked winnability gaps. The 2026-07-09 US easy-environment bump (0.55 logit)
+// is meant to clear us-1984; keep it listed until a gauntlet re-run confirms,
+// then remove. Skill-moves-the-needle still holds while it's here.
 const KNOWN_UNWINNABLE = new Set([
   "us-1984",
 ]);

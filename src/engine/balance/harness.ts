@@ -16,13 +16,14 @@ import type { CampaignAction, CandidateId, GameState } from "../types";
 import type { PartyId } from "../system";
 import { createGame } from "../setup";
 import { advanceTurn, beginGame } from "../turn";
-import { DIFFICULTY } from "../ai";
+import { DIFFICULTY, rankTargets } from "../ai";
 import { projectElection, computeResult } from "../voteModel";
 import {
   createUkGame,
   ukAdvanceTurn,
   computeUkResult,
   majorityForUk,
+  ukCompatible,
   type UkGameState,
   type UkAction,
 } from "../ukGame";
@@ -97,8 +98,9 @@ export const GAUNTLET_THRESHOLDS = {
   // in at least this fraction of seeds — calibration under noise.
   passiveFidelity: 0.8,
   // Bot ordering sanity: focused ≥ scattershot ≥ passive in aggregate win
-  // rate, with this much slack for sampling noise.
-  orderingTolerance: 0.02,
+  // rate, with this much slack for sampling noise. Tightened after the
+  // EV-per-dollar focused planner stopped over-investing in expensive states.
+  orderingTolerance: 0.015,
   // Suggested difficulty label from the focused-bot underdog win rate on the
   // DEFAULT setting (US normal; UK/country base).
   labelEasyMin: 0.45, // winRate ≥ this ⇒ "easy"
@@ -107,7 +109,8 @@ export const GAUNTLET_THRESHOLDS = {
 
 // ── US bots ────────────────────────────────────────────────────────────────
 
-// Battleground targets: vote-bearing states sorted by closeness to 50/50.
+// Battleground targets for the scattershot bot: vote-bearing states sorted by
+// closeness to 50/50 (naive — no EV/$ ranking).
 function usTargets(g: GameState, band: number, max: number) {
   const proj = projectElection(g);
   const rows = proj.contests
@@ -121,56 +124,66 @@ function usTargets(g: GameState, band: number, max: number) {
   return (inBand.length > 0 ? inBand : rows).slice(0, max);
 }
 
-// The strong bot: hammer the 4 closest winnable states with an ad/rally/field
-// mix, keep the war chest topped up, GOTV in the final stretch. Events are
-// resolved by advanceTurn's auto-resolve, which already picks the choice with
-// the best net weighted blocDelta for the player (aiChooseEvent).
+// The strong bot: EV-per-dollar targets (shared with the in-game AI), ads first,
+// one field office early, GOTV late. Avoids dumping the war chest into expensive
+// states that look "close" only because the band widened.
 function usFocusedActions(g: GameState, side: CandidateId): CampaignAction[] {
   const res = g.resources[side];
-  const targets = usTargets(g, 0.12, 4);
+  // Temporarily treat `side` as the player so rankTargets scores from their POV
+  // (the in-game AI ranks for OPPONENT_OF[player]; the gauntlet bot IS the player).
+  const ranked = rankTargets({ ...g, playerCandidate: side === "dem" ? "rep" : "dem" }, side, {
+    efficiency: 1,
+    mistakeRate: 0,
+    foresight: 5,
+  });
+  const targets = ranked.length > 0
+    ? ranked
+    : usTargets(g, 0.12, 5).map((t) => ({ stateId: t.stateId, priority: 1, ev: 0, aiShare: 0.5, mediaCost: 1, evPerDollar: 1 }));
   if (targets.length === 0) return [];
   const slots = res.actions;
   const turnsLeft = Math.max(1, g.totalTurns - g.turn);
   const out: CampaignAction[] = [];
+  const prioritySum = targets.reduce((s, t) => s + t.priority, 0) || 1;
 
-  // War chest floor: refill before it runs dry (pacing, like the engine AI).
-  if (res.cash < 40_000_000) {
+  // War chest floor: one fundraise if broke — never more than one overhead slot.
+  if (res.cash < 35_000_000) {
     const richest = [...g.states]
       .filter((s) => s.blocs.length > 0)
       .sort((a, b) => b.electoralVotes - a.electoralVotes)[0];
     out.push({ type: "fundraise", candidate: side, stateId: richest?.id });
   }
 
-  // Field early (sticky), GOTV late (cashes the field in).
-  if (turnsLeft > 3 && res.staffCapacity > 0 && res.cash > 2_000_000) {
+  // One field office early (sticky), GOTV late.
+  if (turnsLeft > 3 && res.staffCapacity > 0 && res.cash > 2_000_000 && out.length < 1) {
     const build = targets.find((t) => {
-      const st = g.states.find((s) => s.id === t.stateId)!;
-      return st.groundGame[side] < 0.95;
+      const st = g.states.find((s) => s.id === t.stateId);
+      return st && st.groundGame[side] < 0.95;
     });
     if (build) out.push({ type: "ground_game", candidate: side, stateId: build.stateId });
   }
-  if (turnsLeft <= 2) {
-    for (const t of targets.slice(0, 3)) {
-      const st = g.states.find((s) => s.id === t.stateId)!;
-      if (st.groundGame[side] > 0.05 && res.cash > 1_000_000) {
-        out.push({ type: "gotv", candidate: side, stateId: t.stateId });
-      }
-    }
-  }
 
-  // Interleave ads + rallies across the top targets, paced over the weeks left.
   const adBudget = (res.cash * 0.9) / Math.max(2, turnsLeft);
-  const perTarget = adBudget / targets.length;
   for (const t of targets) {
+    if (out.length >= slots) break;
     out.push({ type: "rally", candidate: side, stateId: t.stateId });
-    if (perTarget >= 500_000) {
+    const spend = (adBudget * t.priority) / prioritySum;
+    if (spend >= 400_000 && out.length < slots) {
       out.push({
         type: "advertise",
         candidate: side,
         stateId: t.stateId,
         adMode: "positive",
-        spend: perTarget,
+        spend,
       });
+    }
+  }
+  if (turnsLeft <= 2) {
+    for (const t of targets.slice(0, 3)) {
+      if (out.length >= slots) break;
+      const st = g.states.find((s) => s.id === t.stateId);
+      if (st && st.groundGame[side] > 0.05 && res.cash > 1_000_000) {
+        out.push({ type: "gotv", candidate: side, stateId: t.stateId });
+      }
     }
   }
   return out.slice(0, slots);
@@ -340,6 +353,9 @@ function runUkGame(meta: ScenarioMeta, side: PartyId, bot: BotStrategy, difficul
       totalTurns: g.totalTurns,
       funds: g.resources[side].funds,
       actions: g.resources[side].actions,
+      majority: majorityForUk(g),
+      abstaining: g.abstaining,
+      compatible: ukCompatible,
     };
     g.queuedActions = mpBotActions(bot, view, side) as UkAction[];
     g = ukAdvanceTurn(g, { autoResolvePlayerEvents: true });
@@ -372,6 +388,9 @@ function runCountryGame(
       totalTurns: g.totalTurns,
       funds: g.resources[side].funds,
       actions: g.resources[side].actions,
+      majority,
+      abstaining: g.abstaining,
+      compatible: bundle.compatible,
     };
     g.queuedActions = mpBotActions(bot, view, side) as CountryAction[];
     g = countryAdvanceTurn(g, bundle, { autoResolvePlayerEvents: true });

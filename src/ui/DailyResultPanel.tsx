@@ -32,6 +32,7 @@ export function DailyResultPanel({ gameSeed, scenarioId, engine, won, unitLine, 
   popularVoteMargin: number;
 }) {
   const user = useAuthStore((s) => s.user);
+  const serverDown = useAuthStore((s) => s.serverDown);
   const openModal = useAuthStore((s) => s.openModal);
   const today = useMemo(() => dailyAssignment(utcDateString()), []);
   const isDaily =
@@ -101,9 +102,11 @@ export function DailyResultPanel({ gameSeed, scenarioId, engine, won, unitLine, 
             {copied ? "Copied ✓" : "Share result"}
           </button>
           {user ? (
-            <button className="primary" disabled={postState === "busy" || postState === "done"} onClick={post}>
-              {postState === "done" ? "Posted ✓" : postState === "busy" ? "Posting…" : "Post to daily board"}
+            <button className="primary" disabled={postState === "busy" || postState === "done" || serverDown} onClick={post}>
+              {postState === "done" ? "Posted ✓" : postState === "busy" ? "Posting…" : serverDown ? "Offline" : "Post to daily board"}
             </button>
+          ) : serverDown ? (
+            <span className="muted small">Play offline</span>
           ) : (
             <button className="primary" onClick={() => openModal("login")}>Log in to post</button>
           )}
