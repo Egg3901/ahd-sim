@@ -175,6 +175,197 @@
   100% { opacity: 1; transform: none; filter: none; }
 }
 
+/* ── US state call grid ──────────────────────────────────────────────── */
+.ens-call-grid {
+  padding: 14px 16px;
+  background: var(--navy-700);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.ens-call-grid-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.ens-call-cells {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 6px;
+}
+.ens-call-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 7px 4px;
+  background: var(--navy-800);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  border-left-width: 3px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.ens-call-cell.flipped { background: var(--navy-600); }
+.ens-call-abbr {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.ens-call-flip {
+  color: var(--gold);
+  font-size: 12px;
+  line-height: 1;
+}
+.ens-call-ev { font-size: 11px; color: var(--muted); font-weight: 700; }
+.ens-call-margin { font-size: 10px; color: var(--text); font-weight: 600; }
+
+/* ── Multiparty seat panel ───────────────────────────────────────────── */
+.ens-seat-panel {
+  padding: 14px 16px;
+  background: var(--navy-700);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ens-hung {
+  text-align: center;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gold);
+  background: var(--navy-800);
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  animation: ens-fade-up 0.45s var(--ease);
+}
+.ens-hung.soft { border-style: dashed; opacity: 0.95; }
+.ens-seat-track {
+  position: relative;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--navy-800);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  display: flex;
+}
+.ens-seat-seg {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: #0c0d10;
+  letter-spacing: 0.5px;
+  min-width: 0;
+}
+.ens-seat-thresh {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: #fff;
+  opacity: 0.9;
+  pointer-events: none;
+}
+.ens-seat-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.ens-coalition {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: var(--navy-800);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+.ens-coalition-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--gold);
+}
+.ens-coalition-eq {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+/* ── Daily compact reveal ────────────────────────────────────────────── */
+.ens-daily {
+  padding: 14px 16px;
+  background: var(--navy-600);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-lg);
+}
+.ens-daily-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ens-daily-tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+.ens-daily-score {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-top: 4px;
+  color: var(--text-strong);
+}
+.ens-daily-score-max {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.ens-daily-pct {
+  text-align: right;
+  min-width: 90px;
+}
+.ens-daily-pct-num {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--gold);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.ens-daily-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  align-items: center;
+}
+
 @media (max-width: 520px) {
   .ens-next { grid-template-columns: 1fr; }
   .ens-next-preview { width: 100%; height: 80px; }

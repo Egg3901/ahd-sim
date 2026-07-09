@@ -15,8 +15,11 @@ import { pct, votes } from "./format";
 import { Trophy, Lock } from "lucide-react";
 import { ElectionNight, hasSeenReveal, revealSupported } from "./electionNight/ElectionNight";
 import { ElectionNightShell } from "./electionNight/ElectionNightShell";
+import { StateCallGrid } from "./electionNight/StateCallGrid";
 import { usReveal } from "./electionNight/adapters";
 import { DailyResultPanel } from "./DailyResultPanel";
+import { dailyAssignment, utcDateString } from "@lib/daily";
+import type { CandidateId } from "@engine/types";
 
 export function ResultsScreen() {
   const game = useGameStore((s) => s.game)!;
@@ -280,6 +283,8 @@ export function ResultsScreen() {
               </>
             )}
           </div>
+
+          {done && <StateCallGrid game={game} />}
         </ElectionNightShell>
       </div>
       {statsOpen && <StatsScreen onClose={() => setStatsOpen(false)} />}
@@ -311,6 +316,7 @@ function UsMiniMapPreview({
 // ── Campaign score + achievements + leaderboard post ────────────────────────
 function ScoreAndAchievements() {
   const game = useGameStore((s) => s.game)!;
+  const newGame = useGameStore((s) => s.newGame);
   const difficulty = useGameStore((s) => s.difficulty);
   const user = useAuthStore((s) => s.user);
   const serverDown = useAuthStore((s) => s.serverDown);
@@ -361,11 +367,33 @@ function ScoreAndAchievements() {
     }
   };
 
+  const replayDaily = () => {
+    const today = dailyAssignment(utcDateString());
+    if (today.scenarioId !== scenarioId) return;
+    const nativeId = SCENARIOS[game.scenarioId ?? "2020"] ? (game.scenarioId ?? "2020") : today.scenarioId.replace(/^us-/, "");
+    newGame({
+      seed: today.seed,
+      playerCandidate: today.role as CandidateId,
+      scenario: nativeId,
+      eventMode: game.eventMode,
+      difficulty,
+    });
+  };
+
   return (
     <>
-      <DailyResultPanel gameSeed={game.seed} scenarioId={scenarioId} engine="us" won={result.winner === player}
-        unitLine={`${result.electoralVotes[player]} EV`} score={score} facts={facts}
-        evMargin={Math.round(facts.unitMargin)} popularVoteMargin={facts.popularMargin} />
+      <DailyResultPanel
+        gameSeed={game.seed}
+        scenarioId={scenarioId}
+        engine="us"
+        won={result.winner === player}
+        unitLine={`${result.electoralVotes[player]} EV`}
+        score={score}
+        facts={facts}
+        evMargin={Math.round(facts.unitMargin)}
+        popularVoteMargin={facts.popularMargin}
+        onReplay={replayDaily}
+      />
       <div className="card">
         <div className="row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
           <div>
