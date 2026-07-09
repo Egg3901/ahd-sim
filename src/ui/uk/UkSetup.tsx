@@ -191,7 +191,7 @@ export function UkSetup({ onBack, initialElection, initialSeed, initialParty }: 
                 </div>
                 <div className="su-summary-row">
                   <span className="su-summary-k">Goal</span>
-                  <span className="su-summary-v">326 of 650 seats</span>
+                  <span className="su-summary-v">{data.goalText ?? `${data.majority?.threshold ?? 326} of ${data.majority?.total ?? 650} seats`}</span>
                 </div>
               </div>
             </>

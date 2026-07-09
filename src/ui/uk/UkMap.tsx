@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useUkStore } from "@store/ukStore";
+import { majorityForUk } from "@engine/ukGame";
 import { tallyRegion, allocateRegionSeats } from "@engine/multiparty";
 import { REGION_PATHS, UK_VIEWBOX } from "@content/uk/regionPaths";
 import { partyColor, partyShort } from "./parties";
@@ -31,10 +32,11 @@ export function UkMap() {
   const selected = useUkStore((s) => s.selectedRegionId);
   const select = useUkStore((s) => s.selectRegion);
   const [mode, setMode] = useState<"geo" | "square">("geo");
+  const seatsTotal = majorityForUk(game).total;
 
   const header = (
     <div className="mapcontrols" style={{ justifyContent: "space-between" }}>
-      <h3 style={{ margin: 0, fontSize: 13, textTransform: "uppercase", letterSpacing: 0.8, color: "var(--muted)" }}>Seat Map · 650 seats</h3>
+      <h3 style={{ margin: 0, fontSize: 13, textTransform: "uppercase", letterSpacing: 0.8, color: "var(--muted)" }}>Seat Map · {seatsTotal} seats</h3>
       <div className="row" style={{ gap: 4 }}>
         <button className={`ghost small${mode === "geo" ? " active" : ""}`} onClick={() => setMode("geo")}>Geo</button>
         <button className={`ghost small${mode === "square" ? " active" : ""}`} onClick={() => setMode("square")}>Square</button>

@@ -7,12 +7,19 @@ import type { CauseEntry, Government, SeatResult, StateContest } from "./types";
 import { createRng, hashSeed, type Rng } from "./rng";
 import { computeSeatsResult, blocPartyShares, tallyRegion } from "./multiparty";
 import { UK_SYSTEM, UK_ABSTAINING, PARTY_BY_ID } from "@content/uk/parties";
-import { UK_ELECTIONS, type UkElectionData } from "@content/uk/elections";
+import { UK_ELECTIONS, type UkElectionData, majorityForElection, type UkMajority } from "@content/uk/elections";
 import { leaderFor, type UkLeader } from "@content/uk/leaders";
 import { UK_EVENTS, UK_EVENT_CHANCE, headlineFor, pickTarget, type UkEvent } from "@content/uk/events";
 import { UK_ELECTION_EVENTS } from "@content/uk/electionEvents";
 import { buildUkRegions } from "./ukSetup";
 import { planMultipartyAi, type MpDifficulty } from "./multipartyAi";
+import {
+  buildCauseRecap,
+  decayMultipartyTurn,
+  finalizeMpCampaignTurn,
+  resolvePendingChoiceGate,
+  type RecapItem,
+} from "./mpTurnHelpers";
 
 // Parties a human may lead (GB-wide majors). NI parties + 'oth' are AI/fixed.
 export const UK_PLAYABLE: PartyId[] = ["lab", "con", "ld", "ref", "grn", "snp", "pc"];
@@ -106,11 +113,18 @@ export interface UkGameState {
   firedEvents?: string[];
   // Underdog handicap setting (defaults to "normal" = identity for old saves).
   difficulty?: Difficulty;
+  // Chamber size for THIS election's boundary set.
+  majority?: UkMajority;
   // Week-in-review lines after each turn (US lastRecap parity).
   lastRecap: UkRecapItem[];
   // Player-choice event waiting on a decision (blocks End Week).
   pendingEvent?: UkPendingEvent | null;
   result?: UkResult;
+}
+
+/** Winning post for this election's boundary set (650/326 default). */
+export function majorityForUk(g: UkGameState): UkMajority {
+  return g.majority ?? majorityForElection(g.electionId);
 }
 
 // Active parties = the union of parties appearing in any region's result.
@@ -226,6 +240,7 @@ export function createUkGame(opts: NewUkGameOptions = {}): UkGameState {
     news: [],
     firedEvents: [],
     difficulty,
+    majority: { ...(election.majority ?? majorityForElection(election.id)) },
     lastRecap: [],
     pendingEvent: null,
   };
@@ -410,7 +425,7 @@ function eventById(id: string, electionId: string): UkEvent | undefined {
 }
 
 function topRivalParty(g: UkGameState, party: PartyId): PartyId | undefined {
-  const proj = computeSeatsResult(g.regions, UK_SYSTEM.majority, g.abstaining);
+  const proj = computeSeatsResult(g.regions, majorityForUk(g), g.abstaining);
   return Object.keys(proj.seats)
     .filter((p) => p !== party)
     .sort((a, b) => (proj.seats[b] ?? 0) - (proj.seats[a] ?? 0))[0] as PartyId | undefined;
@@ -438,7 +453,7 @@ function applyUkEventEffects(g: UkGameState, ev: UkEvent, target: PartyId) {
 }
 
 function resolveUkEventTarget(g: UkGameState, ev: UkEvent, rng: Rng): PartyId | undefined {
-  const proj = computeSeatsResult(g.regions, UK_SYSTEM.majority, g.abstaining);
+  const proj = computeSeatsResult(g.regions, majorityForUk(g), g.abstaining);
   return ev.party && g.parties.includes(ev.party)
     ? ev.party
     : pickTarget(ev.role, g.playerParty, proj.largestParty, g.parties, (xs) => rng.pick(xs));
@@ -518,30 +533,16 @@ function fireUkEvent(g: UkGameState, rng: Rng) {
 }
 
 function buildUkRecap(g: UkGameState, turn: number, seatsBefore: number): UkRecapItem[] {
-  const recap: UkRecapItem[] = [];
-  const byCause = new Map<string, { delta: number; regions: Set<string> }>();
-  for (const c of g.causes) {
-    if (c.turn !== turn) continue;
-    const entry = byCause.get(c.cause) ?? { delta: 0, regions: new Set() };
-    entry.delta += c.marginDelta;
-    if (c.stateId) entry.regions.add(c.stateId);
-    byCause.set(c.cause, entry);
-  }
-  for (const [cause, info] of byCause) {
-    recap.push({
-      label: cause,
-      detail: info.regions.size > 0 ? `${info.regions.size} region(s)` : "nationwide",
-      marginDelta: info.delta,
-    });
-  }
-  recap.sort((a, b) => Math.abs(b.marginDelta ?? 0) - Math.abs(a.marginDelta ?? 0));
   const seatsAfter = computeUkResult(g).seats[g.playerParty] ?? 0;
-  recap.unshift({
-    label: "Projected seats",
-    detail: `${PARTY_BY_ID[g.playerParty]?.shortName ?? g.playerParty} ${seatsAfter} (was ${seatsBefore})`,
-    marginDelta: seatsAfter - seatsBefore,
-  });
-  return recap.slice(0, 12);
+  return buildCauseRecap(
+    g.causes,
+    turn,
+    {
+      label: "Projected seats",
+      detail: `${PARTY_BY_ID[g.playerParty]?.shortName ?? g.playerParty} ${seatsAfter} (was ${seatsBefore})`,
+      marginDelta: seatsAfter - seatsBefore,
+    },
+  );
 }
 
 // ── Turn loop ──────────────────────────────────────────────────────────────
@@ -555,16 +556,17 @@ export interface UkAdvanceOptions {
 
 export function ukAdvanceTurn(g: UkGameState, opts: UkAdvanceOptions = {}): UkGameState {
   let next: UkGameState = structuredClone(g);
-  // Auto-resolve any leftover player decision before the week advances.
-  if (next.pendingEvent && opts.autoResolvePlayerEvents) {
-    const ev = eventById(next.pendingEvent.eventId, next.electionId);
-    const choiceId = ev?.choices?.[0]?.id;
-    if (choiceId) next = resolveUkPlayerEvent(next, choiceId);
-    else next.pendingEvent = null;
-  } else if (next.pendingEvent && !opts.autoResolvePlayerEvents) {
-    // UI must resolve first — refuse to advance.
-    return g;
-  }
+  const gate = resolvePendingChoiceGate(
+    next,
+    opts,
+    (game, choiceId) => resolveUkPlayerEvent(game, choiceId),
+    (game) => {
+      const ev = game.pendingEvent ? eventById(game.pendingEvent.eventId, game.electionId) : undefined;
+      return ev?.choices?.[0]?.id;
+    },
+  );
+  if (gate.blocked) return g;
+  next = gate.game;
 
   // Pending resolution on the final week may have already closed the campaign.
   if (next.phase === "result") return next;
@@ -595,28 +597,11 @@ export function ukAdvanceTurn(g: UkGameState, opts: UkAdvanceOptions = {}): UkGa
   if (!opts.disableAi) fireUkEvent(next, rng);
 
   // 4. Momentum decays; refresh action pools and live support.
-  for (const p of next.parties) {
-    next.resources[p].momentum *= 0.7;
-    next.resources[p].actions = next.resources[p].maxActions;
-  }
-  for (const region of next.regions) {
-    region.momentum *= 0.6;
-    for (const bloc of region.blocs) bloc.support = blocPartyShares(bloc) as typeof bloc.support;
-  }
+  decayMultipartyTurn(next.resources, next.regions, next.parties);
 
   next.lastRecap = buildUkRecap(next, turn, seatsBefore);
-  next.turn += 1;
   next.rngState = rng.state();
-
-  // If a player decision queued mid-turn, don't finish the campaign yet —
-  // the UI resolves it, then the next End Week continues.
-  if (next.pendingEvent) return next;
-
-  if (next.turn >= next.totalTurns) {
-    next.phase = "result";
-    next.result = computeUkResult(next);
-  }
-  return next;
+  return finalizeMpCampaignTurn(next, (game) => computeUkResult(game));
 }
 
 // Coalition compatibility: the two main UK rivals (Conservative & Labour) never
@@ -628,7 +613,7 @@ function ukCompatible(lead: PartyId, partner: PartyId): boolean {
 }
 
 export function computeUkResult(g: UkGameState): UkResult {
-  const r = computeSeatsResult(g.regions, UK_SYSTEM.majority, g.abstaining, ukCompatible);
+  const r = computeSeatsResult(g.regions, majorityForUk(g), g.abstaining, ukCompatible);
   // The post-mortem shows the *player's* biggest self-caused swings (the player's
   // leader name tags their action causes), falling back to the whole campaign if
   // the player sat on their hands.

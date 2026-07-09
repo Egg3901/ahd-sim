@@ -1,4 +1,5 @@
 import { useUkStore } from "@store/ukStore";
+import { majorityForUk } from "@engine/ukGame";
 import { partyColor, partyShort, sortBySeats } from "./parties";
 import { partyName } from "./parties";
 import { UK_ISSUES_BY_ID } from "@content/uk/issues";
@@ -19,6 +20,7 @@ export function UkStandings() {
   const live = useUkStore((s) => s.liveProjection)();
   if (!live) return null;
   const order = sortBySeats(live.seats);
+  const maj = majorityForUk(game);
   const issues = Object.keys(game.salience).filter((id) => game.salience[id] >= 0.1).sort((a, b) => game.salience[b] - game.salience[a]);
 
   return (
@@ -46,7 +48,7 @@ export function UkStandings() {
             {partyShort(p)}
           </span>
           <span className="meta">{live.seats[p]} seats · {((live.voteShare[p] ?? 0) * 100).toFixed(1)}%</span>
-          <div className="suppbar"><div style={{ width: `${(live.seats[p] / 650) * 100 * 2}%`, background: partyColor(p) }} /></div>
+          <div className="suppbar"><div style={{ width: `${(live.seats[p] / maj.total) * 100 * 2}%`, background: partyColor(p) }} /></div>
         </div>
       ))}
 

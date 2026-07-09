@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useUkStore } from "@store/ukStore";
+import { majorityForUk } from "@engine/ukGame";
 import { UkSetup } from "./UkSetup";
 import { UkMap } from "./UkMap";
 import { UkSeatBar } from "./UkSeatBar";
@@ -44,6 +45,7 @@ export function UkApp({ onExit, initialElection, initialSeed, initialParty }: { 
   const res = game.resources[game.playerParty];
   const used = game.queuedActions.length;
   const playerSeats = live ? live.seats[game.playerParty] ?? 0 : 0;
+  const maj = majorityForUk(game);
   const hasPending = !!game.pendingEvent;
   const pendingView = hasPending && game.pendingEvent
     ? ukEventView(game.electionId, game.pendingEvent.eventId)
@@ -74,7 +76,7 @@ export function UkApp({ onExit, initialElection, initialSeed, initialParty }: { 
           {weeksLeft} {weeksLeft === 1 ? "week" : "weeks"} to polling day · leading{" "}
           <strong style={{ color: partyColor(game.playerParty) }}>{partyName(game.playerParty)}</strong>
         </div>
-        {live && <UkSeatBar result={live} />}
+        {live && <UkSeatBar result={live} total={maj.total} threshold={maj.threshold} />}
         <div className="stat"><span className="v" style={{ color: partyColor(game.playerParty) }}>{playerSeats}</span><span className="l">Your seats</span></div>
         <div className="stat"><span className="v">£{res.funds.toFixed(0)}M</span><span className="l">Funds</span></div>
         <div className="stat"><span className="v" style={{ color: used >= res.maxActions ? "var(--gold)" : undefined }}>{res.maxActions - used}/{res.maxActions}</span><span className="l">Actions</span></div>
@@ -117,7 +119,7 @@ export function UkApp({ onExit, initialElection, initialSeed, initialParty }: { 
 
       <OnboardingCoach
         doneKey="coach-done-uk-v1"
-        winLine="Win 326 seats in {N} weeks. No pressure."
+        winLine={`Win ${maj.threshold} seats in {N} weeks. No pressure.`}
         mapHint="Click a region on the map to continue."
         mapBody="Your battleground. Colours show the current lean; click a competitive region."
         planBody="Queue your week: broadcasts, rallies, ground game. Actions cost slots. Spend all of them; unspent slots win nothing."

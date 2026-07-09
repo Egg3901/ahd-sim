@@ -14,6 +14,12 @@ import type { CauseEntry, Government, SeatResult, StateBloc, StateContest } from
 import { createRng, hashSeed, type Rng } from "./rng";
 import { computeSeatsResult, blocPartyShares, tallyRegion, softmax } from "./multiparty";
 import { planMultipartyAi, type MpDifficulty } from "./multipartyAi";
+import {
+  buildCauseRecap,
+  decayMultipartyTurn,
+  finalizeMpCampaignTurn,
+  resolvePendingChoiceGate,
+} from "./mpTurnHelpers";
 
 // ── Content bundle: everything a country ships ────────────────────────────
 export interface CountryBlocDef {
@@ -731,32 +737,18 @@ function fireCountryEvent(g: CountryGameState, country: CountryBundle, rng: Rng)
   if (deck.some((d) => d.id === ev.id)) firedList.push(ev.id);
 }
 
-function buildCountryRecap(g: CountryGameState, country: CountryBundle, turn: number, seatsBefore: number): CountryRecapItem[] {
-  const recap: CountryRecapItem[] = [];
-  const byCause = new Map<string, { delta: number; regions: Set<string> }>();
-  for (const c of g.causes) {
-    if (c.turn !== turn) continue;
-    const entry = byCause.get(c.cause) ?? { delta: 0, regions: new Set() };
-    entry.delta += c.marginDelta;
-    if (c.stateId) entry.regions.add(c.stateId);
-    byCause.set(c.cause, entry);
-  }
-  for (const [cause, info] of byCause) {
-    recap.push({
-      label: cause,
-      detail: info.regions.size > 0 ? `${info.regions.size} region(s)` : "nationwide",
-      marginDelta: info.delta,
-    });
-  }
-  recap.sort((a, b) => Math.abs(b.marginDelta ?? 0) - Math.abs(a.marginDelta ?? 0));
+function buildCountryRecap(g: CountryGameState, country: CountryBundle, turn: number, seatsBefore: number) {
   const seatsAfter = computeCountryResult(g, country).seats[g.playerParty] ?? 0;
   const short = country.system.parties.find((p) => p.id === g.playerParty)?.shortName ?? g.playerParty;
-  recap.unshift({
-    label: `Projected ${country.unitNamePlural}`,
-    detail: `${short} ${seatsAfter} (was ${seatsBefore})`,
-    marginDelta: seatsAfter - seatsBefore,
-  });
-  return recap.slice(0, 12);
+  return buildCauseRecap(
+    g.causes,
+    turn,
+    {
+      label: `Projected ${country.unitNamePlural}`,
+      detail: `${short} ${seatsAfter} (was ${seatsBefore})`,
+      marginDelta: seatsAfter - seatsBefore,
+    },
+  );
 }
 
 export interface CountryAdvanceOptions {
@@ -766,14 +758,17 @@ export interface CountryAdvanceOptions {
 
 export function countryAdvanceTurn(g: CountryGameState, country: CountryBundle, opts: CountryAdvanceOptions = {}): CountryGameState {
   let next: CountryGameState = structuredClone(g);
-  if (next.pendingEvent && opts.autoResolvePlayerEvents) {
-    const ev = countryEventById(country, next, next.pendingEvent.eventId);
-    const choiceId = ev?.choices?.[0]?.id;
-    if (choiceId) next = resolveCountryPlayerEvent(next, country, choiceId);
-    else next.pendingEvent = null;
-  } else if (next.pendingEvent && !opts.autoResolvePlayerEvents) {
-    return g;
-  }
+  const gate = resolvePendingChoiceGate(
+    next,
+    opts,
+    (game, choiceId) => resolveCountryPlayerEvent(game, country, choiceId),
+    (game) => {
+      const ev = game.pendingEvent ? countryEventById(country, game, game.pendingEvent.eventId) : undefined;
+      return ev?.choices?.[0]?.id;
+    },
+  );
+  if (gate.blocked) return g;
+  next = gate.game;
 
   if (next.phase === "result") return next;
   if (next.turn >= next.totalTurns) {
@@ -797,26 +792,11 @@ export function countryAdvanceTurn(g: CountryGameState, country: CountryBundle, 
     fireCountryEvent(next, country, rng);
   }
 
-  for (const p of next.parties) {
-    next.resources[p].momentum *= 0.7;
-    next.resources[p].actions = next.resources[p].maxActions;
-  }
-  for (const region of next.regions) {
-    region.momentum *= 0.6;
-    for (const bloc of region.blocs) bloc.support = blocPartyShares(bloc) as typeof bloc.support;
-  }
+  decayMultipartyTurn(next.resources, next.regions, next.parties);
 
   next.lastRecap = buildCountryRecap(next, country, turn, seatsBefore);
-  next.turn += 1;
   next.rngState = rng.state();
-
-  if (next.pendingEvent) return next;
-
-  if (next.turn >= next.totalTurns) {
-    next.phase = "result";
-    next.result = computeCountryResult(next, country);
-  }
-  return next;
+  return finalizeMpCampaignTurn(next, (game) => computeCountryResult(game, country));
 }
 
 export function computeCountryResult(g: CountryGameState, country: CountryBundle): CountryResult {

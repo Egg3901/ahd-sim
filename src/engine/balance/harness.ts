@@ -22,10 +22,10 @@ import {
   createUkGame,
   ukAdvanceTurn,
   computeUkResult,
+  majorityForUk,
   type UkGameState,
   type UkAction,
 } from "../ukGame";
-import { UK_SYSTEM } from "@content/uk/parties";
 import {
   createCountryGame,
   countryAdvanceTurn,
@@ -345,7 +345,7 @@ function runUkGame(meta: ScenarioMeta, side: PartyId, bot: BotStrategy, difficul
     g = ukAdvanceTurn(g, { autoResolvePlayerEvents: true });
   }
   const r = g.result ?? computeUkResult(g);
-  return mpOutcome(r.seats, r.voteShare, r.largestParty, side, UK_SYSTEM.majority, baselineWinner, difficulty);
+    return mpOutcome(r.seats, r.voteShare, r.largestParty, side, majorityForUk(g), baselineWinner, difficulty);
 }
 
 function runCountryGame(
