@@ -7,12 +7,15 @@ import { majorityForUk, playablePartiesIn } from "@engine/ukGame";
 import type { Government } from "@engine/types";
 import { UK_ELECTIONS } from "@content/uk/elections";
 import { UK_NEXT_SCENARIO } from "@content/nextScenario";
-import { UkSeatBar } from "./UkSeatBar";
 import { partyName, partyShort, sortBySeats, partyColor } from "./parties";
 import { ElectionNight, hasSeenReveal, revealSupported } from "../electionNight/ElectionNight";
+import { ElectionNightShell } from "../electionNight/ElectionNightShell";
+import { MultipartySeatPanel } from "../electionNight/MultipartySeatPanel";
 import { ukReveal } from "../electionNight/adapters";
 import { DailyResultPanel } from "../DailyResultPanel";
-import { NextCampaignCard } from "../NextCampaignCard";
+import { dailyAssignment, utcDateString } from "@lib/daily";
+import { REGION_PATHS, UK_VIEWBOX } from "@content/uk/regionPaths";
+import { Lock } from "lucide-react";
 
 function govText(g: Government): string {
   switch (g.kind) {
@@ -24,37 +27,24 @@ function govText(g: Government): string {
   }
 }
 
-function UkNextScenario() {
-  const game = useUkStore((s) => s.game)!;
-  const newGame = useUkStore((s) => s.newGame);
-  const canPlay = useAuthStore((s) => s.canPlay);
-  const openModal = useAuthStore((s) => s.openModal);
-  const user = useAuthStore((s) => s.user);
-
-  const next = UK_NEXT_SCENARIO[game.electionId];
-  if (!next) return null;
-  const data = UK_ELECTIONS[next.id];
-  if (!data) return null;
-  const unlocked = canPlay(`uk-${next.id}`);
-  const playable = playablePartiesIn(next.id);
-  const party = playable.includes(game.playerParty) ? game.playerParty : playable[0];
-
+function UkMiniMap({ seats }: { seats: Record<string, number> }) {
+  // Color a handful of regions by the national largest party as a preview cue.
+  const largest = sortBySeats(seats)[0];
+  const color = largest ? partyColor(largest) : "var(--navy-500)";
+  const ids = Object.keys(REGION_PATHS).slice(0, 12);
   return (
-    <NextCampaignCard
-      title={data.label}
-      blurb={next.blurb}
-      unlocked={unlocked}
-      ctaLabel={`Play ${data.year} →`}
-      lockLabel={`🔒 Unlock ${data.year}`}
-      onPlay={() => newGame(next.id, party, String(Date.now()), game.difficulty)}
-      onUnlock={() => openModal(user ? "activate" : "login", `uk-${next.id}`)}
-    />
+    <svg viewBox={UK_VIEWBOX} preserveAspectRatio="xMidYMid meet">
+      {ids.map((id) => (
+        <path key={id} d={REGION_PATHS[id].d} fill={color} stroke="#0b1120" strokeWidth={0.8} />
+      ))}
+    </svg>
   );
 }
 
 export function UkResults() {
   const game = useUkStore((s) => s.game)!;
   const reset = useUkStore((s) => s.reset);
+  const newGame = useUkStore((s) => s.newGame);
   const r = game.result!;
   const order = sortBySeats(r.seats);
   const maj = majorityForUk(game);
@@ -64,10 +54,10 @@ export function UkResults() {
     ("lead" in r.government && r.government.lead === game.playerParty) ||
     (r.government.kind === "coalition" && r.government.parties.includes(game.playerParty));
 
-  // ── Campaign score + leaderboard post ──
   const user = useAuthStore((s) => s.user);
   const serverDown = useAuthStore((s) => s.serverDown);
   const openModal = useAuthStore((s) => s.openModal);
+  const canPlay = useAuthStore((s) => s.canPlay);
   const scenarioId = `uk-${game.electionId}`;
   const difficulty = game.difficulty ?? "normal";
   const facts = useMemo(
@@ -93,72 +83,194 @@ export function UkResults() {
     }
   };
 
-  // ── Election Night reveal — plays instead of the results until done ──
   const reveal = useMemo(() => ukReveal(game), [game]);
   const [nightDone, setNightDone] = useState(() => !revealSupported() || hasSeenReveal(reveal.storageKey ?? ""));
   if (!nightDone) {
     return <ElectionNight {...reveal} onDone={() => setNightDone(true)} />;
   }
 
+  const next = UK_NEXT_SCENARIO[game.electionId];
+  const nextData = next ? UK_ELECTIONS[next.id] : null;
+  const unlocked = next ? canPlay(`uk-${next.id}`) : false;
+  const playableNext = next ? playablePartiesIn(next.id) : [];
+  const nextParty = playableNext.includes(game.playerParty) ? game.playerParty : playableNext[0];
+
+  const largest = order[0];
+  const seatMargin = playerSeats - maj.threshold;
+  const popShare = (r.voteShare[game.playerParty] ?? 0) * 100;
+  // Swingometer: player seats relative to majority (positive = above the line).
+  const leftParty = largest ?? game.playerParty;
+  const rightParty = order.find((p) => p !== leftParty) ?? game.playerParty;
+
+  const segments = order.map((p) => ({
+    id: p,
+    seats: r.seats[p],
+    short: partyShort(p),
+    color: partyColor(p),
+  }));
+
+  const eyebrow =
+    r.government.kind === "majority"
+      ? "PROJECTED WINNER"
+      : r.government.kind === "hung"
+        ? "HUNG PARLIAMENT"
+        : "NO OVERALL MAJORITY";
+
+  const headline =
+    r.government.kind === "majority"
+      ? partyName(r.government.party)
+      : r.government.kind === "hung"
+        ? partyName(r.government.largest)
+        : inGov
+          ? partyName(game.playerParty)
+          : largest
+            ? partyName(largest)
+            : "Hung parliament";
+
+  const replayDaily = () => {
+    const today = dailyAssignment(utcDateString());
+    if (today.scenarioId !== scenarioId) return;
+    newGame(game.electionId, today.role, today.seed, difficulty);
+  };
+
   return (
-    <div className="card" style={{ maxWidth: 780, margin: "24px auto" }}>
-      <div className={`win270 ${won ? "dem" : ""}`} style={{ textAlign: "center" }}>
-        {won ? "🎉 You won a majority" : inGov ? "You're in government" : "You're in opposition"}
-      </div>
-      <h3 style={{ marginTop: 4 }}>{game.label} — Result</h3>
-      <p className="muted">{govText(r.government)}</p>
-      <p>You led <strong style={{ color: partyColor(game.playerParty) }}>{partyName(game.playerParty)}</strong> to <strong>{playerSeats}</strong> seats.</p>
+    <div className="center" style={{ padding: "24px 16px" }}>
+      <ElectionNightShell
+        eyebrow={eyebrow}
+        headline={headline}
+        headlineColor={
+          r.government.kind === "majority"
+            ? partyColor(r.government.party)
+            : partyColor(game.playerParty)
+        }
+        subhead={
+          won
+            ? "You won a majority."
+            : inGov
+              ? "You're in government."
+              : "You're in opposition."
+        }
+        subheadTone={won ? "win" : inGov ? "neutral" : "loss"}
+        counterValue={playerSeats}
+        counterLabel="Your seats"
+        counterColor={partyColor(game.playerParty)}
+        secondaryCounter={{
+          value: popShare,
+          label: "Vote share",
+          decimals: 1,
+          suffix: "%",
+        }}
+        swing={{
+          value: seatMargin,
+          maxAbs: Math.max(40, Math.abs(seatMargin) * 1.4),
+          leftLabel: partyShort(leftParty),
+          rightLabel: partyShort(rightParty),
+          leftColor: partyColor(leftParty),
+          rightColor: partyColor(rightParty),
+          unitLabel: "vs maj.",
+          caption: "Seats vs majority threshold",
+        }}
+        nextScenario={
+          next && nextData
+            ? {
+                title: nextData.label,
+                blurb: next.blurb,
+                unlocked,
+                ctaLabel: `Play ${nextData.year} →`,
+                lockLabel: `🔒 Unlock ${nextData.year}`,
+                onPlay: () => newGame(next.id, nextParty, String(Date.now()), difficulty),
+                onUnlock: () => openModal(user ? "activate" : "login", `uk-${next.id}`),
+                mapPreview: <UkMiniMap seats={r.seats} />,
+              }
+            : null
+        }
+        footer={
+          <>
+            <DailyResultPanel
+              gameSeed={game.seed}
+              scenarioId={scenarioId}
+              engine="uk"
+              won={won}
+              unitLine={`${playerSeats} seats`}
+              score={score}
+              facts={facts}
+              evMargin={Math.round(facts.unitMargin)}
+              popularVoteMargin={facts.popularMargin}
+              onReplay={replayDaily}
+            />
+            <div className="card">
+              <div className="row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+                <div>
+                  <div className="tag muted small" style={{ color: "var(--gold)", letterSpacing: "2px" }}>CAMPAIGN SCORE</div>
+                  <div style={{ fontSize: 34, fontWeight: 800 }}>
+                    {score}<span className="muted" style={{ fontSize: 15, fontWeight: 600 }}> / 1000</span>
+                  </div>
+                  <div className="muted small">
+                    Seat margin {facts.unitMargin >= 0 ? "+" : ""}{Math.round(facts.unitMargin)} vs {maj.threshold}
+                  </div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  {user ? (
+                    <button className="primary" disabled={postState === "busy" || postState === "done" || serverDown} onClick={post}>
+                      {postState === "done" ? "Posted ✓" : postState === "busy" ? "Posting…" : serverDown ? "Offline" : "Post to Leaderboard"}
+                    </button>
+                  ) : serverDown ? (
+                    <span className="muted small">Play offline</span>
+                  ) : (
+                    <button className="primary" onClick={() => openModal("login")}>
+                      <Lock size={13} style={{ verticalAlign: "-2px", marginRight: 5 }} />Log in to post
+                    </button>
+                  )}
+                  {postNote && <div className="muted small" style={{ marginTop: 6 }}>{postNote}</div>}
+                </div>
+              </div>
+            </div>
 
-      <div style={{ margin: "16px 0" }}><UkSeatBar result={r} total={maj.total} threshold={maj.threshold} /></div>
+            {r.postMortem.length > 0 && (
+              <div className="card">
+                <h3>Biggest swings you caused</h3>
+                {r.postMortem.map((c, i) => (
+                  <div className="kv" key={i}>
+                    <span className="k">{c.cause}</span>
+                    <span className={c.marginDelta >= 0 ? "chip up" : "chip down"}>
+                      {c.marginDelta > 0 ? "+" : ""}{(c.marginDelta * 100).toFixed(1)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
 
-      <DailyResultPanel gameSeed={game.seed} scenarioId={scenarioId} engine="uk" won={won}
-        unitLine={`${playerSeats} seats`} score={score} facts={facts}
-        evMargin={Math.round(facts.unitMargin)} popularVoteMargin={facts.popularMargin} />
+            <button className="primary" style={{ width: "100%", padding: 12 }} onClick={reset}>
+              New campaign
+            </button>
+          </>
+        }
+      >
+        <p className="muted" style={{ textAlign: "center", margin: 0 }}>{govText(r.government)}</p>
 
-      <div className="kv" style={{ alignItems: "center", margin: "0 0 14px" }}>
-        <span className="k">
-          Campaign score <strong style={{ fontSize: 20 }}>{score}</strong><span className="muted small"> / 1000</span>
-          <span className="muted small"> · seat margin {facts.unitMargin >= 0 ? "+" : ""}{Math.round(facts.unitMargin)} vs {maj.threshold}</span>
-        </span>
-        {user ? (
-          <button className="secondary" disabled={postState === "busy" || postState === "done" || serverDown} onClick={post}>
-            {postState === "done" ? "Posted ✓" : postState === "busy" ? "Posting…" : serverDown ? "Offline" : "Post to Leaderboard"}
-          </button>
-        ) : serverDown ? (
-          <span className="muted small">Play offline</span>
-        ) : (
-          <button className="secondary" onClick={() => openModal("login")}>Log in to post</button>
-        )}
-      </div>
-      {postNote && <p className="muted small">{postNote}</p>}
+        <MultipartySeatPanel
+          segments={segments}
+          total={maj.total}
+          threshold={maj.threshold}
+          government={r.government}
+          nameOf={partyName}
+          unitPlural="seats"
+        />
 
-      <h3>Final standings</h3>
-      {order.map((p) => (
-        <div className="bloc" key={p}>
-          <span className="name" style={{ color: p === game.playerParty ? partyColor(p) : undefined }}>
-            <span style={{ display: "inline-block", width: 10, height: 10, background: partyColor(p), borderRadius: 2, marginRight: 6 }} />
-            {partyShort(p)}
-          </span>
-          <span className="meta">{r.seats[p]} seats · {((r.voteShare[p] ?? 0) * 100).toFixed(1)}%</span>
-          <div className="suppbar"><div style={{ width: `${(r.seats[p] / maj.total) * 100 * 1.6}%`, background: partyColor(p) }} /></div>
-        </div>
-      ))}
-
-      {r.postMortem.length > 0 && (
-        <>
-          <h3 style={{ marginTop: 16 }}>Biggest swings you caused</h3>
-          {r.postMortem.map((c, i) => (
-            <div className="kv" key={i}>
-              <span className="k">{c.cause}</span>
-              <span className={c.marginDelta >= 0 ? "chip up" : "chip down"}>{c.marginDelta > 0 ? "+" : ""}{(c.marginDelta * 100).toFixed(1)}</span>
+        <div className="card">
+          <h3>Final standings</h3>
+          {order.map((p) => (
+            <div className="bloc" key={p}>
+              <span className="name" style={{ color: p === game.playerParty ? partyColor(p) : undefined }}>
+                <span style={{ display: "inline-block", width: 10, height: 10, background: partyColor(p), borderRadius: 2, marginRight: 6 }} />
+                {partyShort(p)}
+              </span>
+              <span className="meta">{r.seats[p]} seats · {((r.voteShare[p] ?? 0) * 100).toFixed(1)}%</span>
+              <div className="suppbar"><div style={{ width: `${(r.seats[p] / maj.total) * 100 * 1.6}%`, background: partyColor(p) }} /></div>
             </div>
           ))}
-        </>
-      )}
-
-      <div style={{ marginTop: 16 }}><UkNextScenario /></div>
-
-      <button className="primary" style={{ marginTop: 18, width: "100%" }} onClick={reset}>New campaign</button>
+        </div>
+      </ElectionNightShell>
     </div>
   );
 }

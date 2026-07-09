@@ -1,0 +1,379 @@
+/* ============================================================================
+   Election Night Reveal 2.0 — polished results shell.
+   Owns every .ens-* class. Consumes design tokens from ui/styles.css.
+   ============================================================================ */
+
+.ens-root {
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Hero: headline + counters + swingometer ─────────────────────────── */
+.ens-hero {
+  text-align: center;
+  padding: 22px 18px 18px;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(245, 185, 66, 0.08), transparent 60%),
+    var(--navy-700);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.ens-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  animation: ens-fade-up 0.45s var(--ease);
+}
+
+.ens-headline {
+  margin: 8px 0 0;
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  color: var(--text-strong);
+  animation: ens-headline-in 0.65s var(--ease);
+}
+
+.ens-subhead {
+  margin: 10px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+  animation: ens-fade-up 0.55s var(--ease) 0.1s both;
+}
+.ens-subhead.ens-win { color: var(--green); }
+.ens-subhead.ens-loss { color: var(--rose); }
+.ens-subhead.ens-neutral { color: var(--muted); }
+
+.ens-counters {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 36px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.ens-counter-block { min-width: 100px; }
+.ens-counter {
+  display: block;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(40px, 8vw, 56px);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-strong);
+}
+.ens-counter-sm { font-size: clamp(28px, 5vw, 36px); }
+.ens-counter-label {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── Swingometer ─────────────────────────────────────────────────────── */
+.ens-swing {
+  margin-top: 16px;
+  max-width: 280px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.ens-swing-cap {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.ens-swing-gauge { line-height: 0; }
+.ens-swing-svg { width: 100%; height: auto; display: block; }
+.ens-swing-needle {
+  transition: transform 1.1s var(--ease);
+}
+.ens-swing-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.ens-swing-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ── Body / footer slots ─────────────────────────────────────────────── */
+.ens-body, .ens-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Next scenario card ──────────────────────────────────────────────── */
+.ens-next {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 16px 18px;
+  background: var(--navy-700);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.ens-next.locked { border-style: dashed; opacity: 0.92; }
+.ens-next-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+.ens-next.locked .ens-next-tag { color: var(--muted); }
+.ens-next-title { font-weight: 800; font-size: 16px; color: var(--text-strong); }
+.ens-next-blurb { font-size: 13px; color: var(--muted); margin: 4px 0 10px; }
+.ens-next-preview {
+  width: 110px;
+  height: 72px;
+  border-radius: var(--radius-md);
+  background: var(--navy-800);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ens-next-preview svg { width: 100%; height: 100%; display: block; }
+
+/* ── Motions ─────────────────────────────────────────────────────────── */
+@keyframes ens-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ens-headline-in {
+  0% { opacity: 0; transform: scale(0.92) translateY(12px); filter: blur(4px); }
+  100% { opacity: 1; transform: none; filter: none; }
+}
+
+/* ── US state call grid ──────────────────────────────────────────────── */
+.ens-call-grid {
+  padding: 14px 16px;
+  background: var(--navy-700);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.ens-call-grid-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.ens-call-cells {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 6px;
+}
+.ens-call-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 7px 4px;
+  background: var(--navy-800);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  border-left-width: 3px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.ens-call-cell.flipped { background: var(--navy-600); }
+.ens-call-abbr {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.ens-call-flip {
+  color: var(--gold);
+  font-size: 12px;
+  line-height: 1;
+}
+.ens-call-ev { font-size: 11px; color: var(--muted); font-weight: 700; }
+.ens-call-margin { font-size: 10px; color: var(--text); font-weight: 600; }
+
+/* ── Multiparty seat panel ───────────────────────────────────────────── */
+.ens-seat-panel {
+  padding: 14px 16px;
+  background: var(--navy-700);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ens-hung {
+  text-align: center;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gold);
+  background: var(--navy-800);
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  animation: ens-fade-up 0.45s var(--ease);
+}
+.ens-hung.soft { border-style: dashed; opacity: 0.95; }
+.ens-seat-track {
+  position: relative;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--navy-800);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  display: flex;
+}
+.ens-seat-seg {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: #0c0d10;
+  letter-spacing: 0.5px;
+  min-width: 0;
+}
+.ens-seat-thresh {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: #fff;
+  opacity: 0.9;
+  pointer-events: none;
+}
+.ens-seat-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.ens-coalition {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: var(--navy-800);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+.ens-coalition-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--gold);
+}
+.ens-coalition-eq {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+/* ── Daily compact reveal ────────────────────────────────────────────── */
+.ens-daily {
+  padding: 14px 16px;
+  background: var(--navy-600);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-lg);
+}
+.ens-daily-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ens-daily-tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+.ens-daily-score {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-top: 4px;
+  color: var(--text-strong);
+}
+.ens-daily-score-max {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.ens-daily-pct {
+  text-align: right;
+  min-width: 90px;
+}
+.ens-daily-pct-num {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--gold);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.ens-daily-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  align-items: center;
+}
+
+@media (max-width: 520px) {
+  .ens-next { grid-template-columns: 1fr; }
+  .ens-next-preview { width: 100%; height: 80px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ens-root *, .ens-root *::before, .ens-root *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

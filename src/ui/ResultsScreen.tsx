@@ -14,9 +14,12 @@ import { StatsScreen } from "./StatsScreen";
 import { pct, votes } from "./format";
 import { Trophy, Lock } from "lucide-react";
 import { ElectionNight, hasSeenReveal, revealSupported } from "./electionNight/ElectionNight";
+import { ElectionNightShell } from "./electionNight/ElectionNightShell";
+import { StateCallGrid } from "./electionNight/StateCallGrid";
 import { usReveal } from "./electionNight/adapters";
 import { DailyResultPanel } from "./DailyResultPanel";
-import { NextCampaignCard } from "./NextCampaignCard";
+import { dailyAssignment, utcDateString } from "@lib/daily";
+import type { CandidateId } from "@engine/types";
 
 export function ResultsScreen() {
   const game = useGameStore((s) => s.game)!;
@@ -63,6 +66,15 @@ export function ResultsScreen() {
 
   const winnerName = result.winner === "tie" ? "No one — 269–269" : cands[result.winner].name;
   const playerWon = result.winner === game.playerCandidate;
+  const winnerColor =
+    result.winner === "tie" ? "var(--gold)" : cands[result.winner].color;
+
+  // Margins are always Dem − Rep so the swingometer's left/right labels match.
+  const popMarginPts = (result.popularShare.dem - result.popularShare.rep) * 100;
+
+  const canPlay = useAuthStore((s) => s.canPlay);
+  const openModal = useAuthStore((s) => s.openModal);
+  const user = useAuthStore((s) => s.user);
 
   // ── Election Night reveal — plays instead of the results until done ──
   const reveal = useMemo(() => usReveal(game), [game]);
@@ -90,140 +102,221 @@ export function ResultsScreen() {
     return <ElectionNight {...reveal} onDone={() => setNightDone(true)} />;
   }
 
+  const next = US_NEXT_SCENARIO[game.scenarioId ?? "2020"];
+  const nextMeta = next ? SCENARIOS[next.id] : null;
+  const unlocked = next ? canPlay(`us-${next.id}`) : false;
+  const winnerEv =
+    result.winner === "tie" ? 269 : result.electoralVotes[result.winner];
+  const winnerPopShare =
+    result.winner === "tie"
+      ? result.popularShare[game.playerCandidate]
+      : result.popularShare[result.winner];
+
   return (
     <div className="center">
       <div className="results scroll">
-        {/* Election-night call counter / verdict */}
-        <div className="bigresult">
-          {!done ? (
-            <>
-              <div className="tag muted small" style={{ letterSpacing: "3px", color: "var(--gold)" }}>
-                {lastCalled ? `CALLING ${lastCalled.name.toUpperCase()}…` : "POLLS CLOSING…"}
-              </div>
-              <div className="ev" style={{ color: "var(--text-strong)" }}>{demEV}<span style={{ color: "var(--muted)", fontWeight: 600 }}> – </span>{repEV}</div>
-              <div className="muted">270 to win · {tossupEV} EV still out</div>
-            </>
-          ) : (
-            <>
-              <div className="tag muted small" style={{ letterSpacing: "3px", color: "var(--gold)" }}>
-                {result.winner === "tie" ? "CONTINGENT ELECTION" : "PROJECTED WINNER"}
-              </div>
-              <div className="who" style={{ color: result.winner === "tie" ? "var(--gold)" : cands[result.winner].color }}>
-                {winnerName}
-              </div>
-              {result.winner !== "tie" && (
-                <div className="ev" style={{ color: cands[result.winner].color }}>{result.electoralVotes[result.winner]}</div>
-              )}
-              <div className="muted">
-                {dem} {result.electoralVotes.dem} — {rep} {result.electoralVotes.rep} · Popular vote:{" "}
-                {dem} {pct(result.popularShare.dem)} ({votes(result.popularVote.dem)}) — {rep}{" "}
-                {pct(result.popularShare.rep)} ({votes(result.popularVote.rep)})
-              </div>
-              {result.winner === "tie" ? (
-                <p className="muted small" style={{ marginTop: 8 }}>
-                  Neither ticket reached 270. The election is thrown to the House of Representatives, where each state delegation casts a single vote. The campaign is over; the contingent election is another story.
-                </p>
-              ) : (
-                <h2 style={{ marginTop: 8, color: playerWon ? "var(--green)" : "var(--rose)" }}>
-                  {playerWon ? "You won the campaign." : "You came up short."}
-                </h2>
-              )}
-            </>
-          )}
-        </div>
-
-        <div style={{ marginBottom: 18 }}>
-          <EvBar projection={{ ev: { dem: demEV, rep: repEV }, tossupEv: tossupEV, contests: [] } as unknown as Projection} />
-        </div>
-
-        <div className="card">
-          <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
-            <h3 style={{ margin: 0 }}>{done ? "Final Map" : "Election Night"}</h3>
-            <div className="row" style={{ gap: 6 }}>
-              <button className={`ghost small${mapMode === "geo" ? " active" : ""}`} onClick={() => setMapMode("geo")}>Geo</button>
-              <button className={`ghost small${mapMode === "square" ? " active" : ""}`} onClick={() => setMapMode("square")}>Square</button>
-              {!done && <button className="ghost small" onClick={() => setRevealed(calls.length)}>Skip ⏭</button>}
-            </div>
+        <ElectionNightShell
+          eyebrow={
+            !done
+              ? lastCalled
+                ? `CALLING ${lastCalled.name.toUpperCase()}…`
+                : "POLLS CLOSING…"
+              : result.winner === "tie"
+                ? "CONTINGENT ELECTION"
+                : "PROJECTED WINNER"
+          }
+          headline={!done ? `${demEV} – ${repEV}` : winnerName}
+          headlineColor={!done ? "var(--text-strong)" : winnerColor}
+          subhead={
+            !done
+              ? `270 to win · ${tossupEV} EV still out`
+              : result.winner === "tie"
+                ? "Neither ticket reached 270. The House decides."
+                : playerWon
+                  ? "You won the campaign."
+                  : "You came up short."
+          }
+          subheadTone={!done ? "neutral" : result.winner === "tie" ? "neutral" : playerWon ? "win" : "loss"}
+          counterValue={done ? winnerEv : Math.max(demEV, repEV)}
+          counterLabel={done ? (result.winner === "tie" ? "EV apiece" : "Electoral votes") : "Leading EV"}
+          counterColor={done && result.winner !== "tie" ? cands[result.winner].color : undefined}
+          secondaryCounter={
+            done
+              ? {
+                  value: winnerPopShare * 100,
+                  label: "Popular vote",
+                  decimals: 1,
+                  suffix: "%",
+                }
+              : undefined
+          }
+          swing={{
+            value: done ? popMarginPts : demEV - repEV,
+            maxAbs: done ? Math.max(8, Math.abs(popMarginPts) * 1.4) : 100,
+            leftLabel: dem,
+            rightLabel: rep,
+            leftColor: cands.dem.color,
+            rightColor: cands.rep.color,
+            unitLabel: done ? "pts" : "EV",
+            caption: done ? "Final popular-vote margin" : "Running EV margin",
+          }}
+          nextScenario={
+            done && next && nextMeta
+              ? {
+                  title: nextMeta.label,
+                  blurb: `${next.blurb}${!unlocked ? " · part of the US Historical pack" : ""}`,
+                  unlocked,
+                  ctaLabel: `Play ${nextMeta.year} →`,
+                  lockLabel: `🔒 Unlock ${nextMeta.year}`,
+                  onPlay: () =>
+                    newGame({
+                      seed: String(Date.now()),
+                      playerCandidate: game.playerCandidate,
+                      scenario: next.id,
+                      eventMode: game.eventMode,
+                      difficulty,
+                    }),
+                  onUnlock: () => openModal(user ? "activate" : "login", `us-${next.id}`),
+                  mapPreview: <UsMiniMapPreview byState={byState} cands={cands} />,
+                }
+              : null
+          }
+          footer={
+            done ? (
+              <>
+                <ScoreAndAchievements />
+                <div className="card">
+                  <h3>Post-Mortem — What Moved the Needle</h3>
+                  <p className="muted small">Your biggest self-caused swings across the campaign.</p>
+                  {result.postMortem.length === 0 && <p className="muted small">A hands-off campaign. History took its course.</p>}
+                  {result.postMortem.map((c, i) => (
+                    <div className="recapitem" key={i}>
+                      <div>
+                        <div>{c.cause}</div>
+                        <div className="muted small">Week {c.turn + 1}{c.stateId ? ` · ${c.stateId}` : ""}</div>
+                      </div>
+                      <span className={`delta ${c.marginDelta >= 0 ? "up" : "down"}`}>
+                        {c.marginDelta >= 0 ? "+" : ""}{c.marginDelta.toFixed(3)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="row" style={{ gap: 8, marginTop: 4 }}>
+                  <button className="ghost" style={{ flex: "0 0 auto", padding: "12px 18px" }} onClick={() => setStatsOpen(true)}>
+                    📊 Race Stats
+                  </button>
+                  <button
+                    className="primary"
+                    style={{ flex: 1, padding: 12 }}
+                    onClick={() =>
+                      newGame({
+                        seed: String(Date.now()),
+                        playerCandidate: game.playerCandidate,
+                        scenario: game.scenarioId,
+                        eventMode: game.eventMode,
+                        difficulty,
+                      })
+                    }
+                  >
+                    Run it back — New Campaign →
+                  </button>
+                </div>
+              </>
+            ) : null
+          }
+        >
+          <div style={{ marginBottom: 4 }}>
+            <EvBar projection={{ ev: { dem: demEV, rep: repEV }, tossupEv: tossupEV, contests: [] } as unknown as Projection} />
           </div>
 
-          {mapMode === "geo" ? (
-            <svg viewBox="0 0 1000 650" className="geo-map" preserveAspectRatio="xMidYMid meet" style={{ maxWidth: 640, margin: "10px auto 0" }}>
-              {[...GRID.map((t) => t.id), ...SPLIT_UNITS.map((g) => g.ids.find((id) => id.endsWith("-AL"))).filter(Boolean) as string[]].map((id) => {
-                const sr = byState.get(id);
-                const path = STATE_PATHS[id] ?? STATE_PATHS[id.split("-")[0]];
-                if (!sr || !path) return null;
-                const called = calledIds.has(id);
-                const st = game.states.find((s) => s.id === id);
-                return (
-                  <path key={id} d={path}
-                    fill={called ? cands[sr.winner].color : "#1b2740"}
-                    stroke="#0b1120" strokeWidth={0.6}
-                    style={{ transition: "fill 0.35s var(--ease)" }}>
-                    <title>{st?.name}{called ? `: ${sr.winner === "dem" ? dem : rep} +${sr.margin.toFixed(1)}` : ""}</title>
-                  </path>
-                );
-              })}
-            </svg>
-          ) : (
-            <>
-              <div className="tilegrid" style={{ gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`, gridTemplateRows: `repeat(${GRID_ROWS}, 1fr)`, aspectRatio: `${GRID_COLS} / ${GRID_ROWS}`, maxWidth: 560, margin: "10px auto 0" }}>
-                {GRID.map((t) => (
-                  <div key={t.id} style={{ gridColumn: t.col + 1, gridRow: t.row + 1 }}>{tile(t.id)}</div>
-                ))}
-              </div>
-              <div className="splitstrip" style={{ justifyContent: "center", marginTop: 10 }}>
-                {SPLIT_UNITS.map((g) => (
-                  <div className="splitgroup" key={g.label}>
-                    <span className="lab">{g.label}</span>
-                    <div className="row">{g.ids.map((id) => tile(id, 34))}</div>
-                  </div>
-                ))}
-              </div>
-            </>
+          {done && (
+            <p className="muted small" style={{ textAlign: "center", margin: "0 0 4px" }}>
+              {dem} {result.electoralVotes.dem} — {rep} {result.electoralVotes.rep} · Popular vote:{" "}
+              {dem} {pct(result.popularShare.dem)} ({votes(result.popularVote.dem)}) — {rep}{" "}
+              {pct(result.popularShare.rep)} ({votes(result.popularVote.rep)})
+            </p>
           )}
-        </div>
 
-        {done && <ScoreAndAchievements />}
+          <div className="card">
+            <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
+              <h3 style={{ margin: 0 }}>{done ? "Final Map" : "Election Night"}</h3>
+              <div className="row" style={{ gap: 6 }}>
+                <button className={`ghost small${mapMode === "geo" ? " active" : ""}`} onClick={() => setMapMode("geo")}>Geo</button>
+                <button className={`ghost small${mapMode === "square" ? " active" : ""}`} onClick={() => setMapMode("square")}>Square</button>
+                {!done && <button className="ghost small" onClick={() => setRevealed(calls.length)}>Skip ⏭</button>}
+              </div>
+            </div>
 
-        {done && (
-          <>
-            <div className="card">
-              <h3>Post-Mortem — What Moved the Needle</h3>
-              <p className="muted small">Your biggest self-caused swings across the campaign.</p>
-              {result.postMortem.length === 0 && <p className="muted small">A hands-off campaign. History took its course.</p>}
-              {result.postMortem.map((c, i) => (
-                <div className="recapitem" key={i}>
-                  <div>
-                    <div>{c.cause}</div>
-                    <div className="muted small">Week {c.turn + 1}{c.stateId ? ` · ${c.stateId}` : ""}</div>
-                  </div>
-                  <span className={`delta ${c.marginDelta >= 0 ? "up" : "down"}`}>{c.marginDelta >= 0 ? "+" : ""}{c.marginDelta.toFixed(3)}</span>
+            {mapMode === "geo" ? (
+              <svg viewBox="0 0 1000 650" className="geo-map" preserveAspectRatio="xMidYMid meet" style={{ maxWidth: 640, margin: "10px auto 0" }}>
+                {[...GRID.map((t) => t.id), ...SPLIT_UNITS.map((g) => g.ids.find((id) => id.endsWith("-AL"))).filter(Boolean) as string[]].map((id) => {
+                  const sr = byState.get(id);
+                  const path = STATE_PATHS[id] ?? STATE_PATHS[id.split("-")[0]];
+                  if (!sr || !path) return null;
+                  const called = calledIds.has(id);
+                  const st = game.states.find((s) => s.id === id);
+                  return (
+                    <path key={id} d={path}
+                      fill={called ? cands[sr.winner].color : "#1b2740"}
+                      stroke="#0b1120" strokeWidth={0.6}
+                      style={{ transition: "fill 0.35s var(--ease)" }}>
+                      <title>{st?.name}{called ? `: ${sr.winner === "dem" ? dem : rep} +${sr.margin.toFixed(1)}` : ""}</title>
+                    </path>
+                  );
+                })}
+              </svg>
+            ) : (
+              <>
+                <div className="tilegrid" style={{ gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`, gridTemplateRows: `repeat(${GRID_ROWS}, 1fr)`, aspectRatio: `${GRID_COLS} / ${GRID_ROWS}`, maxWidth: 560, margin: "10px auto 0" }}>
+                  {GRID.map((t) => (
+                    <div key={t.id} style={{ gridColumn: t.col + 1, gridRow: t.row + 1 }}>{tile(t.id)}</div>
+                  ))}
                 </div>
-              ))}
-            </div>
+                <div className="splitstrip" style={{ justifyContent: "center", marginTop: 10 }}>
+                  {SPLIT_UNITS.map((g) => (
+                    <div className="splitgroup" key={g.label}>
+                      <span className="lab">{g.label}</span>
+                      <div className="row">{g.ids.map((id) => tile(id, 34))}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
 
-            <NextScenario />
-
-            <div className="row" style={{ gap: 8, marginTop: 4 }}>
-              <button className="ghost" style={{ flex: "0 0 auto", padding: "12px 18px" }} onClick={() => setStatsOpen(true)}>
-                📊 Race Stats
-              </button>
-              <button className="primary" style={{ flex: 1, padding: 12 }}
-                onClick={() => newGame({ seed: String(Date.now()), playerCandidate: game.playerCandidate, scenario: game.scenarioId, eventMode: game.eventMode, difficulty })}>
-                Run it back — New Campaign →
-              </button>
-            </div>
-          </>
-        )}
+          {done && <StateCallGrid game={game} />}
+        </ElectionNightShell>
       </div>
       {statsOpen && <StatsScreen onClose={() => setStatsOpen(false)} />}
     </div>
   );
 }
 
+// Tiny cartogram for the "next scenario" card — reuses the final map colors.
+function UsMiniMapPreview({
+  byState,
+  cands,
+}: {
+  byState: Map<string, { winner: "dem" | "rep" }>;
+  cands: { dem: { color: string }; rep: { color: string } };
+}) {
+  const ids = ["CA", "TX", "FL", "NY", "PA", "IL", "OH", "GA", "NC", "MI"];
+  return (
+    <svg viewBox="0 0 1000 650" preserveAspectRatio="xMidYMid meet">
+      {ids.map((id) => {
+        const path = STATE_PATHS[id];
+        const sr = byState.get(id);
+        if (!path || !sr) return null;
+        return <path key={id} d={path} fill={cands[sr.winner].color} stroke="#0b1120" strokeWidth={1} />;
+      })}
+    </svg>
+  );
+}
+
 // ── Campaign score + achievements + leaderboard post ────────────────────────
 function ScoreAndAchievements() {
   const game = useGameStore((s) => s.game)!;
+  const newGame = useGameStore((s) => s.newGame);
   const difficulty = useGameStore((s) => s.difficulty);
   const user = useAuthStore((s) => s.user);
   const serverDown = useAuthStore((s) => s.serverDown);
@@ -274,11 +367,33 @@ function ScoreAndAchievements() {
     }
   };
 
+  const replayDaily = () => {
+    const today = dailyAssignment(utcDateString());
+    if (today.scenarioId !== scenarioId) return;
+    const nativeId = SCENARIOS[game.scenarioId ?? "2020"] ? (game.scenarioId ?? "2020") : today.scenarioId.replace(/^us-/, "");
+    newGame({
+      seed: today.seed,
+      playerCandidate: today.role as CandidateId,
+      scenario: nativeId,
+      eventMode: game.eventMode,
+      difficulty,
+    });
+  };
+
   return (
     <>
-      <DailyResultPanel gameSeed={game.seed} scenarioId={scenarioId} engine="us" won={result.winner === player}
-        unitLine={`${result.electoralVotes[player]} EV`} score={score} facts={facts}
-        evMargin={Math.round(facts.unitMargin)} popularVoteMargin={facts.popularMargin} />
+      <DailyResultPanel
+        gameSeed={game.seed}
+        scenarioId={scenarioId}
+        engine="us"
+        won={result.winner === player}
+        unitLine={`${result.electoralVotes[player]} EV`}
+        score={score}
+        facts={facts}
+        evMargin={Math.round(facts.unitMargin)}
+        popularVoteMargin={facts.popularMargin}
+        onReplay={replayDaily}
+      />
       <div className="card">
         <div className="row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
           <div>
@@ -326,32 +441,5 @@ function ScoreAndAchievements() {
         )}
       </div>
     </>
-  );
-}
-
-// ── "Next scenario" branching suggestion ─────────────────────────────────────
-function NextScenario() {
-  const game = useGameStore((s) => s.game)!;
-  const difficulty = useGameStore((s) => s.difficulty);
-  const newGame = useGameStore((s) => s.newGame);
-  const canPlay = useAuthStore((s) => s.canPlay);
-  const openModal = useAuthStore((s) => s.openModal);
-  const user = useAuthStore((s) => s.user);
-
-  const next = US_NEXT_SCENARIO[game.scenarioId ?? "2020"];
-  if (!next) return null;
-  const s = SCENARIOS[next.id];
-  const unlocked = canPlay(`us-${next.id}`);
-
-  return (
-    <NextCampaignCard
-      title={s.label}
-      blurb={`${next.blurb}${!unlocked ? " · part of the US Historical pack" : ""}`}
-      unlocked={unlocked}
-      ctaLabel={`Play ${s.year} →`}
-      lockLabel={`🔒 Unlock ${s.year}`}
-      onPlay={() => newGame({ seed: String(Date.now()), playerCandidate: game.playerCandidate, scenario: next.id, eventMode: game.eventMode, difficulty })}
-      onUnlock={() => openModal(user ? "activate" : "login", `us-${next.id}`)}
-    />
   );
 }
