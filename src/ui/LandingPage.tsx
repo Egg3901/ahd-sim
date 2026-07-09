@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { PAYWALL_ENABLED, SCENARIO_REGISTRY, type CountryCode, type ScenarioMeta } from "@content/scenarioRegistry";
 import { PACKS } from "@content/packs";
+import { countryCover, packCover, scenarioCover } from "@content/covers";
 import { useAuthStore } from "@store/authStore";
 import { UserMenu } from "@ui/auth/UserMenu";
 import { DailyCard } from "@ui/DailyCard";
@@ -39,20 +40,35 @@ const DIFF_COLOR: Record<ScenarioMeta["difficulty"], string> = {
   hard: "var(--rose)",
 };
 
+function CoverImg({ src, alt, tall }: { src?: string; alt: string; tall?: boolean }) {
+  if (!src) return null;
+  return (
+    <img
+      className={`scenario-cover${tall ? " tall" : ""}`}
+      src={src}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+    />
+  );
+}
+
 function ScenarioCard({ s, unlocked, onPlay, onLocked }: {
   s: ScenarioMeta;
   unlocked: boolean;
   onPlay: () => void;
   onLocked: () => void;
 }) {
+  const cover = scenarioCover(s.scenarioId);
   return (
     <button
       type="button"
-      className="scenario-card"
-      style={{ position: "relative", textAlign: "left", alignItems: "flex-start", opacity: unlocked ? 1 : 0.75, minHeight: 96 }}
+      className={`scenario-card${cover ? " has-cover" : ""}`}
+      style={{ position: "relative", textAlign: "left", alignItems: cover ? "stretch" : "flex-start", opacity: unlocked ? 1 : 0.75, minHeight: cover ? undefined : 96 }}
       onClick={unlocked ? onPlay : onLocked}
       title={s.description}
     >
+      <CoverImg src={cover} alt="" />
       <span className="row" style={{ gap: 8, alignItems: "center", width: "100%" }}>
         <span style={{ fontSize: 18 }}>{s.flag}</span>
         <span className="scenario-year" style={{ fontSize: 15 }}>{s.label.split("·")[0].trim()}</span>
@@ -107,6 +123,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
         count: rows.length,
         from: Math.min(...years),
         to: Math.max(...years),
+        cover: countryCover(code),
       };
     });
   }, []);
@@ -188,10 +205,11 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
                 <button
                   key={c.code}
                   type="button"
-                  className="scenario-card"
-                  style={{ textAlign: "left", alignItems: "flex-start", minHeight: 88 }}
+                  className={`scenario-card${c.cover ? " has-cover" : ""}`}
+                  style={{ textAlign: "left", alignItems: c.cover ? "stretch" : "flex-start", minHeight: c.cover ? undefined : 88 }}
                   onClick={() => setCountry(c.code)}
                 >
+                  <CoverImg src={c.cover} alt="" tall />
                   <span className="row" style={{ gap: 10, alignItems: "center", width: "100%" }}>
                     <span style={{ fontSize: 24 }}>{c.flag}</span>
                     <span className="scenario-year" style={{ fontSize: 16 }}>{c.name}</span>
@@ -225,10 +243,12 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
           <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))" }}>
             {PACKS.map((p) => {
               const owned = unlocked.packIds.includes(p.id);
+              const cover = packCover(p.id);
               return (
-                <button key={p.id} type="button" className={`scenario-card${owned ? " sel" : ""}`}
-                  style={{ textAlign: "left", alignItems: "flex-start" }}
+                <button key={p.id} type="button" className={`scenario-card${owned ? " sel" : ""}${cover ? " has-cover" : ""}`}
+                  style={{ textAlign: "left", alignItems: cover ? "stretch" : "flex-start" }}
                   onClick={() => openModal(user ? "activate" : "register")}>
+                  <CoverImg src={cover} alt="" />
                   <span className="scenario-year" style={{ fontSize: 14 }}>
                     {p.name} {owned && "✓"}
                   </span>
@@ -245,6 +265,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
           <button className="ghost small" onClick={() => onGo({ kind: "legal", tab: "privacy" })}>Privacy</button>
           <button className="ghost small" onClick={() => onGo({ kind: "legal", tab: "terms" })}>Terms</button>
           <span style={{ alignSelf: "center" }}>{BRAND.from}</span>
+          <span style={{ alignSelf: "center" }}>Cover photos: Wikimedia Commons / public domain</span>
         </div>
       </div>
     </div>

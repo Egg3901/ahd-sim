@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from "react";
 import { SCENARIOS_BY_ID } from "@content/scenarioRegistry";
+import { scenarioCover } from "@content/covers";
 import { dailyAssignment, hasPlayedDaily, roleShortName, utcDateString, dailyStreak, dailyBest } from "@lib/daily";
 import { api, type DailyBoardEntry } from "@lib/api";
 import { CalendarDays, Check, Play, Trophy, Flame } from "lucide-react";
@@ -17,6 +18,7 @@ export function DailyCard({ onPlay }: { onPlay: () => void }) {
   const streak = dailyStreak();
   const best = dailyBest(today);
   const [top3, setTop3] = useState<DailyBoardEntry[]>([]);
+  const cover = meta ? scenarioCover(meta.scenarioId) : undefined;
 
   useEffect(() => {
     let alive = true;
@@ -31,17 +33,20 @@ export function DailyCard({ onPlay }: { onPlay: () => void }) {
   return (
     <button
       type="button"
-      className="scenario-card"
+      className={`scenario-card${cover ? " has-cover" : ""}`}
       onClick={onPlay}
       title={meta.description}
       style={{
         width: "100%",
         textAlign: "left",
-        alignItems: "flex-start",
+        alignItems: cover ? "stretch" : "flex-start",
         border: "1px solid var(--gold)",
         boxShadow: "var(--glow-gold)",
       }}
     >
+      {cover && (
+        <img className="scenario-cover tall" src={cover} alt="" loading="lazy" decoding="async" />
+      )}
       <span className="row" style={{ gap: 8, alignItems: "center", width: "100%" }}>
         <CalendarDays size={14} style={{ color: "var(--gold)" }} />
         <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, color: "var(--gold)", textTransform: "uppercase" }}>

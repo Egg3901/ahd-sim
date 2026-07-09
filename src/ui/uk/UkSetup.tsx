@@ -3,6 +3,7 @@ import { useUkStore } from "@store/ukStore";
 import { useAuthStore } from "@store/authStore";
 import { DifficultyPicker, type Difficulty } from "@ui/DifficultyPicker";
 import { UK_ELECTIONS, UK_ELECTION_IDS } from "@content/uk/elections";
+import { ukNativeCover } from "@content/covers";
 import { UK_PLAYABLE, playablePartiesIn } from "@engine/ukGame";
 import { leaderFor } from "@content/uk/leaders";
 import { partyName, partyColor, partyShort } from "./parties";
@@ -116,13 +117,19 @@ export function UkSetup({ onBack, initialElection, initialSeed, initialParty }: 
             <div className="field" style={{ textAlign: "left", margin: 0 }}>
               <label>Election year — each ships its real regional results & leaders</label>
               <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-                {ids.map((id) => (
-                  <button key={id} type="button" className={`scenario-card${election === id ? " sel" : ""}`}
-                    onClick={() => chooseElection(id)}>
-                    <span className="scenario-year">{UK_ELECTIONS[id].year}</span>
-                    <span className="scenario-match">{UK_ELECTIONS[id].label}</span>
-                  </button>
-                ))}
+                {ids.map((id) => {
+                  const cover = ukNativeCover(id);
+                  return (
+                    <button key={id} type="button"
+                      className={`scenario-card${election === id ? " sel" : ""}${cover ? " has-cover" : ""}`}
+                      style={cover ? { alignItems: "stretch", textAlign: "left" } : undefined}
+                      onClick={() => chooseElection(id)}>
+                      {cover && <img className="scenario-cover" src={cover} alt="" loading="lazy" decoding="async" />}
+                      <span className="scenario-year">{UK_ELECTIONS[id].year}</span>
+                      <span className="scenario-match">{UK_ELECTIONS[id].label}</span>
+                    </button>
+                  );
+                })}
               </div>
               <div className="su-summary" style={{ marginTop: 14 }}>
                 <div className="su-summary-row"><span className="su-summary-k">Contenders</span></div>
