@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { validateSubmission } from "../scoreValidation";
-import { computeScoreFromFacts, usScoreFacts, multipartyScoreFacts } from "../src/engine/scoring";
+import { validateSubmission } from "../scoreValidation.ts";
+import { computeScoreFromFacts, usScoreFacts, multipartyScoreFacts } from "@engine/scoring";
 
 describe("validateSubmission", () => {
   it("accepts a consistent US submission built from raw EV + popular share", () => {

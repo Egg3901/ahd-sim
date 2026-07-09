@@ -137,13 +137,13 @@ function applyCoalitionBias(
     view.majority.effectiveThreshold ??
     Math.floor((view.majority.total - abstainSeats) / 2) + 1;
   const coalitionSeats = mySeats + (seats[bestPartner] ?? 0);
-  // Only bother when a coalition is the realistic path (short of majority alone,
-  // but within reach with the partner — or the rival is blocking us).
+  // Near a solo majority → keep seat-maxing (don't divert to partner regions).
+  // Only switch to coalition math when a majority alone is clearly out of reach
+  // but a partner still gets us over the line (classic hung-parliament path).
+  const soloGap = threshold - mySeats;
   if (mySeats >= threshold) return targets;
-  if (coalitionSeats < threshold * 0.75 && (seats[rival] ?? 0) < threshold * 0.85) {
-    // Hopeless coalition math and rival isn't close either — stick to seat-max.
-    return targets;
-  }
+  if (soloGap <= 15) return targets;
+  if (coalitionSeats < threshold) return targets;
 
   // Re-score every standing region with a coalition boost, then re-pick top N.
   const standing = view.regions.filter((r) => r.baselineShare?.[party] !== undefined);
