@@ -1,16 +1,23 @@
 import type { UkResult } from "@engine/ukGame";
 import { partyColor, partyShort, sortBySeats } from "./parties";
 
-// Seat tally bar styled like the U.S. EvBar: the largest party's count at the
-// left, a stacked 650-wide track in seat order, and the 326 majority marker.
-export function UkSeatBar({ result }: { result: UkResult }) {
+// Seat tally bar styled like the U.S. EvBar: largest party on the left, a
+// stacked track sized to this election's chamber, and the majority marker.
+export function UkSeatBar({
+  result,
+  total = 650,
+  threshold = 326,
+}: {
+  result: UkResult;
+  total?: number;
+  threshold?: number;
+}) {
   const order = sortBySeats(result.seats);
-  const total = 650;
   const w = (n: number) => `${(n / total) * 100}%`;
   const largest = order[0];
 
   return (
-    <div className="evbar" title="Seats won — 326 for a majority">
+    <div className="evbar" title={`Seats won — ${threshold} for a majority`}>
       <div className="endlabel dem" style={{ color: largest ? partyColor(largest) : undefined }}>
         {largest ? result.seats[largest] : 0}
       </div>
@@ -20,9 +27,9 @@ export function UkSeatBar({ result }: { result: UkResult }) {
             {result.seats[p] >= 40 ? partyShort(p) : ""}
           </div>
         ))}
-        <div style={{ position: "absolute", left: `${(326 / total) * 100}%`, top: -3, bottom: -3, width: 2, background: "#fff", opacity: 0.9 }} />
+        <div style={{ position: "absolute", left: `${(threshold / total) * 100}%`, top: -3, bottom: -3, width: 2, background: "#fff", opacity: 0.9 }} />
       </div>
-      <div className="endlabel gop">326</div>
+      <div className="endlabel gop">{threshold}</div>
     </div>
   );
 }

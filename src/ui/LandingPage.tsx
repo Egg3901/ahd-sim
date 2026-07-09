@@ -69,6 +69,12 @@ function ScenarioCard({ s, unlocked, onPlay, onLocked }: {
       </span>
       <span className="scenario-match" style={{ fontWeight: 700 }}>{s.label.split("·")[1]?.trim() ?? s.label}</span>
       <span className="muted small" style={{ fontSize: 11, lineHeight: 1.4 }}>{s.description}</span>
+      {(s.scenarioId === "us-1984" || s.scenarioId === "uk-1983" || s.scenarioId === "uk-1997" || s.scenarioId === "uk-2001" || s.scenarioId === "uk-2024" || s.scenarioId === "fr-2017") && (
+        <span className="muted small" style={{ fontSize: 10, color: "var(--rose)" }}>Historical tide</span>
+      )}
+      {s.scenarioId === "uk-2017" && (
+        <span className="muted small" style={{ fontSize: 10, color: "var(--gold)" }}>Coin-flip election</span>
+      )}
       {!unlocked && (
         <span className="muted small" style={{ fontSize: 10, color: "var(--gold)" }}>
           <KeyRound size={10} style={{ verticalAlign: "-1px" }} /> Unlock with a code

@@ -193,7 +193,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         const remaining: string[] = [];
         for (const id of hires) {
           const def = STAFF_BY_ID[id];
-          const quits = def && def.loyalty < 65 && Math.random() < 0.22;
+      const quits = def && def.loyalty < 65 && createRng(`staff:${next.seed}:${next.turn}:${id}`).next() < 0.22;
           if (quits) {
             // Losing an action-granting staffer shrinks the weekly pool too.
             const slots = def.effects.maxActions ?? 0;

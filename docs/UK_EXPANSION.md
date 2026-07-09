@@ -18,22 +18,22 @@ party → campaign across the 12 regions → win seats → form a government.
 | P2 | Regional seats curve (swing-elasticity on real baseline) + hung-parliament/coalition formation | ✅ done |
 | P3 | UK content + calibrated setup (IPF solve), NI sub-system, multiparty AI | ✅ done |
 | P4 | UK UI on the real design system: battleground country picker, **real-boundary geographic region map** (ONS/EER TopoJSON for the 12 ITL1 regions + NI, decoded → projected → simplified SVG paths via `scripts/build_uk_paths.cjs`; geo/square toggle), EvBar-style seat bar, region detail (vote-share + per-party bars), national standings, 3-step setup wizard with historical leaders, **full 10-verb action grid + 7-day planner + live what-if seat delta (US parity)**, news ticker, hung-parliament results | ✅ done |
-| P5 | Elections authored: **1979, 1983, 1987, 1992, 1997, 2001, 2005, 2010, 2015, 2017, 2019, 2024** — the full modern era (12 of 12), each with real regional results, historical leaders & issue salience; every one reproduces the right winner + government type at neutral | ✅ done |
+| P5 | Elections authored: **1951, 1979, 1983, 1987, 1992, 1997, 2001, 2005, 2010, 2015, 2017, 2019, 2024** — each with real regional results, historical leaders & issue salience; every one reproduces the right winner + government type at neutral | ✅ done |
 | P6 | Northern Ireland (DUP/SF/UUP/SDLP/Alliance) + Sinn Féin abstention math | ✅ done |
-| P7 | Multiparty AI (per-party heuristic; difficulty tiers still TODO) | 🟡 basic |
-| P8 | Campaign events deck (stochastic, traceable) | ✅ basic |
+| P7 | Multiparty AI (shared `multipartyAi` with easy/normal/hard) | ✅ done |
+| P8 | Campaign events deck (stochastic, traceable) + player-choice events | ✅ done |
+| P9 | Per-election boundary pools (1951–2024 chamber sizes) + next-scenario retention | ✅ done |
 
-**Remaining:** the other 7 elections (1979, 1983, 1987, 1992, 2001, 2005 + a true
-boundary-set per cycle — currently all years map onto 2024 region pools, so
-historic national totals are approximate); AI difficulty tiers; TV-debate events;
-richer demographic profiles per region.
+**Remaining:** TV-debate events; richer demographic profiles per region; optional
+650-constituency sim for power users.
 
-**Tests:** 85 passing. US 2020 calibration is **byte-identical** (Biden 306).
-UK calibration asserts every authored election reproduces the right winner and
-government type, all regions sum to 650 seats.
+**Tests:** UK calibration asserts every authored election reproduces the right
+winner and government type, with region seats summing to that year's boundary
+pool (not a fixed 650).
 
 Engine modules: `engine/system.ts`, `engine/multiparty.ts`, `engine/ukSetup.ts`,
-`engine/ukGame.ts`. Content: `content/uk/*`. UI: `ui/uk/*`, `store/ukStore.ts`.
+`engine/ukGame.ts`, `engine/mpTurnHelpers.ts`. Content: `content/uk/*`,
+`content/nextScenario.ts`. UI: `ui/uk/*`, `store/ukStore.ts`.
 
 ---
 
@@ -283,21 +283,22 @@ ugly UI ok. Exit: neutral 2024 reproduces real seats within tolerance.
 **P4 — UK UI.** ContestMap, SeatBar, RegionPanel, party palette, hung-parliament
 results + coalition builder, setup flow. Exit: 2024 is fun to play end-to-end.
 
-**P5 — The other elections.** ✅ All 12 modern elections (1979–2024) authored
+**P5 — The other elections.** ✅ All modern elections (1951 + 1979–2024) authored
 with real regional priors, leaders & salience; every one calibrates green
-(right winner + government type at 650 seats). Remaining future work: true
-per-cycle boundary sets (historic years currently map onto 2024 region pools,
-so national totals are approximate) and per-election campaign event decks.
+(right winner + government type). Per-cycle boundary pools set chamber size
+(625 / 635 / 646 / 650 / 651 / 659) from the review in force that year.
 
 **P6 — NI sub-system.** DUP/SF/UUP/SDLP/Alliance over 18 seats, abstention-aware
 majority. Exit: NI seats reproduce history; effective-majority math correct.
 
-**P7 — AI for N parties.** Multi-opponent optimiser, difficulty tiers. Exit: hard
-AI is a real threat in 2017/2019-style tight maps.
+**P7 — AI for N parties.** ✅ Shared multiparty AI with easy/normal/hard tiers.
 
 **P8 — UK events & polish.** Manifesto launches, debates (2010+), historical
 beats, period-accurate flavour, polling-miss drama. Exit: each election *feels*
 like its year.
+
+**P9 — Boundaries + retention.** ✅ Per-election seat pools; shared UK/country
+turn helpers; next-scenario chain on results screens.
 
 ---
 
@@ -312,8 +313,8 @@ like its year.
   fallback that still lets every election ship.
 - **Boundary changes across 45 years** → handled as per-scenario region seat
   pools + priors, identical pattern to U.S. `evOverrides`; no engine cost.
-- **Scope creep ("all elections" → pre-1979)** → deliberately bounded at 1979;
-  the system abstraction leaves the door open without committing now.
+- **Scope creep ("all elections" → more pre-1979)** → 1951 ships as the early
+  anchor; further mid-century years stay optional.
 
 ## 12. Deferred / future
 

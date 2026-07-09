@@ -20,7 +20,7 @@ import { money, turnLabel } from "@ui/format";
 import { lazy, Suspense } from "react";
 import { LandingPage, type LandingDestination } from "@ui/LandingPage";
 import { LegalPage } from "@ui/LegalPage";
-import { dailyAssignment, markDailyPlayed, utcDateString } from "@lib/daily";
+import { dailyAssignment, utcDateString } from "@lib/daily";
 import { SCENARIOS_BY_ID } from "@content/scenarioRegistry";
 
 // The UK and country shells carry their engines, content, and map geometry —
@@ -119,6 +119,11 @@ function GameScreen() {
   const hasPendingEvent = game.pendingEvents.some((p) => p.forCandidate === player);
 
   const handleEndTurn = () => {
+    if (hasPendingEvent) return;
+    if (game.queuedActions.length === 0) {
+      const ok = window.confirm("You have no actions queued this week. Unspent slots win nothing. End the week anyway?");
+      if (!ok) return;
+    }
     endTurn();
     const g = useGameStore.getState().game;
     if (g && g.phase !== "result" && g.lastRecap.length > 0) setRecapOpen(true);
@@ -212,7 +217,7 @@ export function App() {
       const assignment = dailyAssignment(utcDateString());
       const meta = SCENARIOS_BY_ID[assignment.scenarioId];
       if (!meta) return;
-      markDailyPlayed(assignment.date);
+      // Played marker is set on results finish (DailyResultPanel), not on click.
       const prefill = { initialSeed: assignment.seed, initialParty: assignment.role };
       if (meta.engine === "us") setView({ kind: "us", scenarioId: meta.nativeId, ...prefill });
       else if (meta.engine === "uk") setView({ kind: "uk", electionId: meta.nativeId, ...prefill });

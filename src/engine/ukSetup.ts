@@ -76,6 +76,10 @@ function solveRegionBlocs(
 function buildRegionContest(regionId: string, res: RegionResult): StateContest {
   const meta = UK_REGIONS_BY_ID[regionId];
   const target = normalizeShare(res.v);
+  // The election's own seat table defines the region pool (Canada-style), so
+  // historic boundary sets (635 / 646 / 659 / 650…) flow through without a
+  // separate pool map at runtime.
+  const pool = Object.values(res.s).reduce((s, x) => s + x, 0) || meta.seats;
 
   // Size each bloc from electorate × (national share × regional profile multiplier).
   const raw = UK_BLOCS.map((b) => ({
@@ -108,7 +112,7 @@ function buildRegionContest(regionId: string, res: RegionResult): StateContest {
     blocs: solveRegionBlocs(blocsIn, target),
     groundGame: { dem: 0, rep: 0 },
     momentum: 0,
-    seats: meta.seats,
+    seats: pool,
     baselineSeats,
     baselineShare,
   };

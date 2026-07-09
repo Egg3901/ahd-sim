@@ -4,8 +4,22 @@ import type { PartyId } from "@engine/system";
 // by role (the player, the leader, a surging challenger, or anyone) and applies a
 // national appeal / momentum nudge, logged as a cause so it shows in the
 // post-mortem and the news line. Authored as DATA; the engine applies them.
+//
+// Events with `choices` become player decisions when the resolved target is the
+// human's party — the UI surfaces them via a modal (US EventModal parity).
 
 export type EventRole = "any" | "player" | "leader" | "challenger";
+
+export interface UkEventChoice {
+  id: string;
+  text: string;
+  resultText: string;
+  // Applied to the player's party (or inverted for contrast-style picks).
+  appeal?: number;
+  momentum?: number;
+  // Optional hit on the strongest rival (contrast / attack options).
+  rivalAppeal?: number;
+}
 
 export interface UkEvent {
   id: string;
@@ -22,6 +36,11 @@ export interface UkEvent {
   // Scheduled story beat: fires deterministically at this turn index (0-based)
   // instead of the random draw. Only meaningful on election decks.
   turn?: number;
+  // Player-facing prompt when this event becomes a decision.
+  prompt?: string;
+  // Branching choices — if present and the target is the player, the event
+  // queues as pending instead of auto-applying.
+  choices?: UkEventChoice[];
 }
 
 export const UK_EVENTS: UkEvent[] = [
@@ -37,6 +56,56 @@ export const UK_EVENTS: UkEvent[] = [
   { id: "rally_energy", headline: "A huge {party} rally electrifies the base", role: "player", weight: 2, appeal: 0.025, momentum: 10 },
   { id: "endorsement", headline: "A popular figure endorses {party}", role: "any", weight: 2, appeal: 0.02, momentum: 5 },
   { id: "u_turn", headline: "{party} forced into an embarrassing policy U-turn", role: "any", weight: 2, appeal: -0.025, momentum: -6 },
+
+  // ── Player decisions (agency beats) ───────────────────────────────────────
+  {
+    id: "tv_debate_call",
+    headline: "The networks offer {party} a head-to-head debate slot",
+    role: "player",
+    weight: 4,
+    prompt: "The broadcasters want a head-to-head. How do you play it?",
+    choices: [
+      { id: "accept_attack", text: "Accept and go on the attack", resultText: "You land blows — and take a few. The overnight polls twitch your way.", appeal: 0.03, momentum: 10, rivalAppeal: -0.015 },
+      { id: "accept_safe", text: "Accept and play it safe", resultText: "A steady, on-message night. No gaffes, no fireworks.", appeal: 0.015, momentum: 4 },
+      { id: "decline", text: "Decline — protect the lead / avoid the ambush", resultText: "You dodge the studio lights. The press calls it cowardice; your base calls it discipline.", appeal: -0.01, momentum: -4 },
+    ],
+  },
+  {
+    id: "tabloid_splash",
+    headline: "A Sunday tabloid is sitting on a story about {party}",
+    role: "player",
+    weight: 3,
+    prompt: "A red-top has dirt. What's the play?",
+    choices: [
+      { id: "prebut", text: "Pre-but: get your version out first", resultText: "You blunt the splash. The story still runs — softer, and on your terms.", appeal: -0.01, momentum: -2 },
+      { id: "ignore", text: "Ignore it and stay on message", resultText: "The splash dominates a news cycle. Your grid holds, barely.", appeal: -0.025, momentum: -6 },
+      { id: "sue", text: "Threaten legal action and dare them", resultText: "They blink on the worst claims. You look thin-skinned to everyone else.", appeal: -0.015, momentum: -3 },
+    ],
+  },
+  {
+    id: "manifesto_fork",
+    headline: "{party}'s manifesto committee is split on the big pledge",
+    role: "player",
+    weight: 3,
+    prompt: "The draft is ready. Which way do you push the manifesto?",
+    choices: [
+      { id: "bold", text: "Go bold — a defining, risky pledge", resultText: "The base roars. The spreadsheets at HQ look nervous.", appeal: 0.035, momentum: 12 },
+      { id: "cautious", text: "Play it cautious — Ming vase politics", resultText: "No hostages to fortune. Also no spark.", appeal: 0.01, momentum: 2 },
+      { id: "contrast", text: "Make it a contrast document against the rival", resultText: "You define them more than yourself — and it lands.", appeal: 0.02, momentum: 6, rivalAppeal: -0.02 },
+    ],
+  },
+  {
+    id: "ground_surge",
+    headline: "Activists beg {party} HQ for a late ground-game surge",
+    role: "player",
+    weight: 3,
+    prompt: "Do you empty the war chest into the final ground push?",
+    choices: [
+      { id: "all_in", text: "All in — flood the marginals", resultText: "Doors knocked, leaflets out. The machine is humming.", appeal: 0.025, momentum: 8 },
+      { id: "balanced", text: "Balanced — keep powder dry for broadcast", resultText: "A competent final week. Nothing wasted, nothing spectacular.", appeal: 0.012, momentum: 3 },
+      { id: "air_war", text: "Pivot to the air war instead", resultText: "The ads blanket the regions. Field organisers grumble.", appeal: 0.018, momentum: 5 },
+    ],
+  },
 ];
 
 // Roughly the chance a campaign event fires in a given week.

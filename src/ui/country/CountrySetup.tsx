@@ -8,6 +8,8 @@ import { Vote, Dices, ChevronLeft, Flag } from "lucide-react";
 import type { PartyId } from "@engine/system";
 import { BRAND } from "../../brand";
 import { DifficultyPicker, type Difficulty } from "@ui/DifficultyPicker";
+import { TideBanner, ChallengePartyBanner } from "@ui/TideBanner";
+import { DAILY_ROLE_PAIRS } from "@lib/daily";
 
 function randomSeed(): string {
   return String(Math.floor(Math.random() * 1_000_000)).padStart(6, "0");
@@ -42,6 +44,13 @@ export function CountrySetup({ country, onBack, initialElection, initialSeed, in
         </div>
         <div className="title">{BRAND.name}</div>
         <p className="sub">{data.tagline}</p>
+        <TideBanner scenarioId={`${country.id.toLowerCase()}-${election}`} />
+        {(() => {
+          const majors = DAILY_ROLE_PAIRS[country.id as keyof typeof DAILY_ROLE_PAIRS] ?? country.playable.slice(0, 2);
+          return !majors.includes(activeParty) ? (
+            <ChallengePartyBanner partyLabel={partyName(country, activeParty)} />
+          ) : null;
+        })()}
 
         <div className="su-panel">
           {ids.length > 1 && (

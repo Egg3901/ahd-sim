@@ -12,7 +12,7 @@
 
 import { SCENARIO_REGISTRY, type ScenarioMeta } from "@content/scenarioRegistry";
 import { COUNTRIES } from "@content/countries";
-import type { CampaignAction, CandidateId, GameState, StateContest } from "../types";
+import type { CampaignAction, CandidateId, GameState } from "../types";
 import type { PartyId } from "../system";
 import { createGame } from "../setup";
 import { advanceTurn, beginGame } from "../turn";
@@ -22,10 +22,10 @@ import {
   createUkGame,
   ukAdvanceTurn,
   computeUkResult,
+  majorityForUk,
   type UkGameState,
   type UkAction,
 } from "../ukGame";
-import { UK_SYSTEM } from "@content/uk/parties";
 import {
   createCountryGame,
   countryAdvanceTurn,
@@ -36,8 +36,13 @@ import {
   type CountryAction,
   type CountryBundle,
 } from "../countryGame";
-import { tallyRegion } from "../multiparty";
 import { computeScoreFromFacts, usScoreFacts, multipartyScoreFacts } from "../scoring";
+import {
+  mpFocusedActions,
+  mpScattershotActions,
+  type MpActionLike,
+  type MpView,
+} from "../multipartyAi";
 
 // ── Public types ───────────────────────────────────────────────────────────
 
@@ -202,93 +207,8 @@ function usBotActions(bot: BotStrategy, g: GameState, side: CandidateId): Campai
 }
 
 // ── Multiparty bots (shared by the UK and country engines) ────────────────
-// Both engines use the same action verbs, costs, and resource shape, so one
-// planner serves both; the caller casts the rows to UkAction[]/CountryAction[].
-
-interface MpActionLike {
-  type: "canvass" | "rally" | "ground_game" | "gotv" | "fundraise";
-  party: PartyId;
-  regionId?: string;
-}
-
-interface MpView {
-  regions: StateContest[];
-  turn: number;
-  totalTurns: number;
-  funds: number;
-  actions: number;
-}
-
-// Regions ranked by how close the player sits to the local top rival.
-function mpTargets(view: MpView, party: PartyId, max: number) {
-  const standing = view.regions.filter((r) => r.baselineShare?.[party] !== undefined);
-  const rows = standing.map((r) => {
-    const { shareByParty } = tallyRegion(r);
-    const mine = shareByParty[party] ?? 0;
-    const rival = Math.max(
-      0,
-      ...Object.keys(shareByParty)
-        .filter((p) => p !== party)
-        .map((p) => shareByParty[p] ?? 0),
-    );
-    return { region: r, margin: mine - rival };
-  });
-  // Winnable = within striking distance of the local lead; fall back to the
-  // closest contests outright so small parties still campaign somewhere.
-  const winnable = rows.filter((r) => r.margin > -0.2);
-  const pool = winnable.length > 0 ? winnable : rows;
-  return pool.sort((a, b) => Math.abs(a.margin) - Math.abs(b.margin)).slice(0, max);
-}
-
-function mpFocusedActions(view: MpView, party: PartyId): MpActionLike[] {
-  const targets = mpTargets(view, party, 4);
-  if (targets.length === 0) return [];
-  const slots = view.actions;
-  const turnsLeft = Math.max(1, view.totalTurns - view.turn);
-  const out: MpActionLike[] = [];
-  let funds = view.funds;
-
-  if (funds < 2) {
-    out.push({ type: "fundraise", party });
-    funds += 1.5;
-  }
-  // One paid push per target: GOTV in the last stretch, field offices earlier;
-  // canvass (free) when the kitty is empty. Plus a rally on the closest race.
-  out.push({ type: "rally", party, regionId: targets[0].region.id });
-  for (const t of targets) {
-    if (out.length >= slots) break;
-    if (turnsLeft <= 2 && funds >= 1) {
-      out.push({ type: "gotv", party, regionId: t.region.id });
-      funds -= 1;
-    } else if (funds >= 1.5) {
-      out.push({ type: "ground_game", party, regionId: t.region.id });
-      funds -= 1.5;
-    } else {
-      out.push({ type: "canvass", party, regionId: t.region.id });
-    }
-  }
-  // Any remaining slots: free canvassing round-robin over the same targets.
-  let i = 0;
-  while (out.length < slots) {
-    out.push({ type: "canvass", party, regionId: targets[i % targets.length].region.id });
-    i++;
-  }
-  return out.slice(0, slots);
-}
-
-function mpScattershotActions(view: MpView, party: PartyId): MpActionLike[] {
-  const standing = view.regions.filter((r) => r.baselineShare?.[party] !== undefined);
-  if (standing.length === 0) return [];
-  const slots = view.actions;
-  const out: MpActionLike[] = [];
-  if (view.funds < 1) out.push({ type: "fundraise", party });
-  let i = 0;
-  while (out.length < slots) {
-    out.push({ type: "canvass", party, regionId: standing[i % standing.length].id });
-    i++;
-  }
-  return out.slice(0, slots);
-}
+// In-game planner lives in multipartyAi.ts; the gauntlet reuses it so test
+// bots and live AI stay aligned.
 
 function mpBotActions(bot: BotStrategy, view: MpView, party: PartyId): MpActionLike[] {
   if (bot === "passive") return [];
@@ -422,10 +342,10 @@ function runUkGame(meta: ScenarioMeta, side: PartyId, bot: BotStrategy, difficul
       actions: g.resources[side].actions,
     };
     g.queuedActions = mpBotActions(bot, view, side) as UkAction[];
-    g = ukAdvanceTurn(g);
+    g = ukAdvanceTurn(g, { autoResolvePlayerEvents: true });
   }
   const r = g.result ?? computeUkResult(g);
-  return mpOutcome(r.seats, r.voteShare, r.largestParty, side, UK_SYSTEM.majority, baselineWinner, difficulty);
+    return mpOutcome(r.seats, r.voteShare, r.largestParty, side, majorityForUk(g), baselineWinner, difficulty);
 }
 
 function runCountryGame(
@@ -454,7 +374,7 @@ function runCountryGame(
       actions: g.resources[side].actions,
     };
     g.queuedActions = mpBotActions(bot, view, side) as CountryAction[];
-    g = countryAdvanceTurn(g, bundle);
+    g = countryAdvanceTurn(g, bundle, { autoResolvePlayerEvents: true });
   }
   const r = g.result ?? computeCountryResult(g, bundle);
   return mpOutcome(r.seats, r.voteShare, r.largestParty, side, majority, baselineWinner, difficulty);

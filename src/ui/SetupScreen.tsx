@@ -11,6 +11,7 @@ import { mateBonusChips } from "@ui/labels";
 import { Avatar } from "@ui/Avatar";
 import type { CandidateId, GameState } from "@engine/index";
 import { BRAND } from "../brand";
+import { TideBanner } from "@ui/TideBanner";
 import {
   Vote,
   Dices,
@@ -136,6 +137,7 @@ export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onEx
         </div>
         <div className="title">{BRAND.name}</div>
         <p className="sub">{scenario.tagline}</p>
+        <TideBanner scenarioId={`us-${scenarioId}`} />
 
         {/* ── Stepper ──────────────────────────────────────────────── */}
         <div className="su-stepper" role="tablist">

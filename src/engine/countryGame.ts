@@ -13,6 +13,13 @@ import type { PartyId, PoliticalSystem } from "./system";
 import type { CauseEntry, Government, SeatResult, StateBloc, StateContest } from "./types";
 import { createRng, hashSeed, type Rng } from "./rng";
 import { computeSeatsResult, blocPartyShares, tallyRegion, softmax } from "./multiparty";
+import { planMultipartyAi, type MpDifficulty } from "./multipartyAi";
+import {
+  buildCauseRecap,
+  decayMultipartyTurn,
+  finalizeMpCampaignTurn,
+  resolvePendingChoiceGate,
+} from "./mpTurnHelpers";
 
 // ── Content bundle: everything a country ships ────────────────────────────
 export interface CountryBlocDef {
@@ -84,6 +91,18 @@ export interface CountryEventDef {
   // Scheduled story beat: fires deterministically at this turn index (0-based)
   // instead of entering the random draw. Only meaningful on election decks.
   turn?: number;
+  // Player-facing prompt when this event becomes a decision.
+  prompt?: string;
+  choices?: CountryEventChoice[];
+}
+
+export interface CountryEventChoice {
+  id: string;
+  text: string;
+  resultText: string;
+  appeal?: number;
+  momentum?: number;
+  rivalAppeal?: number;
 }
 
 export interface CountryIssueDef {
@@ -260,6 +279,17 @@ export interface CountryResult {
   postMortem: CauseEntry[];
 }
 
+export interface CountryRecapItem {
+  label: string;
+  detail: string;
+  marginDelta?: number;
+}
+
+export interface CountryPendingEvent {
+  eventId: string;
+  targetParty: PartyId;
+}
+
 export interface CountryGameState {
   countryId: string;
   seed: number;
@@ -286,6 +316,8 @@ export interface CountryGameState {
   majority?: { total: number; threshold: number };
   // Underdog handicap setting (defaults to "normal" = identity for old saves).
   difficulty?: Difficulty;
+  lastRecap: CountryRecapItem[];
+  pendingEvent?: CountryPendingEvent | null;
   result?: CountryResult;
 }
 
@@ -424,6 +456,8 @@ export function createCountryGame(country: CountryBundle, opts: NewCountryGameOp
     firedEvents: [],
     majority: { ...(election.majority ?? country.system.majority) },
     difficulty,
+    lastRecap: [],
+    pendingEvent: null,
   };
 }
 
@@ -567,19 +601,20 @@ export function applyCountryAction(g: CountryGameState, a: CountryAction, rng: R
 
 // ── AI + events + turn loop (country-parameterized) ────────────────────────
 function planAiActions(g: CountryGameState, party: PartyId, rng: Rng): CountryAction[] {
-  const out: CountryAction[] = [];
-  const budget = g.resources[party].actions;
-  const ranked = g.regions
-    .filter((r) => r.baselineShare?.[party] !== undefined)
-    .map((r) => ({ r, share: r.baselineShare?.[party] ?? 0 }))
-    .sort((a, b) => b.share - a.share);
-  for (let i = 0; i < budget && i < ranked.length; i++) {
-    const region = ranked[i % Math.max(1, Math.min(ranked.length, 4))].r;
-    if (g.resources[party].funds < 1 && rng.chance(0.4)) out.push({ type: "fundraise", party });
-    else if (rng.chance(0.25)) out.push({ type: "rally", party, regionId: region.id });
-    else out.push({ type: "canvass", party, regionId: region.id });
-  }
-  return out;
+  const res = g.resources[party];
+  const difficulty = (g.difficulty ?? "normal") as MpDifficulty;
+  return planMultipartyAi(
+    {
+      regions: g.regions,
+      turn: g.turn,
+      totalTurns: g.totalTurns,
+      funds: res.funds,
+      actions: res.actions,
+    },
+    party,
+    difficulty,
+    rng,
+  ) as CountryAction[];
 }
 
 function pickEventTarget(
@@ -597,29 +632,84 @@ function pickEventTarget(
   }
 }
 
-function applyCountryEvent(g: CountryGameState, country: CountryBundle, ev: CountryEventDef, rng: Rng) {
-  const proj = computeSeatsResult(g.regions, majorityFor(g, country), g.abstaining);
-  const majors = g.parties.filter((p) => country.playable.includes(p));
-  const target = ev.party && g.parties.includes(ev.party)
-    ? ev.party
-    : pickEventTarget(ev.role, g.playerParty, proj.largestParty, majors, (xs) => rng.pick(xs));
-  if (!target) return;
+function countryEventById(country: CountryBundle, g: CountryGameState, id: string): CountryEventDef | undefined {
+  const deck = country.elections[g.electionId]?.events ?? [];
+  return deck.find((e) => e.id === id) ?? country.events.find((e) => e.id === id);
+}
 
-  if (ev.appeal) {
-    for (const region of g.regions) {
-      if (region.baselineShare?.[target] === undefined) continue;
-      for (const bloc of region.blocs) {
-        if (!bloc.campaignAppeal) bloc.campaignAppeal = {};
-        bloc.campaignAppeal[target] = (bloc.campaignAppeal[target] ?? 0) + ev.appeal;
-      }
+function applyAppealNational(g: CountryGameState, target: PartyId, appeal: number, cause: string) {
+  for (const region of g.regions) {
+    if (region.baselineShare?.[target] === undefined) continue;
+    for (const bloc of region.blocs) {
+      if (!bloc.campaignAppeal) bloc.campaignAppeal = {};
+      bloc.campaignAppeal[target] = (bloc.campaignAppeal[target] ?? 0) + appeal;
     }
-    g.causes.push({ turn: g.turn, cause: `${ev.id}: ${target.toUpperCase()}`, marginDelta: ev.appeal });
   }
+  g.causes.push({ turn: g.turn, cause, marginDelta: appeal });
+}
+
+function applyCountryEventEffects(g: CountryGameState, country: CountryBundle, ev: CountryEventDef, target: PartyId) {
+  if (ev.appeal) applyAppealNational(g, target, ev.appeal, `${ev.id}: ${target.toUpperCase()}`);
   if (ev.momentum && g.resources[target]) {
     g.resources[target].momentum = clamp(g.resources[target].momentum + ev.momentum, -100, 100);
   }
   const short = country.system.parties.find((p) => p.id === target)?.shortName ?? target.toUpperCase();
   g.news = [{ turn: g.turn, text: ev.headline.replace("{party}", short) }, ...g.news].slice(0, 12);
+}
+
+function resolveCountryEventTarget(g: CountryGameState, country: CountryBundle, ev: CountryEventDef, rng: Rng): PartyId | undefined {
+  const proj = computeSeatsResult(g.regions, majorityFor(g, country), g.abstaining);
+  const majors = g.parties.filter((p) => country.playable.includes(p));
+  return ev.party && g.parties.includes(ev.party)
+    ? ev.party
+    : pickEventTarget(ev.role, g.playerParty, proj.largestParty, majors, (xs) => rng.pick(xs));
+}
+
+function applyCountryEvent(g: CountryGameState, country: CountryBundle, ev: CountryEventDef, rng: Rng) {
+  const target = resolveCountryEventTarget(g, country, ev, rng);
+  if (!target) return;
+
+  if (ev.choices && ev.choices.length > 0 && target === g.playerParty && !g.pendingEvent) {
+    g.pendingEvent = { eventId: ev.id, targetParty: target };
+    const short = country.system.parties.find((p) => p.id === target)?.shortName ?? target.toUpperCase();
+    g.news = [{ turn: g.turn, text: ev.headline.replace("{party}", short) }, ...g.news].slice(0, 12);
+    return;
+  }
+  applyCountryEventEffects(g, country, ev, target);
+}
+
+/** Resolve a pending player-choice event. Pure: returns a new game state. */
+export function resolveCountryPlayerEvent(g: CountryGameState, country: CountryBundle, choiceId: string): CountryGameState {
+  const next = structuredClone(g);
+  const pending = next.pendingEvent;
+  if (!pending) return next;
+  const ev = countryEventById(country, next, pending.eventId);
+  next.pendingEvent = null;
+  if (!ev?.choices) return next;
+  const choice = ev.choices.find((c) => c.id === choiceId) ?? ev.choices[0];
+  const target = pending.targetParty;
+  if (choice.appeal) applyAppealNational(next, target, choice.appeal, `${ev.id}: ${choice.text}`);
+  if (choice.momentum && next.resources[target]) {
+    next.resources[target].momentum = clamp(next.resources[target].momentum + choice.momentum, -100, 100);
+  }
+  if (choice.rivalAppeal) {
+    const maj = majorityFor(next, country);
+    const proj = computeSeatsResult(next.regions, maj, next.abstaining);
+    const rival = Object.keys(proj.seats)
+      .filter((p) => p !== target)
+      .sort((a, b) => (proj.seats[b] ?? 0) - (proj.seats[a] ?? 0))[0] as PartyId | undefined;
+    if (rival) applyAppealNational(next, rival, choice.rivalAppeal, `${ev.id}: hit on ${rival.toUpperCase()}`);
+  }
+  const short = country.system.parties.find((p) => p.id === target)?.shortName ?? target;
+  next.lastRecap = [
+    { label: ev.headline.replace("{party}", short), detail: choice.resultText, marginDelta: choice.appeal },
+    ...(next.lastRecap ?? []),
+  ].slice(0, 12);
+  if (next.turn >= next.totalTurns) {
+    next.phase = "result";
+    next.result = computeCountryResult(next, country);
+  }
+  return next;
 }
 
 function fireCountryEvent(g: CountryGameState, country: CountryBundle, rng: Rng) {
@@ -628,7 +718,6 @@ function fireCountryEvent(g: CountryGameState, country: CountryBundle, rng: Rng)
   const fired = new Set(firedList);
   const deck = country.elections[g.electionId]?.events ?? [];
 
-  // 1. Scheduled story beats: the real history of this campaign, in order.
   for (const ev of deck) {
     if (ev.turn === undefined || ev.turn !== g.turn || fired.has(ev.id)) continue;
     applyCountryEvent(g, country, ev, rng);
@@ -636,7 +725,8 @@ function fireCountryEvent(g: CountryGameState, country: CountryBundle, rng: Rng)
     firedList.push(ev.id);
   }
 
-  // 2. Weekly random draw: unscheduled deck events (once each) + generic pool.
+  if (g.pendingEvent) return;
+
   const pool = [
     ...deck.filter((e) => e.turn === undefined && !fired.has(e.id)),
     ...country.events,
@@ -647,13 +737,49 @@ function fireCountryEvent(g: CountryGameState, country: CountryBundle, rng: Rng)
   if (deck.some((d) => d.id === ev.id)) firedList.push(ev.id);
 }
 
+function buildCountryRecap(g: CountryGameState, country: CountryBundle, turn: number, seatsBefore: number) {
+  const seatsAfter = computeCountryResult(g, country).seats[g.playerParty] ?? 0;
+  const short = country.system.parties.find((p) => p.id === g.playerParty)?.shortName ?? g.playerParty;
+  return buildCauseRecap(
+    g.causes,
+    turn,
+    {
+      label: `Projected ${country.unitNamePlural}`,
+      detail: `${short} ${seatsAfter} (was ${seatsBefore})`,
+      marginDelta: seatsAfter - seatsBefore,
+    },
+  );
+}
+
 export interface CountryAdvanceOptions {
   disableAi?: boolean; // calibration anchor: neutral play reproduces history
+  autoResolvePlayerEvents?: boolean;
 }
 
 export function countryAdvanceTurn(g: CountryGameState, country: CountryBundle, opts: CountryAdvanceOptions = {}): CountryGameState {
-  const next: CountryGameState = structuredClone(g);
+  let next: CountryGameState = structuredClone(g);
+  const gate = resolvePendingChoiceGate(
+    next,
+    opts,
+    (game, choiceId) => resolveCountryPlayerEvent(game, country, choiceId),
+    (game) => {
+      const ev = game.pendingEvent ? countryEventById(country, game, game.pendingEvent.eventId) : undefined;
+      return ev?.choices?.[0]?.id;
+    },
+  );
+  if (gate.blocked) return g;
+  next = gate.game;
+
+  if (next.phase === "result") return next;
+  if (next.turn >= next.totalTurns) {
+    next.phase = "result";
+    next.result = computeCountryResult(next, country);
+    return next;
+  }
+
   const rng = createRng(next.rngState);
+  const seatsBefore = computeCountryResult(next, country).seats[next.playerParty] ?? 0;
+  const turn = next.turn;
 
   for (const a of next.queuedActions) applyCountryAction(next, a, rng);
   next.queuedActions = [];
@@ -666,22 +792,11 @@ export function countryAdvanceTurn(g: CountryGameState, country: CountryBundle, 
     fireCountryEvent(next, country, rng);
   }
 
-  for (const p of next.parties) {
-    next.resources[p].momentum *= 0.7;
-    next.resources[p].actions = next.resources[p].maxActions;
-  }
-  for (const region of next.regions) {
-    region.momentum *= 0.6;
-    for (const bloc of region.blocs) bloc.support = blocPartyShares(bloc) as typeof bloc.support;
-  }
+  decayMultipartyTurn(next.resources, next.regions, next.parties);
 
-  next.turn += 1;
+  next.lastRecap = buildCountryRecap(next, country, turn, seatsBefore);
   next.rngState = rng.state();
-  if (next.turn >= next.totalTurns) {
-    next.phase = "result";
-    next.result = computeCountryResult(next, country);
-  }
-  return next;
+  return finalizeMpCampaignTurn(next, (game) => computeCountryResult(game, country));
 }
 
 export function computeCountryResult(g: CountryGameState, country: CountryBundle): CountryResult {
