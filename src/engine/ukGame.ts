@@ -6,7 +6,7 @@ import type { PartyId } from "./system";
 import type { CauseEntry, Government, SeatResult, StateContest } from "./types";
 import { createRng, hashSeed, type Rng } from "./rng";
 import { computeSeatsResult, blocPartyShares, tallyRegion } from "./multiparty";
-import { UK_SYSTEM, UK_ABSTAINING, PARTY_BY_ID } from "@content/uk/parties";
+import { UK_ABSTAINING, PARTY_BY_ID } from "@content/uk/parties";
 import { UK_ELECTIONS, type UkElectionData, majorityForElection, type UkMajority } from "@content/uk/elections";
 import { leaderFor, type UkLeader } from "@content/uk/leaders";
 import { UK_EVENTS, UK_EVENT_CHANCE, headlineFor, pickTarget, type UkEvent } from "@content/uk/events";
@@ -18,7 +18,6 @@ import {
   decayMultipartyTurn,
   finalizeMpCampaignTurn,
   resolvePendingChoiceGate,
-  type RecapItem,
 } from "./mpTurnHelpers";
 
 // Parties a human may lead (GB-wide majors). NI parties + 'oth' are AI/fixed.
