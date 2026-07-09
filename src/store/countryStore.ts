@@ -4,6 +4,7 @@ import {
   countryAdvanceTurn,
   projectCountry,
   projectCountryPreview,
+  resolveCountryPlayerEvent,
   playablePartiesIn,
   type CountryBundle,
   type CountryGameState,
@@ -19,6 +20,7 @@ interface CountryStore {
   game: CountryGameState | null;
   history: CountryGameState[];
   selectedRegionId: string | null;
+  lastEventResult: { title: string; text: string } | null;
 
   newGame: (countryId: string, election: string, party: PartyId, seed?: string, difficulty?: Difficulty) => void;
   reset: () => void;
@@ -28,35 +30,70 @@ interface CountryStore {
   removeAction: (index: number) => void;
   clearActions: () => void;
 
+  resolvePlayerEvent: (choiceId: string) => void;
   endTurn: () => void;
   undo: () => void;
 
   liveProjection: () => CountryResult | null;
   previewProjection: () => CountryResult | null;
+
+  tryResumeAutosave: (countryId: string) => boolean;
 }
 
 const MAX_HISTORY = 12;
+const autosaveKey = (countryId: string) => `campaign-country-autosave-${countryId}`;
+
+function autosave(countryId: string, game: CountryGameState) {
+  try {
+    localStorage.setItem(autosaveKey(countryId), JSON.stringify({ updatedAt: Date.now(), state: game }));
+  } catch {
+    /* private mode etc. */
+  }
+}
+
+function loadAutosave(countryId: string): CountryGameState | null {
+  try {
+    const raw = localStorage.getItem(autosaveKey(countryId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { state?: CountryGameState };
+    if (!parsed.state?.regions || !parsed.state.playerParty) return null;
+    if (!parsed.state.lastRecap) parsed.state.lastRecap = [];
+    return parsed.state;
+  } catch {
+    return null;
+  }
+}
 
 export const useCountryStore = create<CountryStore>((set, get) => ({
   country: null,
   game: null,
   history: [],
   selectedRegionId: null,
+  lastEventResult: null,
 
   newGame: (countryId, election, party, seed, difficulty) => {
     const country = COUNTRIES[countryId];
     if (!country) return;
     const playable = playablePartiesIn(country, election);
     const p = playable.includes(party) ? party : playable[0];
+    const game = createCountryGame(country, { election, playerParty: p, seed: seed ?? `${countryId}-${Date.now()}`, difficulty });
+    autosave(countryId, game);
     set({
       country,
-      game: createCountryGame(country, { election, playerParty: p, seed: seed ?? `${countryId}-${Date.now()}`, difficulty }),
+      game,
       history: [],
       selectedRegionId: null,
+      lastEventResult: null,
     });
   },
 
-  reset: () => set({ country: null, game: null, history: [], selectedRegionId: null }),
+  reset: () => {
+    const country = get().country;
+    if (country) {
+      try { localStorage.removeItem(autosaveKey(country.id)); } catch { /* */ }
+    }
+    set({ country: null, game: null, history: [], selectedRegionId: null, lastEventResult: null });
+  },
 
   selectRegion: (id) => set({ selectedRegionId: id }),
 
@@ -80,21 +117,38 @@ export const useCountryStore = create<CountryStore>((set, get) => ({
     set({ game: { ...game, queuedActions: [] } });
   },
 
+  resolvePlayerEvent: (choiceId) => {
+    const { game, country } = get();
+    if (!game?.pendingEvent || !country) return;
+    const next = resolveCountryPlayerEvent(game, country, choiceId);
+    autosave(country.id, next);
+    set({
+      game: next,
+      lastEventResult: next.lastRecap[0]
+        ? { title: next.lastRecap[0].label, text: next.lastRecap[0].detail }
+        : null,
+    });
+  },
+
   endTurn: () => {
     const { game, country, history } = get();
-    if (!game || !country) return;
+    if (!game || !country || game.pendingEvent) return;
     const next = countryAdvanceTurn(game, country);
+    autosave(country.id, next);
     set({
       game: next,
       history: [...history, game].slice(-MAX_HISTORY),
       selectedRegionId: null,
+      lastEventResult: null,
     });
   },
 
   undo: () => {
-    const { history } = get();
+    const { history, country } = get();
     if (history.length === 0) return;
-    set({ game: history[history.length - 1], history: history.slice(0, -1) });
+    const prev = history[history.length - 1];
+    if (country) autosave(country.id, prev);
+    set({ game: prev, history: history.slice(0, -1) });
   },
 
   liveProjection: () => {
@@ -105,5 +159,14 @@ export const useCountryStore = create<CountryStore>((set, get) => ({
   previewProjection: () => {
     const { game, country } = get();
     return game && country ? projectCountryPreview(game, country) : null;
+  },
+
+  tryResumeAutosave: (countryId) => {
+    const country = COUNTRIES[countryId];
+    if (!country) return false;
+    const saved = loadAutosave(countryId);
+    if (!saved || saved.phase === "result") return false;
+    set({ country, game: saved, history: [], selectedRegionId: null, lastEventResult: null });
+    return true;
   },
 }));

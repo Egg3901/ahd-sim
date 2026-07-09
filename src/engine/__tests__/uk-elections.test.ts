@@ -1,10 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { createUkGame, computeUkResult } from "@engine/ukGame";
-import { UK_ELECTIONS, UK_ELECTION_IDS } from "@content/uk/elections";
-import { UK_REGIONS_BY_ID } from "@content/uk/regions";
+import {
+  UK_ELECTIONS,
+  UK_ELECTION_IDS,
+  UK_BOUNDARY_POOLS,
+  majorityForElection,
+  poolFor,
+} from "@content/uk/elections";
 
-// Every authored election must be structurally sound (seats sum to the region
-// pools and to 650) and reproduce the right headline outcome at the neutral
+// Every authored election must be structurally sound (seats sum to that year's
+// boundary pools) and reproduce the right headline outcome at the neutral
 // baseline: the right largest party and the right kind of government.
 const EXPECTED: Record<string, { largest: string; gov: string }> = {
   "1951": { largest: "con", gov: "majority" },
@@ -29,25 +34,42 @@ describe("UK elections roster", () => {
     );
   });
 
+  it("boundary pools match each election's chamber size", () => {
+    for (const id of UK_ELECTION_IDS) {
+      const maj = majorityForElection(id);
+      const pool = UK_BOUNDARY_POOLS[id];
+      expect(pool, id).toBeTruthy();
+      const sum = Object.values(pool).reduce((a, b) => a + b, 0);
+      expect(sum, id).toBe(maj.total);
+      expect(UK_ELECTIONS[id].majority?.total ?? maj.total, id).toBe(maj.total);
+    }
+  });
+
   for (const id of UK_ELECTION_IDS) {
     describe(`${id} — ${UK_ELECTIONS[id].label}`, () => {
-      it("each region's seats sum to its pool, totalling 650", () => {
+      it("each region's seats sum to its boundary pool", () => {
+        const maj = majorityForElection(id);
         let total = 0;
         for (const [rid, res] of Object.entries(UK_ELECTIONS[id].regions)) {
           const sum = Object.values(res.s).reduce((a, b) => a + b, 0);
-          expect(sum, `${id}/${rid}`).toBe(UK_REGIONS_BY_ID[rid].seats);
+          expect(sum, `${id}/${rid}`).toBe(poolFor(id, rid));
           total += sum;
         }
-        expect(total).toBe(650);
+        expect(total).toBe(maj.total);
       });
 
       it("neutral play reproduces the right winner and government type", () => {
         const g = createUkGame({ election: id, seed: 3 });
         const r = computeUkResult(g);
-        expect(Object.values(r.seats).reduce((a, b) => a + b, 0)).toBe(650);
+        const maj = majorityForUkSeats(g.electionId);
+        expect(Object.values(r.seats).reduce((a, b) => a + b, 0)).toBe(maj);
         expect(r.largestParty).toBe(EXPECTED[id].largest);
         expect(r.government.kind).toBe(EXPECTED[id].gov);
       });
     });
   }
 });
+
+function majorityForUkSeats(electionId: string): number {
+  return majorityForElection(electionId).total;
+}

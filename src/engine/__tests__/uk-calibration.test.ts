@@ -1,20 +1,22 @@
 import { describe, it, expect } from "vitest";
-import { createUkGame, ukAdvanceTurn, computeUkResult } from "@engine/ukGame";
+import { createUkGame, ukAdvanceTurn, computeUkResult, majorityForUk } from "@engine/ukGame";
 import { tallyRegion } from "@engine/multiparty";
 import { UK_REGIONS, UK_TOTAL_SEATS } from "@content/uk/regions";
-import { UK_ELECTIONS } from "@content/uk/elections";
+import { UK_ELECTIONS, poolFor, majorityForElection } from "@content/uk/elections";
 
 // The UK analog of the U.S. 2020 calibration: neutral, do-nothing play must
 // reproduce the real 2024 result by construction.
 describe("UK 2024 calibration", () => {
-  it("the 12 regions' seat pools total 650", () => {
+  it("the 2024 region metadata seat pools total 650", () => {
     expect(UK_TOTAL_SEATS).toBe(650);
+    expect(majorityForElection("2024").total).toBe(650);
   });
 
-  it("each region's authored seats sum to its pool", () => {
+  it("each region's authored seats sum to its 2024 boundary pool", () => {
     for (const region of UK_REGIONS) {
       const seats = UK_ELECTIONS["2024"].regions[region.id].s;
       const sum = Object.values(seats).reduce((a, b) => a + b, 0);
+      expect(sum, region.name).toBe(poolFor("2024", region.id));
       expect(sum, region.name).toBe(region.seats);
     }
   });
@@ -39,7 +41,7 @@ describe("UK 2024 calibration", () => {
     }
     const r = g.result!;
     const total = Object.values(r.seats).reduce((a, b) => a + b, 0);
-    expect(total).toBe(650);
+    expect(total).toBe(majorityForUk(g).total);
     // Labour landslide reproduced near the real ~411 seats.
     expect(r.largestParty).toBe("lab");
     expect(r.seats.lab).toBeGreaterThan(395);
@@ -50,27 +52,29 @@ describe("UK 2024 calibration", () => {
 
   it("doing nothing while opponents campaign costs the player ground (but it's recoverable)", () => {
     let g = createUkGame({ election: "2024", seed: 1, playerParty: "lab" });
-    while (g.phase !== "result") {
+    let guard = 0;
+    while (g.phase !== "result" && guard++ < 20) {
       g.queuedActions = [];
-      g = ukAdvanceTurn(g); // AI active, player passive
+      g = ukAdvanceTurn(g, { autoResolvePlayerEvents: true }); // AI active, player passive
     }
-    // Labour erodes from its peak but the engine stays sane (still 650 seats).
+    // Labour erodes from its peak but the engine stays sane (chamber size holds).
     const total = Object.values(g.result!.seats).reduce((a, b) => a + b, 0);
-    expect(total).toBe(650);
+    expect(total).toBe(majorityForUk(g).total);
     expect(g.result!.seats.lab).toBeLessThan(411); // passivity has a cost
   });
 
   it("a full campaign with player actions and events yields a valid government", () => {
     let g = createUkGame({ election: "2024", seed: 42, playerParty: "lab" });
-    while (g.phase !== "result") {
+    let guard = 0;
+    while (g.phase !== "result" && guard++ < 20) {
       // Player canvasses its weakest English region each week.
       const target = g.regions
         .filter((r) => r.baselineShare?.lab !== undefined)
         .sort((a, b) => (a.baselineShare!.lab ?? 0) - (b.baselineShare!.lab ?? 0))[0];
       g.queuedActions = [{ type: "canvass", party: "lab", regionId: target.id }];
-      g = ukAdvanceTurn(g);
+      g = ukAdvanceTurn(g, { autoResolvePlayerEvents: true });
     }
-    expect(Object.values(g.result!.seats).reduce((a, b) => a + b, 0)).toBe(650);
+    expect(Object.values(g.result!.seats).reduce((a, b) => a + b, 0)).toBe(majorityForUk(g).total);
     expect(["majority", "minority", "coalition", "confidence_supply", "hung"]).toContain(g.result!.government.kind);
     // Events fired over the campaign and were logged as news.
     expect(g.news.length).toBeGreaterThan(0);

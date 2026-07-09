@@ -95,11 +95,58 @@ function storage(): MiniStorage | undefined {
 }
 
 const playedKey = (date: string) => `daily-played-${date}`;
+const bestKey = (date: string) => `daily-best-${date}`;
+const STREAK_KEY = "daily-streak";
+const STREAK_LAST_KEY = "daily-streak-last";
 
 export function markDailyPlayed(date: string): void {
-  try { storage()?.setItem(playedKey(date), "1"); } catch { /* private mode etc. */ }
+  try {
+    const s = storage();
+    if (!s) return;
+    s.setItem(playedKey(date), "1");
+    // Streak: consecutive UTC days with a finished daily.
+    const last = s.getItem(STREAK_LAST_KEY);
+    const prev = Number(s.getItem(STREAK_KEY) ?? "0") || 0;
+    if (last === date) return; // already counted today
+    const yesterday = (() => {
+      const d = new Date(`${date}T00:00:00Z`);
+      d.setUTCDate(d.getUTCDate() - 1);
+      return d.toISOString().slice(0, 10);
+    })();
+    const next = last === yesterday ? prev + 1 : 1;
+    s.setItem(STREAK_KEY, String(next));
+    s.setItem(STREAK_LAST_KEY, date);
+  } catch { /* private mode etc. */ }
 }
 
 export function hasPlayedDaily(date: string): boolean {
   try { return storage()?.getItem(playedKey(date)) === "1"; } catch { return false; }
+}
+
+export function dailyStreak(): number {
+  try { return Number(storage()?.getItem(STREAK_KEY) ?? "0") || 0; } catch { return 0; }
+}
+
+export function recordDailyBest(date: string, score: number): number {
+  try {
+    const s = storage();
+    if (!s) return score;
+    const prev = Number(s.getItem(bestKey(date)) ?? "0") || 0;
+    const best = Math.max(prev, score);
+    s.setItem(bestKey(date), String(best));
+    return best;
+  } catch {
+    return score;
+  }
+}
+
+export function dailyBest(date: string): number | null {
+  try {
+    const v = storage()?.getItem(bestKey(date));
+    if (v == null) return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
 }

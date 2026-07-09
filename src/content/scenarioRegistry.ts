@@ -28,6 +28,42 @@ export interface ScenarioMeta {
   label: string;
   description: string;
   flag: string;
+  // Optional player-facing tags for setup / landing.
+  // "tide" = historical landslide (flip-history fantasy is a challenge).
+  // "challenge" = minor-party / kingmaker path, not tuned for majority wins.
+  tags?: Array<"tide" | "challenge" | "coin-flip">;
+}
+
+/** Landslide / known-unwinnable years — surface a "historical tide" warning. */
+export const TIDE_SCENARIO_IDS = new Set([
+  "us-1984", "us-1972", "us-1936",
+  "uk-1983", "uk-1997", "uk-2001", "uk-2024",
+  "fr-2017",
+]);
+
+/** Genuine coin-flip years where the baseline winner is not a pushover. */
+export const COIN_FLIP_SCENARIO_IDS = new Set(["uk-2017", "us-2000"]);
+
+export function scenarioTags(meta: ScenarioMeta): Array<"tide" | "challenge" | "coin-flip"> {
+  if (meta.tags) return meta.tags;
+  const tags: Array<"tide" | "challenge" | "coin-flip"> = [];
+  if (TIDE_SCENARIO_IDS.has(meta.scenarioId) || meta.difficulty === "hard") {
+    // Only stamp "tide" on the most extreme landslides, not every hard year.
+    if (TIDE_SCENARIO_IDS.has(meta.scenarioId)) tags.push("tide");
+  }
+  if (COIN_FLIP_SCENARIO_IDS.has(meta.scenarioId)) tags.push("coin-flip");
+  return tags;
+}
+
+export function tideBlurb(meta: ScenarioMeta): string | null {
+  const tags = scenarioTags(meta);
+  if (tags.includes("tide")) {
+    return "Historical tide — flipping this election is a challenge even on Easy. Fight the map, or enjoy the ride.";
+  }
+  if (tags.includes("coin-flip")) {
+    return "Coin-flip election — the baseline is a near-tie. Either side can win.";
+  }
+  return null;
 }
 
 const us = (year: number, label: string, description: string, free: boolean, difficulty: ScenarioMeta["difficulty"]): ScenarioMeta => ({
@@ -118,6 +154,12 @@ export const SCENARIO_REGISTRY: ScenarioMeta[] = [
     free: false, packId: "global", difficulty: "hard", flag: "🇦🇺",
     label: "2025 · Albanese v. Dutton",
     description: "Preferential voting, a cyclone-delayed budget, and a Trump-shaped shadow over 150 seats.",
+  },
+  {
+    scenarioId: "au-2022", country: "AU", engine: "country", nativeId: "2022", year: 2022,
+    free: false, packId: "global", difficulty: "medium", flag: "🇦🇺",
+    label: "2022 · Albanese v. Morrison",
+    description: "Nine years of Coalition rule, a teal wave on the harbourside, and a PM who doesn't hold a hose.",
   },
 ];
 

@@ -19,7 +19,7 @@ export const UK_ALL = [
   "uk-1997", "uk-1992", "uk-1987", "uk-1983", "uk-1979", "uk-1951",
 ];
 export const GLOBAL_ALL = [
-  "ca-2025", "ca-2021", "de-2025", "de-2021", "fr-2027", "fr-2022", "fr-2017", "au-2025",
+  "ca-2025", "ca-2021", "de-2025", "de-2021", "fr-2027", "fr-2022", "fr-2017", "au-2025", "au-2022",
 ];
 
 export const ALL_PAID = [...US_PAID, ...UK_ALL, ...GLOBAL_ALL];
@@ -42,7 +42,7 @@ export const PACKS: ScenarioPack[] = [
   {
     id: "global",
     name: "Global Elections Pack",
-    description: "Eight elections across four countries: Canada 2021 & 2025, Germany 2021 & 2025, France 2017, 2022 & 2027, and Australia 2025 — real maps, real parties, real campaign events, four electoral systems.",
+    description: "Nine elections across four countries: Canada 2021 & 2025, Germany 2021 & 2025, France 2017–2027, and Australia 2022 & 2025 — real maps, real parties, real campaign events, four electoral systems.",
     price: 599,
     scenarios: GLOBAL_ALL,
   },

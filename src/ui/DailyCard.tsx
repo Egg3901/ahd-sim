@@ -5,15 +5,17 @@
 
 import { useEffect, useState } from "react";
 import { SCENARIOS_BY_ID } from "@content/scenarioRegistry";
-import { dailyAssignment, hasPlayedDaily, roleShortName, utcDateString } from "@lib/daily";
+import { dailyAssignment, hasPlayedDaily, roleShortName, utcDateString, dailyStreak, dailyBest } from "@lib/daily";
 import { api, type DailyBoardEntry } from "@lib/api";
-import { CalendarDays, Check, Play, Trophy } from "lucide-react";
+import { CalendarDays, Check, Play, Trophy, Flame } from "lucide-react";
 
 export function DailyCard({ onPlay }: { onPlay: () => void }) {
   const [today] = useState(() => utcDateString());
   const assignment = dailyAssignment(today);
   const meta = SCENARIOS_BY_ID[assignment.scenarioId];
   const played = hasPlayedDaily(today);
+  const streak = dailyStreak();
+  const best = dailyBest(today);
   const [top3, setTop3] = useState<DailyBoardEntry[]>([]);
 
   useEffect(() => {
@@ -60,19 +62,28 @@ export function DailyCard({ onPlay }: { onPlay: () => void }) {
 
       <span className="muted small" style={{ fontSize: 11, lineHeight: 1.4 }}>
         {played
-          ? "Played ✓ — see today's board, or replay to beat your best (the server keeps your top score)."
+          ? <>Played ✓{best != null ? ` · best ${best}` : ""} — see today's board, or replay to beat your best.</>
           : <>Seed <strong>{assignment.seed}</strong> — the same race, same events, for everyone on Earth today.</>}
       </span>
 
-      {top3.length > 0 && (
+      {(streak > 0 || top3.length > 0) && (
         <span className="row" style={{ gap: 10, alignItems: "center", flexWrap: "wrap", fontSize: 11 }}>
-          <Trophy size={12} style={{ color: "var(--gold)" }} />
-          {top3.map((e) => (
-            <span key={e.rank} className="muted small" style={{ fontSize: 11 }}>
-              <strong style={{ color: e.rank === 1 ? "var(--gold)" : undefined }}>#{e.rank}</strong>{" "}
-              {e.username} · {e.score}
+          {streak > 0 && (
+            <span style={{ display: "inline-flex", gap: 4, alignItems: "center", color: "var(--gold)", fontWeight: 700 }}>
+              <Flame size={12} /> {streak}-day streak
             </span>
-          ))}
+          )}
+          {top3.length > 0 && (
+            <>
+              <Trophy size={12} style={{ color: "var(--gold)" }} />
+              {top3.map((e) => (
+                <span key={e.rank} className="muted small" style={{ fontSize: 11 }}>
+                  <strong style={{ color: e.rank === 1 ? "var(--gold)" : undefined }}>#{e.rank}</strong>{" "}
+                  {e.username} · {e.score}
+                </span>
+              ))}
+            </>
+          )}
         </span>
       )}
     </button>

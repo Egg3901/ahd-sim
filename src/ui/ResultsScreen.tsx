@@ -4,6 +4,7 @@ import { useAuthStore } from "@store/authStore";
 import { GRID, SPLIT_UNITS, GRID_COLS, GRID_ROWS } from "@content/mapLayout";
 import { STATE_PATHS } from "@content/statePaths";
 import { SCENARIOS } from "@content/scenarios";
+import { US_NEXT_SCENARIO } from "@content/nextScenario";
 import type { Projection } from "@engine/index";
 import { computeScoreFromFacts, usScoreFacts } from "@engine/scoring";
 import { checkAchievements, recordLocalAchievements } from "@engine/achievements";
@@ -15,17 +16,7 @@ import { Trophy, Lock } from "lucide-react";
 import { ElectionNight, hasSeenReveal, revealSupported } from "./electionNight/ElectionNight";
 import { usReveal } from "./electionNight/adapters";
 import { DailyResultPanel } from "./DailyResultPanel";
-
-// Light scenario branching: after the race, suggest where to go next.
-const NEXT_SCENARIO: Record<string, { id: string; blurb: string }> = {
-  "2000": { id: "2004", blurb: "Continue the timeline — the wartime election" },
-  "2004": { id: "2008", blurb: "Continue the timeline — the crash of 2008" },
-  "2008": { id: "2012", blurb: "Continue the timeline — defend the coalition" },
-  "2012": { id: "2016", blurb: "Continue the timeline — hold the blue wall" },
-  "2016": { id: "2020", blurb: "Continue the timeline — the pandemic election" },
-  "2020": { id: "2024", blurb: "Continue the timeline — the 2024 rematch" },
-  "2024": { id: "2000", blurb: "Try a different era — the Florida recount awaits" },
-};
+import { NextCampaignCard } from "./NextCampaignCard";
 
 export function ResultsScreen() {
   const game = useGameStore((s) => s.game)!;
@@ -341,29 +332,20 @@ function NextScenario() {
   const openModal = useAuthStore((s) => s.openModal);
   const user = useAuthStore((s) => s.user);
 
-  const next = NEXT_SCENARIO[game.scenarioId ?? "2020"];
+  const next = US_NEXT_SCENARIO[game.scenarioId ?? "2020"];
   if (!next) return null;
   const s = SCENARIOS[next.id];
   const unlocked = canPlay(`us-${next.id}`);
 
   return (
-    <div className="card">
-      <h3>Next Campaign</h3>
-      <div className="row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-        <div>
-          <div style={{ fontWeight: 700 }}>{s.label}</div>
-          <div className="muted small">{next.blurb}{!unlocked && " · part of the US Historical pack"}</div>
-        </div>
-        {unlocked ? (
-          <button className="secondary" onClick={() => newGame({ seed: String(Date.now()), playerCandidate: game.playerCandidate, scenario: next.id, eventMode: game.eventMode, difficulty })}>
-            Play {s.year} →
-          </button>
-        ) : (
-          <button className="secondary" onClick={() => openModal(user ? "activate" : "login", `us-${next.id}`)}>
-            🔒 Unlock {s.year}
-          </button>
-        )}
-      </div>
-    </div>
+    <NextCampaignCard
+      title={s.label}
+      blurb={`${next.blurb}${!unlocked ? " · part of the US Historical pack" : ""}`}
+      unlocked={unlocked}
+      ctaLabel={`Play ${s.year} →`}
+      lockLabel={`🔒 Unlock ${s.year}`}
+      onPlay={() => newGame({ seed: String(Date.now()), playerCandidate: game.playerCandidate, scenario: next.id, eventMode: game.eventMode, difficulty })}
+      onUnlock={() => openModal(user ? "activate" : "login", `us-${next.id}`)}
+    />
   );
 }

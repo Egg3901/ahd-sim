@@ -60,7 +60,12 @@ describe("country bundles", () => {
     const country = COUNTRIES.DE;
     for (const seed of [1, 2, 3, 4, 5]) {
       let g = createCountryGame(country, { seed, playerParty: "afd" });
-      for (let t = 0; t < g.totalTurns; t++) g = countryAdvanceTurn(g, country);
+      // autoResolvePlayerEvents: bots/tests pick the first choice so the loop
+      // never stalls on a pending decision modal.
+      for (let t = 0; t < g.totalTurns + 2; t++) {
+        if (g.phase === "result") break;
+        g = countryAdvanceTurn(g, country, { autoResolvePlayerEvents: true });
+      }
       const gov = g.result!.government;
       if (gov.kind === "coalition") expect(gov.parties).not.toContain("afd");
       if (gov.kind === "confidence_supply") expect(gov.partner).not.toBe("afd");
@@ -71,13 +76,14 @@ describe("country bundles", () => {
     const country = COUNTRIES.CA;
     let g = createCountryGame(country, { seed: 99, playerParty: "cpc" });
     expect(playablePartiesIn(country, "2025")).toContain("cpc");
-    for (let t = 0; t < g.totalTurns; t++) {
+    for (let t = 0; t < g.totalTurns + 2; t++) {
+      if (g.phase === "result") break;
       g.queuedActions = [
         { type: "rally", party: "cpc", regionId: "ON" },
         { type: "canvass", party: "cpc", regionId: "QC" },
         { type: "fundraise", party: "cpc" },
       ];
-      g = countryAdvanceTurn(g, country);
+      g = countryAdvanceTurn(g, country, { autoResolvePlayerEvents: true });
     }
     expect(g.phase).toBe("result");
     const facts = multipartyScoreFacts(g.result!, "cpc", 172, 343, "normal");

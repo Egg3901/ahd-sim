@@ -189,5 +189,41 @@ export const GERMANY: CountryBundle = {
     { id: "wahlkampf_panne", headline: "{party}'s leader fumbles a live interview", role: "any", weight: 2, appeal: -0.03, momentum: -6 },
     { id: "endorsement_de", headline: "Business leaders and papers line up behind {party}", role: "any", weight: 2, appeal: 0.02, momentum: 5 },
     { id: "ukraine_moment", headline: "A security shock puts statesmanship first — {party} looks the part", role: "leader", weight: 2, appeal: 0.025, momentum: 6 },
+    {
+      id: "tv_duell_call",
+      headline: "The networks offer {party} a TV-Duell slot",
+      role: "player",
+      weight: 4,
+      prompt: "A head-to-head is on the table. How do you play it?",
+      choices: [
+        { id: "accept_attack", text: "Accept and go on the attack", resultText: "You land blows — and take a few. The overnight polls twitch your way.", appeal: 0.03, momentum: 10, rivalAppeal: -0.015 },
+        { id: "accept_safe", text: "Accept and play it safe", resultText: "A steady, on-message night. No gaffes, no fireworks.", appeal: 0.015, momentum: 4 },
+        { id: "decline", text: "Decline — protect the lead / avoid the ambush", resultText: "You dodge the studio lights. The press calls it caution.", appeal: -0.01, momentum: -4 },
+      ],
+    },
+    {
+      id: "brandmauer_fork",
+      headline: "{party} faces a firewall question that won't go away",
+      role: "player",
+      weight: 3,
+      prompt: "How do you handle the Brandmauer?",
+      choices: [
+        { id: "hard_line", text: "Draw a hard line — no deals, no votes", resultText: "The centre breathes easier. Your right flank fumes.", appeal: 0.02, momentum: 5 },
+        { id: "ambiguous", text: "Keep it ambiguous — case by case", resultText: "Everyone hears what they want. Trust erodes a little.", appeal: -0.01, momentum: -3 },
+        { id: "contrast", text: "Turn it into an attack on the rival", resultText: "You change the subject — and it mostly works.", appeal: 0.015, momentum: 4, rivalAppeal: -0.02 },
+      ],
+    },
+    {
+      id: "programm_fork",
+      headline: "{party}'s programme committee is split on the big pledge",
+      role: "player",
+      weight: 3,
+      prompt: "The draft is ready. Which way do you push?",
+      choices: [
+        { id: "bold", text: "Go bold — a defining, risky pledge", resultText: "The base roars. The spreadsheets at HQ look nervous.", appeal: 0.035, momentum: 12 },
+        { id: "cautious", text: "Play it cautious — no hostages to fortune", resultText: "No spark, no self-inflicted wounds.", appeal: 0.01, momentum: 2 },
+        { id: "contrast", text: "Make it a contrast document against the rival", resultText: "You define them more than yourself — and it lands.", appeal: 0.02, momentum: 6, rivalAppeal: -0.02 },
+      ],
+    },
   ],
 };

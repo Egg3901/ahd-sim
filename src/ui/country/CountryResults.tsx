@@ -3,14 +3,16 @@ import { useCountryStore } from "@store/countryStore";
 import { useAuthStore } from "@store/authStore";
 import { api } from "@lib/api";
 import { computeScoreFromFacts, multipartyScoreFacts } from "@engine/scoring";
-import { majorityFor } from "@engine/countryGame";
+import { majorityFor, playablePartiesIn } from "@engine/countryGame";
 import type { Government } from "@engine/types";
+import { countryNextScenario } from "@content/nextScenario";
 import { CountrySeatBar } from "./CountryPanels";
 import { partyColor, partyName, partyShort, sortBySeats } from "./helpers";
 import { Trophy } from "lucide-react";
 import { ElectionNight, hasSeenReveal, revealSupported } from "../electionNight/ElectionNight";
 import { countryReveal } from "../electionNight/adapters";
 import { DailyResultPanel } from "../DailyResultPanel";
+import { NextCampaignCard } from "../NextCampaignCard";
 
 function defaultGovText(g: Government, name: (p: string) => string): string {
   switch (g.kind) {
@@ -20,6 +22,36 @@ function defaultGovText(g: Government, name: (p: string) => string): string {
     case "confidence_supply": return `${name(g.lead)} governs with ${name(g.partner)} confidence-and-supply (${g.seats}).`;
     case "hung": return `No workable majority. ${name(g.largest)} is the largest party.`;
   }
+}
+
+function CountryNextScenario() {
+  const country = useCountryStore((s) => s.country)!;
+  const game = useCountryStore((s) => s.game)!;
+  const newGame = useCountryStore((s) => s.newGame);
+  const canPlay = useAuthStore((s) => s.canPlay);
+  const openModal = useAuthStore((s) => s.openModal);
+  const user = useAuthStore((s) => s.user);
+
+  const next = countryNextScenario(country.id, game.electionId);
+  if (!next) return null;
+  const data = country.elections[next.id];
+  if (!data) return null;
+  const packId = `${country.id.toLowerCase()}-${next.id}`;
+  const unlocked = canPlay(packId);
+  const playable = playablePartiesIn(country, next.id);
+  const party = playable.includes(game.playerParty) ? game.playerParty : playable[0];
+
+  return (
+    <NextCampaignCard
+      title={data.label}
+      blurb={next.blurb}
+      unlocked={unlocked}
+      ctaLabel={`Play ${data.year} →`}
+      lockLabel={`🔒 Unlock ${data.year}`}
+      onPlay={() => newGame(country.id, next.id, party, String(Date.now()), game.difficulty)}
+      onUnlock={() => openModal(user ? "activate" : "login", packId)}
+    />
+  );
 }
 
 export function CountryResults({ onExit }: { onExit: () => void }) {
@@ -144,6 +176,8 @@ export function CountryResults({ onExit }: { onExit: () => void }) {
           ))}
         </>
       )}
+
+      <div style={{ marginTop: 16 }}><CountryNextScenario /></div>
 
       <div className="row" style={{ gap: 8, marginTop: 18 }}>
         <button className="primary" style={{ flex: 1 }} onClick={reset}>New campaign</button>
