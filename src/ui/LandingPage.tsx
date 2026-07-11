@@ -5,7 +5,7 @@ import { countryCover, scenarioCover } from "@content/covers";
 import { useAuthStore } from "@store/authStore";
 import { UserMenu } from "@ui/auth/UserMenu";
 import { DailyCard } from "@ui/DailyCard";
-import { Vote, Lock, Play, Trophy, KeyRound, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
+import { Vote, Lock, Play, Trophy, KeyRound, ChevronLeft, ChevronRight, Check, X, ShoppingBag } from "lucide-react";
 import { BRAND } from "../brand";
 
 const COUNTRY_NAMES: Record<CountryCode, string> = {
@@ -191,6 +191,9 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
             <span className="mark"><Vote size={18} /></span>{BRAND.name}
           </span>
           <span className="row" style={{ gap: 6 }}>
+            <button className="ghost small" onClick={() => { window.location.href = "https://lakesidegames.net/store/"; }}>
+              <ShoppingBag size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Store
+            </button>
             <button className="ghost small" onClick={() => onGo({ kind: "leaderboard" })}>
               <Trophy size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Leaderboard
             </button>
