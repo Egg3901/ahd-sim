@@ -12,20 +12,26 @@
    ============================================================================ */
 
 :root {
-  /* ── Surfaces (navy stack, dark → light) ─────────────────────────── */
-  --navy-900: #0b1120; /* app background */
-  --navy-800: #0e1626; /* recessed wells (bar tracks, inputs) */
-  --navy-700: #131c31; /* card / panel */
-  --navy-600: #1b263f; /* raised panel, secondary button */
-  --navy-500: #243150; /* hover / selected fill */
-  --navy-450: #2a3a5c; /* hairline border */
-  --navy-400: #38476b; /* tossup / disabled track */
-  --navy-350: #3a4f7a; /* border hover */
+  /* ── Surfaces (Lakeside ground, dark → light) ────────────────────── */
+  --navy-900: #0a0f14; /* app background (Lakeside --bg) */
+  --navy-800: #0d141c; /* recessed wells (bar tracks, inputs) */
+  --navy-700: #111b26; /* card / panel (Lakeside --surface) */
+  --navy-600: #16222e; /* raised panel, secondary button (--surface-2) */
+  --navy-500: #1c2a38; /* hover / selected fill */
+  --navy-450: rgba(234, 240, 246, 0.08); /* hairline border */
+  --navy-400: #33404e; /* tossup / disabled track */
+  --navy-350: rgba(234, 240, 246, 0.16); /* border hover / bright */
 
   /* ── Ink ─────────────────────────────────────────────────────────── */
-  --ink-100: #e6ecf7; /* primary text */
-  --ink-300: #d7e0f2; /* prose / prompt body */
-  --ink-500: #8ea2c4; /* muted / labels */
+  --ink-100: #eaf0f6; /* primary text */
+  --ink-300: rgba(234, 240, 246, 0.8); /* prose / prompt body */
+  --ink-500: rgba(234, 240, 246, 0.64); /* muted / labels */
+
+  /* ── Brand accent (Electioneer red, Lakeside per-game accent) ────── */
+  --accent: #e05c4b;
+  --accent-bright: #e97463;
+  --accent-ink: #0a0f14; /* text on filled accent */
+  --water: #38bdf8; /* studio accent: links / focus rings */
 
   /* ── Party (Democratic blue / Republican red) ────────────────────── */
   --dem: #2563eb;
@@ -56,35 +62,39 @@
   --border-hover: var(--navy-350);
   --text: var(--ink-100);
   --muted: var(--ink-500);
+  --text-3: rgba(234, 240, 246, 0.38);
+  --surface-raised: var(--navy-600);
+  --text-body: var(--ink-300);
 
   /* ── Type ────────────────────────────────────────────────────────── */
-  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 
   /* ── Glass & glow ────────────────────────────────────────────────── */
-  --glass-bg: rgba(11, 17, 32, 0.85);
-  --glass-blur: 8px;
+  --glass-bg: rgba(10, 15, 20, 0.86);
+  --glass-blur: 10px;
   --glow-gold: 0 0 0 1.5px var(--gold), 0 0 18px rgba(245, 185, 66, 0.32);
+  --glow-accent: 0 0 0 1.5px var(--accent), 0 0 18px rgba(224, 92, 75, 0.3);
   --glow-dem: 0 0 0 3px rgba(37, 99, 235, 0.25);
   --glow-gop: 0 0 0 3px rgba(220, 38, 38, 0.25);
 
   /* ── Signature gradients ─────────────────────────────────────────── */
-  --grad-app: radial-gradient(1200px 800px at 70% -10%, #182447 0%, var(--bg) 55%);
+  --grad-app: linear-gradient(180deg, var(--navy-900) 0%, var(--navy-800) 100%);
   --grad-dem: linear-gradient(180deg, var(--dem-bright), var(--dem));
   --grad-gop: linear-gradient(180deg, var(--gop-bright), var(--gop));
-  --grad-card: linear-gradient(180deg, #1a2440 0%, var(--panel) 100%);
-  --grad-modal-head: linear-gradient(180deg, #1c2742, var(--panel));
+  --grad-card: linear-gradient(180deg, var(--navy-600) 0%, var(--panel) 100%);
+  --grad-modal-head: linear-gradient(180deg, #182430, var(--panel));
   --grad-spectrum: linear-gradient(90deg, var(--gop), #cbd5e1, var(--dem));
 
   /* ── Shadows ─────────────────────────────────────────────────────── */
-  --shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  --shadow: 0 20px 44px -16px rgba(0, 0, 0, 0.6);
   --shadow-tile: 0 4px 14px rgba(0, 0, 0, 0.5);
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
 
   /* ── Radii ───────────────────────────────────────────────────────── */
   --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-md: 9px;
+  --radius-lg: 14px;
   --radius-xl: 16px;
   --radius-pill: 20px;
 
@@ -102,10 +112,12 @@
 
 html, body, #root { height: 100%; margin: 0; }
 
+html { background: var(--bg); }
 body {
   font-family: var(--font-sans);
   background: var(--grad-app);
   background-attachment: fixed;
+  background-color: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
@@ -146,8 +158,11 @@ button {
 button:hover:not(:disabled) { background: var(--surface-hover); border-color: var(--border-hover); }
 button:active:not(:disabled) { transform: scale(0.97); }
 button:disabled { opacity: 0.4; cursor: not-allowed; }
-button.primary { background: var(--dem); border-color: var(--dem-bright); font-weight: 600; }
-button.primary:hover:not(:disabled) { background: var(--dem-bright); border-color: var(--dem-bright); }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--water); outline-offset: 3px;
+}
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 650; }
+button.primary:hover:not(:disabled) { background: var(--accent-bright); border-color: var(--accent-bright); }
 button.gop { background: var(--gop); border-color: var(--gop-bright); font-weight: 600; }
 button.gop:hover:not(:disabled) { background: var(--gop-bright); border-color: var(--gop-bright); }
 button.ghost { background: transparent; }
@@ -373,10 +388,10 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
 .center { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; }
 .setup { max-width: 540px; width: 100%; text-align: center; }
 .setup-eyebrow { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 10px;
-  font-size: 12px; font-weight: 700; letter-spacing: 3px; color: var(--gold); }
+  font-size: 0.74rem; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--accent); }
 .setup-eyebrow .mark { display: inline-flex; }
-.setup .title { font-size: 40px; font-weight: 800; letter-spacing: 1px; }
-.setup .title .yr { color: var(--gold); }
+.setup .title { font-size: 40px; font-weight: 800; letter-spacing: -1.2px; line-height: 1.08; text-wrap: balance; }
+.setup .title .yr { color: var(--accent); }
 .setup .sub { color: var(--muted); margin: 10px auto 20px; max-width: 460px; line-height: 1.5; }
 .setup-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .setup-actions .ghost { flex: 1 1 0; min-width: 0; }
@@ -439,7 +454,8 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
 .scenario-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .scenario-card { display: flex; flex-direction: column; align-items: center; gap: 2px;
   padding: 10px 6px; border-radius: var(--radius-md); line-height: 1.1; overflow: hidden; }
-.scenario-card.sel { border-color: var(--gold); background: var(--surface-hover); box-shadow: var(--glow-gold); }
+.scenario-card.sel { border-color: var(--accent); background: var(--surface-hover); box-shadow: var(--glow-accent); }
+.scenario-card:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-3px); }
 .scenario-card.has-cover { padding: 0 0 10px; align-items: stretch; text-align: left; }
 .scenario-card.has-cover > :not(.scenario-cover) { padding-left: 10px; padding-right: 10px; }
 .scenario-card.has-cover > .scenario-cover + * { padding-top: 8px; }
@@ -702,6 +718,41 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
   .actiongrid { grid-template-columns: 1fr; }
   .evbar .seg { font-size: 10px; }
 }
+
+/* ── Landing shell (Lakeside sibling idiom) ─────────────────────────── */
+.landing { min-height: 100%; display: flex; flex-direction: column; }
+.landing-topbar {
+  position: sticky; top: 0; z-index: 30;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-bottom: 1px solid var(--border);
+}
+.landing-topbar-inner {
+  max-width: 1020px; margin: 0 auto; padding: 12px 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+}
+.landing-brand { display: inline-flex; align-items: center; gap: 10px;
+  font-weight: 700; font-size: 15px; letter-spacing: -0.2px; }
+.landing-brand .mark { color: var(--accent); display: inline-flex; }
+.landing-body { max-width: 1020px; width: 100%; margin: 0 auto; padding: 10px 20px 30px; text-align: left; }
+.kicker { font-size: 0.74rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--accent); }
+.landing-hero { margin: 26px 0 8px; }
+.landing-hero h1 {
+  font-size: clamp(2rem, 5vw, 2.8rem); font-weight: 800;
+  letter-spacing: -1.2px; line-height: 1.08; margin: 6px 0 10px; text-wrap: balance;
+}
+.landing-hero .sub { color: var(--muted); font-size: 0.96rem; max-width: 58ch; margin: 0 0 8px; line-height: 1.6; }
+.landing-foot {
+  display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap;
+  margin: 30px 0 8px; padding-top: 18px; border-top: 1px solid var(--border);
+  color: var(--text-3); font-size: 12px;
+}
+.lakeside-credit { display: inline-flex; align-items: center; gap: 8px;
+  color: var(--muted); text-decoration: none; font-weight: 500; }
+.lakeside-credit img { width: 20px; height: 20px; display: block; }
+.lakeside-credit:hover { color: var(--text); }
+@media (max-width: 560px) { .landing-hero h1 { font-size: 1.9rem; } }
 
 /* ── Reduced motion ─────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
