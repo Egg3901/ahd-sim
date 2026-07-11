@@ -173,7 +173,7 @@ export const FREE_SCENARIO_IDS = SCENARIO_REGISTRY.filter((s) => s.free).map((s)
 // (entitlement checks). While false, every scenario is playable by everyone;
 // the packs/activation machinery stays intact so flipping this back on
 // restores the paid tiers without further changes.
-export const PAYWALL_ENABLED = false;
+export const PAYWALL_ENABLED = true;
 
 export function isFreeScenario(scenarioId: string): boolean {
   const meta = SCENARIOS_BY_ID[scenarioId];

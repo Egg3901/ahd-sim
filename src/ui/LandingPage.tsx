@@ -210,7 +210,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
           <p className="sub">
             {SCENARIO_REGISTRY.length} elections across {new Set(SCENARIO_REGISTRY.map((s) => s.country)).size} countries: presidential duels, multiparty brawls, two-round runoffs.
             {PAYWALL_ENABLED
-              ? " Two are free forever. The rest unlock with a pack code."
+              ? " Two are free forever. The rest unlock with a scenario pack."
               : " All of them are free to play right now."}
           </p>
         </header>
@@ -285,7 +285,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
 
         {/* Packs strip: text-led, no cover art */}
         <div className="field" style={{ textAlign: "left", margin: "36px 0 0" }}>
-          <label>{PAYWALL_ENABLED ? "Scenario packs: redeem a code to unlock" : "Scenario packs: everything is playable free while we're in open beta"}</label>
+          <label>{PAYWALL_ENABLED ? "Scenario packs" : "Scenario packs: everything is playable free while we're in open beta"}</label>
           <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))" }}>
             {PACKS.map((p) => {
               const owned = unlocked.packIds.includes(p.id);
