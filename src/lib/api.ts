@@ -99,10 +99,11 @@ export const api = {
   activations: () => call<{ unlocked: Unlocked }>("/api/auth/activations"),
 
   // ── Purchases + Lakeside ID ──
-  checkout: (packId: string) =>
-    call<{ url: string }>("/api/checkout", { method: "POST", body: JSON.stringify({ packId }) }),
-
-  purchases: () => call<{ purchases: Purchase[] }>("/api/purchases"),
+  // Commerce is owned by the Lakeside platform now. The Buy button links out to
+  // the platform checkout (see lakesideCheckoutUrl); the account view lists the
+  // current user's purchases via this same-origin proxy so INTERNAL_TOKEN stays
+  // server-side.
+  myEntitlements: () => call<{ purchases: Purchase[] }>("/api/my-entitlements"),
 
   lakesideExchange: (code: string) =>
     call<{ token: string; user: ApiUser; unlocked: Unlocked }>(
@@ -205,6 +206,18 @@ export function lakesideLoginUrl(): string {
     : "https://sim.ahousedividedgame.com/api/lakeside/login";
   const ret = onSim ? loc.pathname + loc.search : loc.origin + loc.pathname + loc.search;
   return `${endpoint}?return=${encodeURIComponent(ret)}`;
+}
+
+// ── Lakeside platform checkout ───────────────────────────────────────────────
+// Commerce lives on the platform. The Buy button navigates here; the platform
+// requires its own session (bouncing to sign-in if needed), takes payment, and
+// returns to the game with ?purchase=success. Override at build time with
+// VITE_LAKESIDE_BASE if the platform host ever changes.
+export const LAKESIDE_BASE = (import.meta.env.VITE_LAKESIDE_BASE as string | undefined)?.replace(/\/+$/, "")
+  || "https://lakesidegames.net";
+
+export function lakesideCheckoutUrl(packId: string): string {
+  return `${LAKESIDE_BASE}/account/checkout?game=electioneer&product=${encodeURIComponent(packId)}`;
 }
 
 export interface MyRanking {

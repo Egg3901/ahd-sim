@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { api, ApiError, clearSession, getStoredUser, getToken, storeSession, type ApiUser, type Purchase, type Unlocked } from "@lib/api";
+import { api, ApiError, clearSession, getStoredUser, getToken, lakesideCheckoutUrl, storeSession, type ApiUser, type Purchase, type Unlocked } from "@lib/api";
 import { isFreeScenario } from "@content/scenarioRegistry";
 import { PACKS_BY_ID } from "@content/packs";
 
@@ -83,18 +83,15 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   buyPack: async (packId) => {
-    try {
-      const { url } = await api.checkout(packId);
-      window.location.assign(url);
-      return null;
-    } catch (e) {
-      return e instanceof ApiError ? e.message : "Could not reach the server";
-    }
+    // Checkout is owned by the Lakeside platform now. Hand off to it; it takes
+    // over the page and returns with ?purchase=success.
+    window.location.assign(lakesideCheckoutUrl(packId));
+    return null;
   },
 
   loadPurchases: async () => {
     try {
-      const { purchases } = await api.purchases();
+      const { purchases } = await api.myEntitlements();
       set({ purchases });
     } catch {
       /* account view shows an empty list; nothing to do */

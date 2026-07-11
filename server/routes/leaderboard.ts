@@ -2,7 +2,7 @@ import { Router } from "express";
 import { randomUUID } from "node:crypto";
 import { getDb } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth.js";
-import { canAccessScenario } from "../activation.js";
+import { canAccessScenarioWithPlatform } from "../activation.js";
 import { validateSubmission, type ScoreSubmission } from "../scoreValidation.js";
 import { SCENARIOS_BY_ID } from "../../src/content/scenarioRegistry.js";
 
@@ -39,11 +39,11 @@ leaderboardRouter.get("/", (req, res) => {
 });
 
 // POST /api/leaderboard — submit a finished game's score (validated + entitled).
-leaderboardRouter.post("/", requireAuth, (req: AuthedRequest, res) => {
+leaderboardRouter.post("/", requireAuth, async (req: AuthedRequest, res) => {
   const sub = req.body as ScoreSubmission;
   const verdict = validateSubmission(sub);
   if (!verdict.ok) return res.status(400).json({ error: verdict.error });
-  if (!canAccessScenario(req.auth!.userId, sub.scenarioId)) {
+  if (!(await canAccessScenarioWithPlatform(req.auth!.userId, sub.scenarioId))) {
     return res.status(402).json({ error: "PAYWALL", scenarioId: sub.scenarioId });
   }
 

@@ -13,9 +13,11 @@ import { ensureSeedCodes, generateCodes } from "./activation.js";
 import { authRouter } from "./routes/auth.js";
 import { leaderboardRouter, achievementsRouter } from "./routes/leaderboard.js";
 import { dailyRouter } from "./routes/daily.js";
-import { checkoutRouter, stripeWebhook } from "./routes/checkout.js";
 import { lakesideRouter } from "./routes/lakeside.js";
 import { secretEquals } from "./lakeside.js";
+import { requireAuth, type AuthedRequest } from "./auth.js";
+import { fetchPlatformPurchases, identityForUser } from "./entitlements.js";
+import { PACKS_BY_ID } from "../src/content/packs.js";
 
 const PORT = Number(process.env.PORT ?? 3401);
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -25,9 +27,6 @@ const DIST = process.env.CAMPAIGN_DIST ?? join(HERE, "..", "dist");
 
 const app = express();
 app.use(cors());
-// Stripe webhooks are signed over the raw bytes, so this route must see the
-// unparsed body. Registered BEFORE the global JSON parser on purpose.
-app.post("/api/stripe/webhook", express.raw({ type: "*/*", limit: "1mb" }), stripeWebhook);
 app.use(express.json({ limit: "256kb" }));
 
 app.get("/api/health", (_req, res) => {
@@ -38,8 +37,27 @@ app.use("/api/auth", authRouter);
 app.use("/api/leaderboard", leaderboardRouter);
 app.use("/api/achievements", achievementsRouter);
 app.use("/api/daily", dailyRouter);
-app.use(checkoutRouter);   // /api/checkout, /api/purchases
 app.use(lakesideRouter);   // /api/lakeside/*, /api/internal/*
+
+// Same-origin proxy so the client can list the current user's platform
+// purchases without ever seeing INTERNAL_TOKEN. Commerce is owned by the
+// Lakeside platform now; this game only reads.
+app.get("/api/my-entitlements", requireAuth, async (req: AuthedRequest, res) => {
+  const identity = identityForUser(req.auth!.userId);
+  const purchases = identity ? await fetchPlatformPurchases(identity) : [];
+  res.json({
+    purchases: purchases.map((p) => ({
+      packId: p.productId,
+      packName: p.name ?? PACKS_BY_ID[p.productId]?.name ?? p.productId,
+      scenarioId: null,
+      provider: "stripe" as const,
+      amountCents: p.amountCents,
+      currency: p.currency,
+      status: p.status === "refunded" ? "refunded" : "paid",
+      createdAt: p.createdAt,
+    })),
+  });
+});
 
 // Ops backdoor for minting more codes (never exposed in the client).
 app.post("/api/admin/codes", (req, res) => {

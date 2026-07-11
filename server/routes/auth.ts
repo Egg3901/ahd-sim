@@ -2,7 +2,7 @@ import { Router } from "express";
 import { randomUUID } from "node:crypto";
 import { getDb, type UserRow } from "../db.js";
 import { signToken, hashPassword, checkPassword, requireAuth, type AuthedRequest } from "../auth.js";
-import { redeemCode, unlockedForUser } from "../activation.js";
+import { redeemCode, unlockedForUserWithPlatform } from "../activation.js";
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -52,23 +52,23 @@ authRouter.post("/login", async (req, res) => {
   });
 });
 
-authRouter.get("/me", requireAuth, (req: AuthedRequest, res) => {
+authRouter.get("/me", requireAuth, async (req: AuthedRequest, res) => {
   const row = getDb().prepare("SELECT id, username, email, created_at, ahd_user_id FROM users WHERE id = ?")
     .get(req.auth!.userId) as { id: string; username: string; email: string; created_at: number; ahd_user_id: string | null } | undefined;
   if (!row) return res.status(404).json({ error: "User not found" });
   const { ahd_user_id, ...user } = row;
-  res.json({ user: { ...user, ahdLinked: !!ahd_user_id }, unlocked: unlockedForUser(req.auth!.userId) });
+  res.json({ user: { ...user, ahdLinked: !!ahd_user_id }, unlocked: await unlockedForUserWithPlatform(req.auth!.userId) });
 });
 
-authRouter.post("/activate", requireAuth, (req: AuthedRequest, res) => {
+authRouter.post("/activate", requireAuth, async (req: AuthedRequest, res) => {
   const { code } = req.body ?? {};
   if (typeof code !== "string" || !code.trim()) return res.status(400).json({ error: "Code required" });
   const out = redeemCode(req.auth!.userId, code);
   if (!out.ok) return res.status(400).json({ error: out.error });
-  res.json({ scenarioId: out.scenarioId, packId: out.packId, packName: out.packName, unlocked: unlockedForUser(req.auth!.userId) });
+  res.json({ scenarioId: out.scenarioId, packId: out.packId, packName: out.packName, unlocked: await unlockedForUserWithPlatform(req.auth!.userId) });
 });
 
-authRouter.get("/activations", requireAuth, (req: AuthedRequest, res) => {
+authRouter.get("/activations", requireAuth, async (req: AuthedRequest, res) => {
   const rows = getDb().prepare("SELECT * FROM activations WHERE user_id = ?").all(req.auth!.userId);
-  res.json({ activations: rows, unlocked: unlockedForUser(req.auth!.userId) });
+  res.json({ activations: rows, unlocked: await unlockedForUserWithPlatform(req.auth!.userId) });
 });

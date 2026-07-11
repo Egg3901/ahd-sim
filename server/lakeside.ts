@@ -18,6 +18,15 @@ export interface LakesideIdentity {
   username: string;
 }
 
+export const DEFAULT_BASE_URL = "https://sim.ahousedividedgame.com";
+
+// BASE_URL is also a Vite-reserved env name ("/" under vitest), so only honor
+// values that are actual absolute URLs.
+export function configuredBaseUrl(): string {
+  const raw = process.env.BASE_URL;
+  return (raw && /^https?:\/\//.test(raw) ? raw : DEFAULT_BASE_URL).replace(/\/+$/, "");
+}
+
 function b64urlToBuf(s: string): Buffer {
   return Buffer.from(s.replace(/-/g, "+").replace(/_/g, "/"), "base64");
 }

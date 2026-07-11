@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { getDb, type ActivationRow } from "./db.js";
 import { PACKS, PACKS_BY_ID } from "../src/content/packs.js";
 import { isFreeScenario } from "../src/content/scenarioRegistry.js";
+import { identityForUser, ownedProductIds } from "./entitlements.js";
 
 // CAMP-XXXX-XXXX-XXXX — uppercase alphanumerics minus ambiguous O/0/I/1 (L kept
 // out too for safety).
@@ -180,4 +181,38 @@ export function canAccessScenario(userId: string | null, scenarioId: string): bo
   if (isFreeScenario(scenarioId)) return true;
   if (!userId) return false;
   return unlockedForUser(userId).scenarioIds.includes(scenarioId);
+}
+
+// ── Platform-aware entitlements ──────────────────────────────────────────────
+// The paid-scenario source of truth is now the Lakeside platform (owned pack
+// ids), OR'd with local activation-code unlocks (the `activations` table). Code
+// unlocks stay 100% local and unchanged; only the former Stripe source moved.
+
+/** Fold platform-owned pack ids into an Unlocked set. */
+function mergePackIds(base: Unlocked, ownedPacks: string[]): Unlocked {
+  const scenarioIds = new Set(base.scenarioIds);
+  const packIds = new Set(base.packIds);
+  for (const pid of ownedPacks) {
+    const pack = PACKS_BY_ID[pid];
+    if (!pack) continue;
+    packIds.add(pid);
+    for (const sid of pack.scenarios) scenarioIds.add(sid);
+  }
+  return { scenarioIds: [...scenarioIds], packIds: [...packIds] };
+}
+
+/** Local activation-code unlocks OR'd with platform entitlements. */
+export async function unlockedForUserWithPlatform(userId: string): Promise<Unlocked> {
+  const local = unlockedForUser(userId);
+  const identity = identityForUser(userId);
+  if (!identity) return local;
+  const ownedPacks = await ownedProductIds(identity);
+  return mergePackIds(local, ownedPacks);
+}
+
+/** canAccessScenario, considering platform entitlements as well as codes. */
+export async function canAccessScenarioWithPlatform(userId: string | null, scenarioId: string): Promise<boolean> {
+  if (isFreeScenario(scenarioId)) return true;
+  if (!userId) return false;
+  return (await unlockedForUserWithPlatform(userId)).scenarioIds.includes(scenarioId);
 }

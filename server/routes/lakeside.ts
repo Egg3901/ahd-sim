@@ -21,15 +21,12 @@
 // the right origin, and the same flow works on both hosts.
 
 import { Router } from "express";
-import { getDb, type PurchaseRow, type UserRow } from "../db.js";
 import { signToken } from "../auth.js";
-import { unlockedForUser } from "../activation.js";
+import { unlockedForUserWithPlatform } from "../activation.js";
 import {
-  checkInternalToken, getLakesideIdentity, linkOrCreateUser,
+  checkInternalToken, configuredBaseUrl, getLakesideIdentity, linkOrCreateUser,
   mintHandoffCode, redeemHandoffCode, resolveReturnUrl,
 } from "../lakeside.js";
-import { configuredBaseUrl } from "./checkout.js";
-import { PACKS_BY_ID } from "../../src/content/packs.js";
 
 const AHD_LOGIN_URL = "https://www.ahousedividedgame.com/login";
 
@@ -49,7 +46,7 @@ lakesideRouter.get("/api/lakeside/login", (req, res) => {
   res.redirect(url.toString());
 });
 
-lakesideRouter.post("/api/lakeside/exchange", (req, res) => {
+lakesideRouter.post("/api/lakeside/exchange", async (req, res) => {
   const { code } = req.body ?? {};
   if (typeof code !== "string" || !code) return res.status(400).json({ error: "Code required" });
   const identity = redeemHandoffCode(code);
@@ -58,7 +55,7 @@ lakesideRouter.post("/api/lakeside/exchange", (req, res) => {
   res.json({
     token: signToken({ userId: user.id, username: user.username }),
     user: { id: user.id, username: user.username, email: user.email },
-    unlocked: unlockedForUser(user.id),
+    unlocked: await unlockedForUserWithPlatform(user.id),
   });
 });
 
@@ -83,34 +80,10 @@ lakesideRouter.post("/api/internal/redeem-handoff", (req, res) => {
   res.json(identity);
 });
 
-lakesideRouter.get("/api/internal/entitlements", (req, res) => {
-  if (!checkInternalToken(req.headers.authorization)) return res.status(401).json({ error: "Unauthorized" });
-  const ahdUserId = typeof req.query.ahdUserId === "string" ? req.query.ahdUserId : null;
-  const email = typeof req.query.email === "string" ? req.query.email.toLowerCase() : null;
-  if (!ahdUserId && !email) return res.status(400).json({ error: "ahdUserId or email required" });
-
-  const db = getDb();
-  const userIds = new Set<string>();
-  if (ahdUserId) {
-    for (const u of db.prepare("SELECT id FROM users WHERE ahd_user_id = ?").all(ahdUserId) as UserRow[]) userIds.add(u.id);
-  }
-  if (email) {
-    for (const u of db.prepare("SELECT id FROM users WHERE email = ?").all(email) as UserRow[]) userIds.add(u.id);
-  }
-  const rows: PurchaseRow[] = [];
-  for (const id of userIds) {
-    rows.push(...(db.prepare("SELECT * FROM purchases WHERE user_id = ? ORDER BY created_at DESC").all(id) as PurchaseRow[]));
-  }
-  res.json({
-    purchases: rows.map((r) => ({
-      game: "electioneer",
-      packId: r.pack_id,
-      packName: r.pack_id ? PACKS_BY_ID[r.pack_id]?.name ?? r.pack_id : null,
-      amountCents: r.amount_cents,
-      currency: r.currency,
-      provider: r.provider,
-      createdAt: r.created_at,
-      status: r.status,
-    })),
-  });
+// RETIRED: commerce moved to the Lakeside platform, which now owns the purchase
+// ledger and serves entitlements directly. The account portal reads the
+// platform, not this game. Kept as a 410 so any stale caller gets a clear
+// signal instead of a silent 404.
+lakesideRouter.all("/api/internal/entitlements", (_req, res) => {
+  res.status(410).json({ error: "Gone: entitlements are served by the Lakeside platform" });
 });

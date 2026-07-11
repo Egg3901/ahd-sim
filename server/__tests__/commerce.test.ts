@@ -1,24 +1,23 @@
-// Stripe checkout grants, Lakeside ID linking, handoff codes, and internal
-// auth. Uses a throwaway SQLite file (CAMPAIGN_DB_PATH must be set before the
-// db module loads, hence the dynamic imports).
+// Lakeside ID linking, handoff codes, internal auth, activation codes, and the
+// platform entitlements consumer. Commerce (Stripe checkout + the purchases
+// ledger) moved to the Lakeside platform, so those tests are gone. Uses a
+// throwaway SQLite file (CAMPAIGN_DB_PATH must be set before the db module
+// loads, hence the dynamic imports).
 
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, afterEach, vi } from "vitest";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createHmac, randomUUID } from "node:crypto";
-import Stripe from "stripe";
 
 process.env.CAMPAIGN_DB_PATH = join(mkdtempSync(join(tmpdir(), "campaign-test-")), "test.db");
 process.env.AUTH_SECRET = "test-auth-secret";
 process.env.INTERNAL_TOKEN = "test-internal-token";
-process.env.STRIPE_SECRET_KEY = "sk_test_dummy";
-process.env.STRIPE_WEBHOOK_SECRET = "whsec_test_dummy";
 
 const dbMod = await import("../db.ts");
 const activation = await import("../activation.ts");
 const lakeside = await import("../lakeside.ts");
-const checkout = await import("../routes/checkout.ts");
+const entitlements = await import("../entitlements.ts");
 
 function makeUser(overrides: Partial<{ username: string; email: string; ahd: string | null }> = {}) {
   const id = randomUUID();
@@ -38,114 +37,60 @@ function gameJwt(payload: Record<string, unknown>, secret = process.env.AUTH_SEC
   return `${head}.${body}.${sig}`;
 }
 
-function fakeSession(id: string, userId: string, packId = "us-historical", paid = true) {
-  return {
-    id,
-    payment_status: paid ? "paid" : "unpaid",
-    amount_total: 499,
-    currency: "usd",
-    metadata: { userId, packId, email: "buyer@example.com" },
-  };
-}
-
-// Minimal express-shaped req/res for the webhook handler.
-function fakeRes() {
-  const res = {
-    statusCode: 200,
-    body: undefined as unknown,
-    status(code: number) { this.statusCode = code; return this; },
-    json(payload: unknown) { this.body = payload; return this; },
-  };
-  return res;
-}
-
 beforeAll(() => {
   dbMod.getDb();
 });
 
-describe("stripe webhook", () => {
-  const stripe = new Stripe("sk_test_dummy");
-
-  it("rejects a bad signature with 400 and grants nothing", () => {
-    const user = makeUser();
-    const payload = Buffer.from(JSON.stringify({
-      type: "checkout.session.completed",
-      data: { object: fakeSession("cs_bad_sig", user.id) },
-    }));
-    const res = fakeRes();
-    checkout.stripeWebhook(
-      { headers: { "stripe-signature": "t=1,v1=deadbeef" }, body: payload } as never,
-      res as never,
-    );
-    expect(res.statusCode).toBe(400);
-    expect(activation.unlockedForUser(user.id).packIds).toEqual([]);
-  });
-
-  it("accepts a correctly signed event and grants the pack", () => {
-    const user = makeUser();
-    const event = {
-      id: "evt_1", object: "event", type: "checkout.session.completed",
-      data: { object: fakeSession("cs_signed_ok", user.id) },
-    };
-    const payload = JSON.stringify(event);
-    const sig = stripe.webhooks.generateTestHeaderString({ payload, secret: "whsec_test_dummy" });
-    const res = fakeRes();
-    checkout.stripeWebhook(
-      { headers: { "stripe-signature": sig }, body: Buffer.from(payload) } as never,
-      res as never,
-    );
-    expect(res.statusCode).toBe(200);
-    expect(activation.unlockedForUser(user.id).packIds).toContain("us-historical");
-  });
-
-  it("ignores unrelated event types with 200", () => {
-    const event = { id: "evt_2", object: "event", type: "invoice.paid", data: { object: {} } };
-    const payload = JSON.stringify(event);
-    const sig = stripe.webhooks.generateTestHeaderString({ payload, secret: "whsec_test_dummy" });
-    const res = fakeRes();
-    checkout.stripeWebhook(
-      { headers: { "stripe-signature": sig }, body: Buffer.from(payload) } as never,
-      res as never,
-    );
-    expect(res.statusCode).toBe(200);
-  });
+afterEach(() => {
+  vi.restoreAllMocks();
+  entitlements.clearEntitlementsCache();
 });
 
-describe("checkout grant path", () => {
-  it("grants the pack and unlocks its scenarios on paid completion", () => {
-    const user = makeUser();
-    const granted = checkout.handleCheckoutCompleted(fakeSession("cs_grant_1", user.id));
-    expect(granted).toBe(true);
-    const unlocked = activation.unlockedForUser(user.id);
-    expect(unlocked.packIds).toContain("us-historical");
-    expect(unlocked.scenarioIds).toContain("us-2016");
+describe("platform entitlements consumer", () => {
+  function mockPlatform(purchases: unknown) {
+    return vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ purchases }), { status: 200 }),
+    );
+  }
+
+  it("unlocks an owned platform pack, OR'd with local activation codes", async () => {
+    const user = makeUser({ ahd: "ahd_ent_1", email: "ent1@example.com" });
+    // Local code unlock of the global pack.
+    const [code] = activation.generateCodes(null, "global", 1);
+    activation.redeemCode(user.id, code);
+    // Platform reports the user owns the US historical pack.
+    const spy = mockPlatform([{ game: "electioneer", productId: "us-historical", status: "paid" }]);
+
+    const unlocked = await activation.unlockedForUserWithPlatform(user.id);
+    expect(unlocked.packIds).toContain("global");        // local code
+    expect(unlocked.packIds).toContain("us-historical"); // platform
+    expect(unlocked.scenarioIds).toContain("us-2016");   // expanded from the pack
+    // Bearer token + query identity are sent to the platform.
+    const url = String(spy.mock.calls[0][0]);
+    expect(url).toContain("ahdUserId=ahd_ent_1");
+    expect((spy.mock.calls[0][1] as RequestInit).headers).toMatchObject({
+      Authorization: "Bearer test-internal-token",
+    });
   });
 
-  it("is idempotent: a retried webhook records and grants nothing new", () => {
-    const user = makeUser();
-    expect(checkout.handleCheckoutCompleted(fakeSession("cs_dup", user.id))).toBe(true);
-    expect(checkout.handleCheckoutCompleted(fakeSession("cs_dup", user.id))).toBe(false);
-    const db = dbMod.getDb();
-    const purchases = db.prepare("SELECT COUNT(*) AS n FROM purchases WHERE provider_ref = ?").get("cs_dup") as { n: number };
-    const grants = db.prepare("SELECT COUNT(*) AS n FROM activations WHERE user_id = ?").get(user.id) as { n: number };
-    expect(purchases.n).toBe(1);
-    expect(grants.n).toBe(1);
+  it("ignores refunded and other-game rows", async () => {
+    const user = makeUser({ ahd: "ahd_ent_2", email: "ent2@example.com" });
+    mockPlatform([
+      { game: "electioneer", productId: "complete", status: "refunded" },
+      { game: "metroforge", productId: "complete", status: "paid" },
+    ]);
+    const owned = await activation.unlockedForUserWithPlatform(user.id);
+    expect(owned.packIds).toEqual([]);
   });
 
-  it("does not grant on unpaid sessions", () => {
-    const user = makeUser();
-    expect(checkout.handleCheckoutCompleted(fakeSession("cs_unpaid", user.id, "us-historical", false))).toBe(false);
-    expect(activation.unlockedForUser(user.id).packIds).toEqual([]);
-  });
-});
-
-describe("checkout base URL", () => {
-  it("maps origins to their app mount", () => {
-    expect(checkout.checkoutBase("https://sim.ahousedividedgame.com")).toBe("https://sim.ahousedividedgame.com/");
-    expect(checkout.checkoutBase("https://lakesidegames.net")).toBe("https://lakesidegames.net/games/electioneer/");
-    expect(checkout.checkoutBase("https://www.lakesidegames.net")).toBe("https://www.lakesidegames.net/games/electioneer/");
-    expect(checkout.checkoutBase("https://evil.example.com")).toBe("https://sim.ahousedividedgame.com/");
-    expect(checkout.checkoutBase(undefined)).toBe("https://sim.ahousedividedgame.com/");
+  it("fails soft (no platform unlock) when the platform errors", async () => {
+    const user = makeUser({ ahd: "ahd_ent_3", email: "ent3@example.com" });
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network down"));
+    const unlocked = await activation.unlockedForUserWithPlatform(user.id);
+    expect(unlocked.packIds).toEqual([]);
+    // Free scenarios still resolve (paywall is off), proving the game never
+    // blocks play on the platform being reachable.
+    expect(await activation.canAccessScenarioWithPlatform(user.id, "us-2016")).toBe(true);
   });
 });
 
