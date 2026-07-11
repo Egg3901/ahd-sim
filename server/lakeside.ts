@@ -81,20 +81,30 @@ export function linkOrCreateUser(identity: LakesideIdentity): UserRow {
   const byAhd = db.prepare("SELECT * FROM users WHERE ahd_user_id = ?").get(identity.ahdUserId) as UserRow | undefined;
   if (byAhd) return byAhd;
 
+  // A random unusable password: nothing bcrypt-verifies against it, so the
+  // local password door is closed until the player deliberately sets one.
+  const unusablePassword = () => bcrypt.hashSync(randomBytes(32).toString("hex"), 10);
+
+  // Email match is NOT trusted for silent linking: local registration accepts
+  // any unverified email, so an attacker could pre-register a victim's address
+  // (with a password they know) and inherit the victim's AHD identity + future
+  // purchases on first SSO. The AHD identity's email IS verified (owned at the
+  // game), so we make it authoritative: attach this ahd_user_id to the colliding
+  // row AND rotate its password_hash to an unusable value, which severs any
+  // local-password access a squatter set up. The legitimate AHD owner keeps the
+  // account and its data, reached through Lakeside sign-in.
   const byEmail = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as UserRow | undefined;
   if (byEmail) {
-    db.prepare("UPDATE users SET ahd_user_id = ? WHERE id = ?").run(identity.ahdUserId, byEmail.id);
+    db.prepare("UPDATE users SET ahd_user_id = ?, password_hash = ? WHERE id = ?")
+      .run(identity.ahdUserId, unusablePassword(), byEmail.id);
     return { ...byEmail, ahd_user_id: identity.ahdUserId };
   }
 
   const id = randomUUID();
   const username = availableUsername(db, identity.username);
-  // Random unusable password: nothing hashes to this, so the local password
-  // door stays closed until the player sets one deliberately.
-  const passwordHash = bcrypt.hashSync(randomBytes(32).toString("hex"), 10);
   db.prepare(
     "INSERT INTO users (id, username, email, password_hash, created_at, ahd_user_id) VALUES (?, ?, ?, ?, ?, ?)",
-  ).run(id, username, email, passwordHash, Date.now(), identity.ahdUserId);
+  ).run(id, username, email, unusablePassword(), Date.now(), identity.ahdUserId);
   return db.prepare("SELECT * FROM users WHERE id = ?").get(id) as UserRow;
 }
 

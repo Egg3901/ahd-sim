@@ -179,6 +179,24 @@ describe("lakeside identity", () => {
     expect(u.ahd_user_id).toBe("ahd_new_1");
     expect(u.email).toBe("brand-new@example.com");
   });
+
+  it("closes the local password door when linking an email-collision account (takeover fix)", () => {
+    // Simulate a squatter who pre-registered the victim's email locally with a
+    // password they know (makeUser stores password_hash = "x").
+    const squat = makeUser({ email: "victim@example.com" });
+    const before = dbMod.getDb().prepare("SELECT password_hash FROM users WHERE id = ?").get(squat.id) as { password_hash: string };
+    expect(before.password_hash).toBe("x");
+
+    // The verified AHD owner signs in for the first time.
+    const linked = lakeside.linkOrCreateUser({ ahdUserId: "ahd_victim", email: "victim@example.com", username: "victim" });
+    expect(linked.id).toBe(squat.id);
+    expect(linked.ahd_user_id).toBe("ahd_victim");
+
+    // The squatter's known password no longer opens the account.
+    const after = dbMod.getDb().prepare("SELECT password_hash FROM users WHERE id = ?").get(squat.id) as { password_hash: string };
+    expect(after.password_hash).not.toBe("x");
+    expect(after.password_hash.length).toBeGreaterThan(20); // a real bcrypt hash
+  });
 });
 
 describe("handoff codes", () => {
