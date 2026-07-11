@@ -43,6 +43,59 @@ export function ensureSeedCodes(): void {
   console.log(`[activation] seeded ${PACKS.length * 100} codes (100 per pack)`);
 }
 
+// ── Shared entitlement grant ─────────────────────────────────────────────────
+// Every unlock (activation code OR Stripe purchase) lands in `activations`;
+// unlockedForUser/canAccessScenario read only that table, so one grant path
+// serves both. `code` is the provider reference (activation code or a
+// stripe:<session_id> marker) for traceability.
+
+export function grantUnlock(userId: string, scenarioId: string | null, packId: string | null, code: string): void {
+  getDb().prepare(
+    "INSERT INTO activations (id, user_id, scenario_id, pack_id, code, redeemed_at) VALUES (?, ?, ?, ?, ?, ?)",
+  ).run(randomUUID(), userId, scenarioId, packId, code, Date.now());
+}
+
+export interface PurchaseInput {
+  userId: string;
+  ahdUserId?: string | null;
+  email: string;
+  packId?: string | null;
+  scenarioId?: string | null;
+  provider: "stripe" | "code";
+  providerRef: string; // stripe checkout session id, or the activation code
+  amountCents: number;
+  currency: string;
+}
+
+/**
+ * Idempotently record a purchase (unique index on provider_ref) and grant the
+ * unlock. Returns false when the provider_ref was already recorded (webhook
+ * retry, double redeem), in which case nothing is granted twice.
+ */
+export function recordPurchase(p: PurchaseInput): boolean {
+  const db = getDb();
+  let recorded = false;
+  db.transaction(() => {
+    const ins = db.prepare(
+      `INSERT OR IGNORE INTO purchases
+         (id, user_id, ahd_user_id, email, pack_id, scenario_id, provider, provider_ref, amount_cents, currency, status, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'paid', ?)`,
+    ).run(
+      randomUUID(), p.userId, p.ahdUserId ?? null, p.email.toLowerCase(),
+      p.packId ?? null, p.scenarioId ?? null, p.provider, p.providerRef,
+      p.amountCents, p.currency.toLowerCase(), Date.now(),
+    );
+    if (ins.changes === 0) return; // already processed
+    recorded = true;
+    // Codes already write their own activations row in redeemCode; only
+    // non-code providers need the unlock granted here.
+    if (p.provider !== "code") {
+      grantUnlock(p.userId, p.scenarioId ?? null, p.packId ?? null, `stripe:${p.providerRef}`);
+    }
+  })();
+  return recorded;
+}
+
 export interface RedeemOutcome {
   ok: boolean;
   error?: string;
@@ -75,6 +128,25 @@ export function redeemCode(userId: string, rawCode: string): RedeemOutcome {
     })();
   } catch {
     return { ok: false, error: "Code already redeemed" };
+  }
+
+  // Entitlements ledger: mirror the redemption into `purchases` (provider
+  // 'code', $0) so the Lakeside account portal sees code unlocks too.
+  const user = db.prepare("SELECT email, ahd_user_id FROM users WHERE id = ?").get(userId) as
+    | { email: string; ahd_user_id: string | null }
+    | undefined;
+  if (user) {
+    recordPurchase({
+      userId,
+      ahdUserId: user.ahd_user_id,
+      email: user.email,
+      packId: row.pack_id,
+      scenarioId: row.scenario_id,
+      provider: "code",
+      providerRef: code,
+      amountCents: 0,
+      currency: "usd",
+    });
   }
 
   return {

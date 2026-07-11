@@ -74,7 +74,44 @@ export function getDb(): Database.Database {
       earned_at INTEGER NOT NULL,
       PRIMARY KEY (user_id, scenario_id, achievement_id)
     );
+
+    -- Purchases ledger (Lakeside ID contract). provider 'stripe' rows come from
+    -- checkout webhooks; provider 'code' rows are backfilled on code redemption.
+    -- provider_ref (stripe session id / activation code) is the idempotency key.
+    CREATE TABLE IF NOT EXISTS purchases (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id),
+      ahd_user_id TEXT,
+      email TEXT NOT NULL,
+      pack_id TEXT,
+      scenario_id TEXT,
+      provider TEXT NOT NULL CHECK (provider IN ('stripe', 'code')),
+      provider_ref TEXT NOT NULL,
+      amount_cents INTEGER NOT NULL,
+      currency TEXT NOT NULL,
+      status TEXT NOT NULL CHECK (status IN ('paid', 'refunded')),
+      created_at INTEGER NOT NULL
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS purchases_provider_ref ON purchases(provider_ref);
+
+    -- Single-use SSO handoff codes for lakesidegames.net consumers (60s TTL).
+    CREATE TABLE IF NOT EXISTS handoff_codes (
+      code TEXT PRIMARY KEY,
+      ahd_user_id TEXT NOT NULL,
+      email TEXT NOT NULL,
+      username TEXT NOT NULL,
+      expires_at INTEGER NOT NULL,
+      used INTEGER NOT NULL DEFAULT 0
+    );
   `);
+
+  // Lakeside account link: AHD userId attached to a local user. Additive column
+  // migration, same idiom as the CREATE IF NOT EXISTS blocks above.
+  const userCols = db.prepare("PRAGMA table_info(users)").all() as { name: string }[];
+  if (!userCols.some((c) => c.name === "ahd_user_id")) {
+    db.exec("ALTER TABLE users ADD COLUMN ahd_user_id TEXT");
+  }
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS users_ahd_user_id ON users(ahd_user_id) WHERE ahd_user_id IS NOT NULL");
 
   return db;
 }
@@ -84,6 +121,22 @@ export interface UserRow {
   username: string;
   email: string;
   password_hash: string;
+  created_at: number;
+  ahd_user_id: string | null;
+}
+
+export interface PurchaseRow {
+  id: string;
+  user_id: string;
+  ahd_user_id: string | null;
+  email: string;
+  pack_id: string | null;
+  scenario_id: string | null;
+  provider: "stripe" | "code";
+  provider_ref: string;
+  amount_cents: number;
+  currency: string;
+  status: "paid" | "refunded";
   created_at: number;
 }
 

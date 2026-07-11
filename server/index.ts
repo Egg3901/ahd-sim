@@ -13,6 +13,8 @@ import { ensureSeedCodes, generateCodes } from "./activation.js";
 import { authRouter } from "./routes/auth.js";
 import { leaderboardRouter, achievementsRouter } from "./routes/leaderboard.js";
 import { dailyRouter } from "./routes/daily.js";
+import { checkoutRouter, stripeWebhook } from "./routes/checkout.js";
+import { lakesideRouter } from "./routes/lakeside.js";
 
 const PORT = Number(process.env.PORT ?? 3401);
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -22,6 +24,9 @@ const DIST = process.env.CAMPAIGN_DIST ?? join(HERE, "..", "dist");
 
 const app = express();
 app.use(cors());
+// Stripe webhooks are signed over the raw bytes, so this route must see the
+// unparsed body. Registered BEFORE the global JSON parser on purpose.
+app.post("/api/stripe/webhook", express.raw({ type: "*/*", limit: "1mb" }), stripeWebhook);
 app.use(express.json({ limit: "256kb" }));
 
 app.get("/api/health", (_req, res) => {
@@ -32,6 +37,8 @@ app.use("/api/auth", authRouter);
 app.use("/api/leaderboard", leaderboardRouter);
 app.use("/api/achievements", achievementsRouter);
 app.use("/api/daily", dailyRouter);
+app.use(checkoutRouter);   // /api/checkout, /api/purchases
+app.use(lakesideRouter);   // /api/lakeside/*, /api/internal/*
 
 // Ops backdoor for minting more codes (never exposed in the client).
 app.post("/api/admin/codes", (req, res) => {

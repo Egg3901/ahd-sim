@@ -53,9 +53,11 @@ authRouter.post("/login", async (req, res) => {
 });
 
 authRouter.get("/me", requireAuth, (req: AuthedRequest, res) => {
-  const user = getDb().prepare("SELECT id, username, email, created_at FROM users WHERE id = ?").get(req.auth!.userId);
-  if (!user) return res.status(404).json({ error: "User not found" });
-  res.json({ user, unlocked: unlockedForUser(req.auth!.userId) });
+  const row = getDb().prepare("SELECT id, username, email, created_at, ahd_user_id FROM users WHERE id = ?")
+    .get(req.auth!.userId) as { id: string; username: string; email: string; created_at: number; ahd_user_id: string | null } | undefined;
+  if (!row) return res.status(404).json({ error: "User not found" });
+  const { ahd_user_id, ...user } = row;
+  res.json({ user: { ...user, ahdLinked: !!ahd_user_id }, unlocked: unlockedForUser(req.auth!.userId) });
 });
 
 authRouter.post("/activate", requireAuth, (req: AuthedRequest, res) => {
