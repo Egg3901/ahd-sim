@@ -20,7 +20,7 @@ export function IntelPanel() {
       <div className="kv"><span className="k">National poll (2-party)</span><span>{game.candidates.dem.shortName} {pct(natl)} · {game.candidates.rep.shortName} {pct(1 - natl)}</span></div>
       <div className="kv"><span className="k">Your momentum</span><span>{game.resources[game.playerCandidate].nationalMomentum.toFixed(0)}</span></div>
       <div className="kv"><span className="k">Media narrative</span><span>{game.resources[game.playerCandidate].mediaNarrative.toFixed(0)}</span></div>
-      <div className="kv"><span className="k">{game.candidates[opp].shortName}'s last stop</span><span style={{ color: game.candidates[opp].color }}>{oppLoc ? oppLoc.name : "—"}</span></div>
+      <div className="kv"><span className="k">{game.candidates[opp].shortName}'s last stop</span><span style={{ color: game.candidates[opp].color }}>{oppLoc ? oppLoc.name : "·"}</span></div>
 
       <h3 style={{ marginTop: 14 }}>Issue Salience</h3>
       {issues.map((id) => (

@@ -55,7 +55,7 @@ export const CANADA: CountryBundle = {
   ],
 
   blocs: [
-    { id: "young", name: "Young voters (18–34)", share: 0.24, turnoutPropensity: 0.55,
+    { id: "young", name: "Young voters (18-34)", share: 0.24, turnoutPropensity: 0.55,
       tilt: { cpc: 0.25, ndp: 0.2, lpc: -0.3, gpc: 0.1 } },
     { id: "graduate", name: "University graduates", share: 0.30, turnoutPropensity: 0.75,
       tilt: { lpc: 0.25, ndp: 0.05, cpc: -0.15, gpc: 0.1 } },
@@ -116,14 +116,14 @@ export const CANADA: CountryBundle = {
       },
       events: [
         // Scheduled beats — the real five-week arc, in order.
-        { id: "carney_sworn_in", headline: "Trudeau resigns, the carbon tax is axed — {party}'s attack lines lose their target as Carney takes the oath", role: "any", party: "cpc", weight: 1, appeal: -0.03, momentum: -8, turn: 0 },
+        { id: "carney_sworn_in", headline: "Trudeau resigns, the carbon tax is axed, and {party}'s attack lines lose their target as Carney takes the oath", role: "any", party: "cpc", weight: 1, appeal: -0.03, momentum: -8, turn: 0 },
         { id: "gst_cut_duel", headline: "The GST-cut duel: {party}'s tax-off-new-homes pledge forces the pace on affordability", role: "any", party: "cpc", weight: 1, appeal: 0.03, momentum: 7, turn: 1 },
         { id: "debate_faceoff_fr", headline: "The French debate: {party}'s leader labours through his second language while Blanchet and Poilievre land hits", role: "any", party: "lpc", weight: 1, appeal: -0.025, momentum: -6, turn: 3 },
-        { id: "advance_poll_record", headline: "7.3 million vote early — a record advance poll banks votes for {party}", role: "leader", weight: 1, appeal: 0.02, momentum: 6, turn: 4 },
+        { id: "advance_poll_record", headline: "7.3 million vote early. A record advance poll banks votes for {party}", role: "leader", weight: 1, appeal: 0.02, momentum: 6, turn: 4 },
         { id: "ndp_consolidation", headline: "Strategic voting bites: {party} support bleeds to the front of the anti-tariff line", role: "any", party: "ndp", weight: 1, appeal: -0.035, momentum: -12, turn: 5 },
         // Unscheduled flavor — joins the weekly draw, fires at most once.
-        { id: "annexation_rally", headline: "'51st state' — another Trump taunt sends flag-waving voters to {party}", role: "any", party: "lpc", weight: 3, appeal: 0.03, momentum: 8 },
-        { id: "elbows_up", headline: "'Elbows up' goes national — the hockey-bench battle cry rallies {party} crowds", role: "any", party: "lpc", weight: 2, appeal: 0.02, momentum: 7 },
+        { id: "annexation_rally", headline: "'51st state': another Trump taunt sends flag-waving voters to {party}", role: "any", party: "lpc", weight: 3, appeal: 0.03, momentum: 8 },
+        { id: "elbows_up", headline: "'Elbows up' goes national. The hockey-bench battle cry rallies {party} crowds", role: "any", party: "lpc", weight: 2, appeal: 0.02, momentum: 7 },
         { id: "debate_night_en", headline: "{party} judged the winner of the English debate showdown", role: "any", weight: 2, appeal: 0.03, momentum: 8 },
         { id: "carleton_watch", headline: "Riding watch: {party}'s own leader is in a dogfight for his Carleton seat", role: "any", party: "cpc", weight: 2, appeal: -0.025, momentum: -6 },
       ],
@@ -153,16 +153,16 @@ export const CANADA: CountryBundle = {
       },
       events: [
         // Scheduled beats — the real five-week arc, in order.
-        { id: "snap_call_backlash", headline: "'Why an election, why now?' — the pandemic snap call blows back on {party}", role: "any", party: "lpc", weight: 1, appeal: -0.03, momentum: -9, turn: 0 },
-        { id: "kabul_airlift", headline: "Kabul falls in week one — the airlift scramble follows {party} down the campaign trail", role: "any", party: "lpc", weight: 1, appeal: -0.025, momentum: -6, turn: 1 },
-        { id: "gravel_thrown", headline: "Anti-vax protesters throw gravel at the {party} leader — the ugliness earns a sympathy backlash", role: "any", party: "lpc", weight: 1, appeal: 0.025, momentum: 6, turn: 2 },
-        { id: "gun_ban_reversal", headline: "{party} reverses on the assault-weapons ban mid-campaign — and wears the flip-flop", role: "any", party: "cpc", weight: 1, appeal: -0.03, momentum: -8, turn: 3 },
-        { id: "tva_quebec_bashing", headline: "'Quebec bashing' — the face-à-face question ignites {party}'s campaign", role: "any", party: "bq", weight: 1, appeal: 0.03, momentum: 9, turn: 4 },
+        { id: "snap_call_backlash", headline: "'Why an election, why now?' The pandemic snap call blows back on {party}", role: "any", party: "lpc", weight: 1, appeal: -0.03, momentum: -9, turn: 0 },
+        { id: "kabul_airlift", headline: "Kabul falls in week one, and the airlift scramble follows {party} down the campaign trail", role: "any", party: "lpc", weight: 1, appeal: -0.025, momentum: -6, turn: 1 },
+        { id: "gravel_thrown", headline: "Anti-vax protesters throw gravel at the {party} leader, and the ugliness earns a sympathy backlash", role: "any", party: "lpc", weight: 1, appeal: 0.025, momentum: 6, turn: 2 },
+        { id: "gun_ban_reversal", headline: "{party} reverses on the assault-weapons ban mid-campaign, and wears the flip-flop", role: "any", party: "cpc", weight: 1, appeal: -0.03, momentum: -8, turn: 3 },
+        { id: "tva_quebec_bashing", headline: "'Quebec bashing': the face-à-face question ignites {party}'s campaign", role: "any", party: "bq", weight: 1, appeal: 0.03, momentum: 9, turn: 4 },
         // Unscheduled flavor — joins the weekly draw, fires at most once.
-        { id: "mandate_wedge", headline: "The vaccine-mandate wedge splits the Conservative coalition — {party} presses it at every stop", role: "any", party: "lpc", weight: 2, appeal: 0.03, momentum: 7 },
+        { id: "mandate_wedge", headline: "The vaccine-mandate wedge splits the Conservative coalition, and {party} presses it at every stop", role: "any", party: "lpc", weight: 2, appeal: 0.03, momentum: 7 },
         { id: "otoole_union_pitch", headline: "The new Tory pitch: {party}'s leader plays the union-hall moderate and the debate-night polish pays", role: "any", party: "cpc", weight: 2, appeal: 0.035, momentum: 9 },
         { id: "ppc_surge", headline: "The People's Party surge eats {party}'s right flank", role: "any", party: "cpc", weight: 3, appeal: -0.025, momentum: -6 },
-        { id: "singh_tiktok", headline: "{party}'s TikTok campaign owns the youth vote — Singh's likability tops every tracker", role: "any", party: "ndp", weight: 2, appeal: 0.025, momentum: 8 },
+        { id: "singh_tiktok", headline: "{party}'s TikTok campaign owns the youth vote, and Singh's likability tops every tracker", role: "any", party: "ndp", weight: 2, appeal: 0.025, momentum: 8 },
       ],
     },
   },
@@ -187,13 +187,13 @@ export const CANADA: CountryBundle = {
   events: [
     { id: "tariff_shock", headline: "A new round of U.S. tariffs rallies voters behind {party}", role: "leader", weight: 3, appeal: 0.03, momentum: 8 },
     { id: "annexation_taunt", headline: "Another '51st state' taunt from Washington boosts {party}'s flag-waving campaign", role: "leader", weight: 2, appeal: 0.03, momentum: 6 },
-    { id: "debate_fr", headline: "{party}'s leader survives the French-language debate — better than expected", role: "any", weight: 2, appeal: 0.02, momentum: 6 },
+    { id: "debate_fr", headline: "{party}'s leader survives the French-language debate, better than expected", role: "any", weight: 2, appeal: 0.02, momentum: 6 },
     { id: "debate_en", headline: "{party} judged the winner of the English-language debate", role: "any", weight: 3, appeal: 0.03, momentum: 10 },
     { id: "gaffe", headline: "A campaign-trail gaffe puts {party} on the defensive", role: "any", weight: 3, appeal: -0.035, momentum: -9 },
     { id: "grocery_prices", headline: "Grocery-price headlines sting the {party} campaign", role: "leader", weight: 2, appeal: -0.025, momentum: -5 },
     { id: "endorsement", headline: "A string of local mayors endorse {party}", role: "any", weight: 2, appeal: 0.02, momentum: 5 },
     { id: "candidate_bozo", headline: "{party} drops a candidate over old social-media posts", role: "any", weight: 2, appeal: -0.025, momentum: -5 },
-    { id: "vote_split", headline: "Strategic-voting chatter surges — progressives consolidate against the front-runner, lifting {party}", role: "challenger", weight: 2, appeal: 0.025, momentum: 8 },
+    { id: "vote_split", headline: "Strategic-voting chatter surges as progressives consolidate against the front-runner, lifting {party}", role: "challenger", weight: 2, appeal: 0.025, momentum: 8 },
     { id: "rally_surge", headline: "An overflow {party} rally electrifies the base", role: "player", weight: 2, appeal: 0.025, momentum: 10 },
     {
       id: "debate_call",
@@ -202,9 +202,9 @@ export const CANADA: CountryBundle = {
       weight: 4,
       prompt: "The broadcasters want a head-to-head. How do you play it?",
       choices: [
-        { id: "accept_attack", text: "Accept and go on the attack", resultText: "You land blows — and take a few. The overnight polls twitch your way.", appeal: 0.03, momentum: 10, rivalAppeal: -0.015 },
+        { id: "accept_attack", text: "Accept and go on the attack", resultText: "You land blows and take a few. The overnight polls twitch your way.", appeal: 0.03, momentum: 10, rivalAppeal: -0.015 },
         { id: "accept_safe", text: "Accept and play it safe", resultText: "A steady, on-message night. No gaffes, no fireworks.", appeal: 0.015, momentum: 4 },
-        { id: "decline", text: "Decline — protect the lead / avoid the ambush", resultText: "You dodge the studio lights. The press calls it caution; your base calls it discipline.", appeal: -0.01, momentum: -4 },
+        { id: "decline", text: "Decline: protect the lead, avoid the ambush", resultText: "You dodge the studio lights. The press calls it caution; your base calls it discipline.", appeal: -0.01, momentum: -4 },
       ],
     },
     {
@@ -214,9 +214,9 @@ export const CANADA: CountryBundle = {
       weight: 3,
       prompt: "A newsroom has dirt. What's the play?",
       choices: [
-        { id: "prebut", text: "Pre-but: get your version out first", resultText: "You blunt the splash. The story still runs — softer, and on your terms.", appeal: -0.01, momentum: -2 },
+        { id: "prebut", text: "Pre-but: get your version out first", resultText: "You blunt the splash. The story still runs, softer and on your terms.", appeal: -0.01, momentum: -2 },
         { id: "ignore", text: "Ignore it and stay on message", resultText: "The splash dominates a news cycle. Your grid holds, barely.", appeal: -0.025, momentum: -6 },
-        { id: "contrast", text: "Pivot hard onto your rival's record", resultText: "You change the subject — and it mostly works.", appeal: 0.015, momentum: 4, rivalAppeal: -0.02 },
+        { id: "contrast", text: "Pivot hard onto your rival's record", resultText: "You change the subject, and it mostly works.", appeal: 0.015, momentum: 4, rivalAppeal: -0.02 },
       ],
     },
     {
@@ -226,9 +226,9 @@ export const CANADA: CountryBundle = {
       weight: 3,
       prompt: "The draft is ready. Which way do you push the platform?",
       choices: [
-        { id: "bold", text: "Go bold — a defining, risky pledge", resultText: "The base roars. The spreadsheets at HQ look nervous.", appeal: 0.035, momentum: 12 },
-        { id: "cautious", text: "Play it cautious — no hostages to fortune", resultText: "No spark, no self-inflicted wounds.", appeal: 0.01, momentum: 2 },
-        { id: "contrast", text: "Make it a contrast document against the rival", resultText: "You define them more than yourself — and it lands.", appeal: 0.02, momentum: 6, rivalAppeal: -0.02 },
+        { id: "bold", text: "Go bold with a defining, risky pledge", resultText: "The base roars. The spreadsheets at HQ look nervous.", appeal: 0.035, momentum: 12 },
+        { id: "cautious", text: "Play it cautious: no hostages to fortune", resultText: "No spark, no self-inflicted wounds.", appeal: 0.01, momentum: 2 },
+        { id: "contrast", text: "Make it a contrast document against the rival", resultText: "You define them more than yourself, and it lands.", appeal: 0.02, momentum: 6, rivalAppeal: -0.02 },
       ],
     },
   ],

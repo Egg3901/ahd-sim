@@ -35,7 +35,7 @@ export function RegisterModal() {
         <div className="body">
           <form onSubmit={submit}>
             <div className="field" style={{ textAlign: "left" }}>
-              <label>Username — shown on the leaderboard</label>
+              <label>Username: shown on the leaderboard</label>
               <input type="text" value={username} required autoFocus onChange={(e) => setUsername(e.target.value)} style={{ width: "100%" }} />
             </div>
             <div className="field" style={{ textAlign: "left" }}>
@@ -43,7 +43,7 @@ export function RegisterModal() {
               <input type="email" value={email} required onChange={(e) => setEmail(e.target.value)} style={{ width: "100%" }} />
             </div>
             <div className="field" style={{ textAlign: "left" }}>
-              <label>Password — 8+ characters</label>
+              <label>Password: 8+ characters</label>
               <input type="password" value={password} required onChange={(e) => setPassword(e.target.value)} style={{ width: "100%" }} />
             </div>
             {error && <p className="muted small" style={{ color: "var(--rose)" }}>{error}</p>}

@@ -58,10 +58,10 @@ export function scenarioTags(meta: ScenarioMeta): Array<"tide" | "challenge" | "
 export function tideBlurb(meta: ScenarioMeta): string | null {
   const tags = scenarioTags(meta);
   if (tags.includes("tide")) {
-    return "Historical tide — flipping this election is a challenge even on Easy. Fight the map, or enjoy the ride.";
+    return "Historical tide: flipping this election is a challenge even on Easy. Fight the map, or enjoy the ride.";
   }
   if (tags.includes("coin-flip")) {
-    return "Coin-flip election — the baseline is a near-tie. Either side can win.";
+    return "Coin-flip election. The baseline is a near-tie and either side can win.";
   }
   return null;
 }
@@ -80,11 +80,11 @@ export const SCENARIO_REGISTRY: ScenarioMeta[] = [
   // ── United States (presidential) ──
   us(2024, "2024 · Harris v. Trump", "A late switch at the top of the ticket, the Sun Belt and the Blue Wall both in play.", true, "hard"),
   us(2020, "2020 · Biden v. Trump", "A pandemic on the ballot and a blue wall to rebuild. The original campaign.", true, "easy"),
-  us(2016, "2016 · Clinton v. Trump", "The map looks settled and the blue wall looks safe — don't be the one who let it crack.", false, "easy"),
+  us(2016, "2016 · Clinton v. Trump", "The map looks settled and the blue wall looks safe. Don't be the one who let it crack.", false, "easy"),
   us(2012, "2012 · Obama v. Romney", "A slow recovery, a re-election fight, and a turnout war in the swing states.", false, "easy"),
   us(2008, "2008 · Obama v. McCain", "An open seat, two wars, and a financial system in free fall.", false, "hard"),
   us(2004, "2004 · Bush v. Kerry", "A wartime incumbent, a decorated challenger. It runs through Ohio.", false, "hard"),
-  us(2000, "2000 · Gore v. Bush", "A knife's-edge electorate — and a recount waiting to happen.", false, "easy"),
+  us(2000, "2000 · Gore v. Bush", "A knife's-edge electorate, and a recount waiting to happen.", false, "easy"),
   us(1996, "1996 · Clinton v. Dole", "A booming economy, a triangulating incumbent, and the last campaign of a war generation.", false, "hard"),
   us(1992, "1992 · Clinton v. Bush", "It's the economy, stupid. A broken tax pledge, a billionaire wildcard, and the Man from Hope.", false, "hard"),
   us(1988, "1988 · Dukakis v. Bush", "A 17-point summer lead, a tank ride, and the meanest ad war of its era.", false, "hard"),
@@ -92,7 +92,7 @@ export const SCENARIO_REGISTRY: ScenarioMeta[] = [
   us(1980, "1980 · Carter v. Reagan", "Hostages in Tehran, stagflation at home, and one debate to decide it all.", false, "hard"),
 
   // ── United Kingdom (general elections) ──
-  uk(2024, "2024 · Starmer's landslide", "Fourteen years of Conservative rule end — or do they? Reform surges on the right.", "hard"),
+  uk(2024, "2024 · Starmer's landslide", "Fourteen years of Conservative rule end. Or do they? Reform surges on the right.", "hard"),
   uk(2019, "2019 · Get Brexit Done", "Johnson's gamble: smash the Red Wall or lose the majority.", "hard"),
   uk(2017, "2017 · May's gamble", "A snap election, a collapsing lead, and a hung parliament in waiting.", "easy"),
   uk(2015, "2015 · Cameron v. Miliband", "Coalition's end, the SNP tide in Scotland, and a polling shock.", "hard"),
@@ -141,7 +141,7 @@ export const SCENARIO_REGISTRY: ScenarioMeta[] = [
     scenarioId: "fr-2022", country: "FR", engine: "country", nativeId: "2022", year: 2022,
     free: false, packId: "global", difficulty: "hard", flag: "🇫🇷",
     label: "2022 · Macron v. Le Pen",
-    description: "The rematch. Pouvoir d'achat against the front républicain — and a far narrower runoff than last time.",
+    description: "The rematch. Pouvoir d'achat against the front républicain, and a far narrower runoff than last time.",
   },
   {
     scenarioId: "fr-2017", country: "FR", engine: "country", nativeId: "2017", year: 2017,

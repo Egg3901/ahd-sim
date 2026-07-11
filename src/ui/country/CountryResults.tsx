@@ -17,9 +17,9 @@ import { dailyAssignment, utcDateString } from "@lib/daily";
 
 function defaultGovText(g: Government, name: (p: string) => string): string {
   switch (g.kind) {
-    case "majority": return `${name(g.party)} wins a majority — ${g.seats} seats.`;
+    case "majority": return `${name(g.party)} wins a majority with ${g.seats} seats.`;
     case "minority": return `${name(g.party)} forms a minority government on ${g.seats} seats.`;
-    case "coalition": return `A ${g.parties.map(name).join(" – ")} coalition reaches ${g.seats} seats.`;
+    case "coalition": return `A ${g.parties.map(name).join("-")} coalition reaches ${g.seats} seats.`;
     case "confidence_supply": return `${name(g.lead)} governs with ${name(g.partner)} confidence-and-supply (${g.seats}).`;
     case "hung": return `No workable majority. ${name(g.largest)} is the largest party.`;
   }
@@ -65,7 +65,7 @@ export function CountryResults({ onExit }: { onExit: () => void }) {
         turnsPlayed: game.turn,
       });
       setPostState("done");
-      setPostNote(out.posted ? `Posted — rank #${out.rank}.` : `Kept your personal best (${out.personalBest}). Rank #${out.rank}.`);
+      setPostNote(out.posted ? `Posted. Rank #${out.rank}.` : `Kept your personal best (${out.personalBest}). Rank #${out.rank}.`);
     } catch (e) {
       setPostState("error");
       setPostNote(e instanceof Error ? e.message : "Could not reach the server");

@@ -182,7 +182,7 @@ export const BLOCS: Record<BlocId, BlocArchetype> = {
   },
   youth: {
     id: "youth",
-    name: "Young voters (18–29)",
+    name: "Young voters (18-29)",
     nationalShare: 0.05,
     turnoutPropensity: 0.46,
     nationalDemShare: 0.6,

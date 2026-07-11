@@ -90,7 +90,7 @@ function Tile({ id, game, size }: { id: string; game: GameState; size?: number }
       className={`tile${selected ? " selected" : ""}${st.battleground ? " bg" : ""}`}
       style={{ background: shareToColor(share), width: size }}
       onClick={() => select(id)}
-      title={`${st.name} — ${st.electoralVotes} EV`}
+      title={`${st.name} · ${st.electoralVotes} EV`}
     >
       <span>{st.abbr}</span>
       <span className="ev">{st.electoralVotes}</span>

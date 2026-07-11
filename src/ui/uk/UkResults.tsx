@@ -19,11 +19,11 @@ import { Lock } from "lucide-react";
 
 function govText(g: Government): string {
   switch (g.kind) {
-    case "majority": return `${partyName(g.party)} wins a majority — ${g.seats} seats.`;
-    case "minority": return `${partyName(g.party)} forms a minority government on ${g.seats} seats — no overall control.`;
-    case "coalition": return `Hung parliament. A ${g.parties.map(partyName).join(" – ")} coalition reaches ${g.seats} seats.`;
+    case "majority": return `${partyName(g.party)} wins a majority with ${g.seats} seats.`;
+    case "minority": return `${partyName(g.party)} forms a minority government on ${g.seats} seats. No overall control.`;
+    case "coalition": return `Hung parliament. A ${g.parties.map(partyName).join("-")} coalition reaches ${g.seats} seats.`;
     case "confidence_supply": return `Hung parliament. ${partyName(g.lead)} governs with ${partyName(g.partner)} confidence-and-supply (${g.seats}).`;
-    case "hung": return `Hung parliament — no workable majority. ${partyName(g.largest)} is the largest party.`;
+    case "hung": return `Hung parliament, no workable majority. ${partyName(g.largest)} is the largest party.`;
   }
 }
 
@@ -76,7 +76,7 @@ export function UkResults() {
         evMargin: Math.round(facts.unitMargin), popularVoteMargin: facts.popularMargin, turnsPlayed: game.turn,
       });
       setPostState("done");
-      setPostNote(out.posted ? `Posted — rank #${out.rank}.` : `Kept your best (${out.personalBest}). Rank #${out.rank}.`);
+      setPostNote(out.posted ? `Posted. Rank #${out.rank}.` : `Kept your best (${out.personalBest}). Rank #${out.rank}.`);
     } catch (e) {
       setPostState("error");
       setPostNote(e instanceof Error ? e.message : "Server unreachable");

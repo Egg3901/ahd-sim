@@ -45,7 +45,7 @@ function Privacy() {
 
       <h4>Your rights</h4>
       <p>
-        Email us and we will show you, correct, or permanently delete everything tied to your account —
+        Email us and we will show you, correct, or permanently delete everything tied to your account,
         usually within a few days, always within 30. Deleting your account removes your leaderboard
         entries too.
       </p>
@@ -68,7 +68,7 @@ function Terms() {
       <h4>The deal</h4>
       <p>
         {BRAND.name} is a game of historical fiction. Play it, enjoy it, share your results. Scenario
-        packs, when sold, are a personal, non-transferable license to play that content on your accounts —
+        packs, when sold, are a personal, non-transferable license to play that content on your accounts,
         not ownership of the content itself.
       </p>
 
@@ -76,7 +76,7 @@ function Terms() {
       <p>
         Leaderboards are shared space. Submitting forged scores, exploiting bugs for ranks, automating
         play, or abusing other players gets your entries removed and can get your account closed.
-        Found a bug or exploit? Tell us — we're grateful, not litigious.
+        Found a bug or exploit? Tell us. We're grateful, not litigious.
       </p>
 
       <h4>Your account</h4>

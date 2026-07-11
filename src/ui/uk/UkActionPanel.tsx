@@ -152,7 +152,7 @@ export function UkActionPanel() {
           <div className="field">
             <label>Target {regionRequired ? "region" : "region (or national)"}</label>
             <select value={regionId} onChange={(e) => setRegionId(e.target.value)}>
-              {!regionRequired && <option value="__national">National — every region you contest</option>}
+              {!regionRequired && <option value="__national">National: every region you contest</option>}
               {regions.map((r) => (
                 <option key={r.id} value={r.id}>{r.name} ({r.seats} seats)</option>
               ))}

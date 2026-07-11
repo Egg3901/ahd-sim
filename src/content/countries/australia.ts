@@ -33,7 +33,7 @@ export const AUSTRALIA: CountryBundle = {
     label: "Australia",
     parties: [
       { id: "alp", name: "Australian Labor Party", shortName: "Labor", color: "#e53440" },
-      { id: "lnp", name: "Liberal–National Coalition", shortName: "Coalition", color: "#1c4f9c" },
+      { id: "lnp", name: "Liberal-National Coalition", shortName: "Coalition", color: "#1c4f9c" },
       { id: "grn", name: "Australian Greens", shortName: "Greens", color: "#009c3d" },
       { id: "onp", name: "One Nation", shortName: "One Nation", color: "#f36c21" },
       { id: "ind", name: "Independents & minor crossbench", shortName: "Crossbench", color: "#26a69a" },
@@ -59,13 +59,13 @@ export const AUSTRALIA: CountryBundle = {
     if (g.kind === "majority") return `${partyName(g.party)} forms majority government with ${g.seats} seats.`;
     if (g.kind === "coalition") return `${g.parties.map(partyName).join(" and ")} strike a governing agreement (${g.seats} seats).`;
     if (g.kind === "confidence_supply") return `${partyName(g.lead)} governs with confidence and supply from ${partyName(g.partner)}.`;
-    if (g.kind === "minority") return `${partyName(g.party)} forms minority government — the crossbench holds the balance of power.`;
+    if (g.kind === "minority") return `${partyName(g.party)} forms minority government, and the crossbench holds the balance of power.`;
     if (g.kind === "hung") return `Hung parliament: the crossbench decides who governs.`;
     return undefined;
   },
 
   issues: [
-    { id: "cost_of_living", name: "Cost of living", blurb: "Groceries, rents, mortgage rates — the squeeze that framed the whole campaign." },
+    { id: "cost_of_living", name: "Cost of living", blurb: "Groceries, rents, mortgage rates: the squeeze that framed the whole campaign." },
     { id: "housing", name: "Housing", blurb: "A generation locked out; both sides bid with deposits and super." },
     { id: "medicare", name: "Medicare & health", blurb: "Bulk billing, urgent-care clinics, and the little green card at every Labor event." },
     { id: "energy_climate", name: "Energy & climate", blurb: "Renewables versus the Coalition's seven nuclear plants." },
@@ -78,7 +78,7 @@ export const AUSTRALIA: CountryBundle = {
   // graduates and teal seats stayed anti-Coalition, and the outer-suburban
   // mortgage belt broke to Labor and decided it.
   blocs: [
-    { id: "young_renter", name: "Young renters (18–34)", share: 0.22, turnoutPropensity: 0.88,
+    { id: "young_renter", name: "Young renters (18-34)", share: 0.22, turnoutPropensity: 0.88,
       tilt: { alp: 0.3, grn: 0.55, lnp: -0.6, onp: -0.2, ind: 0.1 } },
     { id: "graduate", name: "University graduates", share: 0.28, turnoutPropensity: 0.93,
       tilt: { alp: 0.2, grn: 0.3, lnp: -0.25, onp: -0.5, ind: 0.35 } },
@@ -139,25 +139,25 @@ export const AUSTRALIA: CountryBundle = {
       // entries fire deterministically that week; the rest join the weekly draw.
       events: [
         { id: "au25_cyclone_alfred", turn: 0, party: "lnp", role: "any", weight: 1,
-          headline: "Cyclone Alfred washes out the campaign launch — the budget slips, and so does {party}'s opening week", momentum: -6 },
+          headline: "Cyclone Alfred washes out the campaign launch. The budget slips, and so does {party}'s opening week", momentum: -6 },
         { id: "au25_wfh_backflip", turn: 1, party: "lnp", role: "any", weight: 1,
-          headline: "{party} dumps its end-work-from-home policy mid-campaign — 'we got it wrong'", appeal: -0.03, momentum: -8 },
+          headline: "{party} dumps its end-work-from-home policy mid-campaign: 'we got it wrong'", appeal: -0.03, momentum: -8 },
         { id: "au25_liberation_day", turn: 2, party: "lnp", role: "any", weight: 1,
-          headline: "Trump's 'Liberation Day' tariffs land mid-campaign — voters recoil from anything that rhymes with MAGA, and {party} wears it", appeal: -0.035, momentum: -9 },
+          headline: "Trump's 'Liberation Day' tariffs land mid-campaign. Voters recoil from anything that rhymes with MAGA, and {party} wears it", appeal: -0.035, momentum: -9 },
         { id: "au25_stage_fall", turn: 3, party: "alp", role: "any", weight: 1,
-          headline: "The {party} leader tumbles off the stage at a rally — 'I stepped back one step, I didn't fall'", appeal: -0.02, momentum: -5 },
+          headline: "The {party} leader tumbles off the stage at a rally: 'I stepped back one step, I didn't fall'", appeal: -0.02, momentum: -5 },
         { id: "au25_debate_worm", turn: 4, party: "alp", role: "any", weight: 1,
           headline: "The worm turns: {party}'s leader takes the final debate on every network verdict", appeal: 0.03, momentum: 8 },
         { id: "au25_doge_scare", party: "lnp", role: "any", weight: 3,
-          headline: "The 41,000 public-service-cuts scare sticks — 'DOGE-style slashing' dogs {party} at every stop", appeal: -0.025, momentum: -6 },
+          headline: "The 41,000 public-service-cuts scare sticks, and 'DOGE-style slashing' dogs {party} at every stop", appeal: -0.025, momentum: -6 },
         { id: "au25_medicare_card", party: "alp", role: "any", weight: 3,
-          headline: "The Medicare card comes out of {party}'s pocket at every single event — and it's working", appeal: 0.025, momentum: 6 },
+          headline: "The Medicare card comes out of {party}'s pocket at every single event, and it's working", appeal: 0.025, momentum: 6 },
         { id: "au25_dickson_watch", party: "lnp", role: "any", weight: 2,
           headline: "Dickson watch: polling puts {party}'s own leader's seat in play", appeal: -0.02, momentum: -7 },
         { id: "au25_gas_reservation", party: "lnp", role: "any", weight: 2,
-          headline: "{party}'s east-coast gas reservation plan unravels under questioning — nobody can say what power bills do", appeal: -0.02, momentum: -5 },
+          headline: "{party}'s east-coast gas reservation plan unravels under questioning. Nobody can say what power bills do", appeal: -0.02, momentum: -5 },
         { id: "au25_early_voting", role: "leader", weight: 2,
-          headline: "Record pre-poll turnout — half the country votes early, and {party} banks its lead", appeal: 0.02, momentum: 6 },
+          headline: "Record pre-poll turnout: half the country votes early, and {party} banks its lead", appeal: 0.02, momentum: 6 },
       ],
     },
 
@@ -165,7 +165,7 @@ export const AUSTRALIA: CountryBundle = {
       id: "2022",
       year: 2022,
       label: "2022 · Albanese v. Morrison",
-      tagline: "May 2022. Nine years of Coalition government, a teal wave on the harbourside, and a prime minister who doesn't hold a hose. Change the government — or hold the line.",
+      tagline: "May 2022. Nine years of Coalition government, a teal wave on the harbourside, and a prime minister who doesn't hold a hose. Change the government, or hold the line.",
       // Pre-redistribution chamber: 151 seats (NSW 47 / VIC 39 / WA 15).
       majority: { total: 151, threshold: 76 },
       goalText: "76 of 151 seats",
@@ -184,25 +184,25 @@ export const AUSTRALIA: CountryBundle = {
       },
       events: [
         { id: "au22_hose", turn: 0, party: "lnp", role: "any", weight: 1,
-          headline: "'I don't hold a hose, mate' — the flood-week clip dogs {party} from day one", appeal: -0.03, momentum: -8 },
+          headline: "'I don't hold a hose, mate': the flood-week clip dogs {party} from day one", appeal: -0.03, momentum: -8 },
         { id: "au22_teal_wave", turn: 1, party: "lnp", role: "any", weight: 1,
           headline: "The teal wave breaks: climate independents surge in {party}'s harbourside heartland", appeal: -0.035, momentum: -10 },
         { id: "au22_aukus_row", turn: 2, party: "lnp", role: "any", weight: 1,
-          headline: "The French submarine scrap and AUKUS still sting — {party} wears the diplomacy hangover", appeal: -0.02, momentum: -5 },
+          headline: "The French submarine scrap and AUKUS still sting, and {party} wears the diplomacy hangover", appeal: -0.02, momentum: -5 },
         { id: "au22_small_target", turn: 3, party: "alp", role: "any", weight: 1,
-          headline: "{party}'s small-target strategy holds — no hostages, no fireworks, just the change argument", appeal: 0.02, momentum: 6 },
+          headline: "{party}'s small-target strategy holds: no hostages, no fireworks, just the change argument", appeal: 0.02, momentum: 6 },
         { id: "au22_debate_night", turn: 4, party: "alp", role: "any", weight: 1,
           headline: "Leaders' debate: {party} lands the 'how good is Australia' contrast without a gaffe", appeal: 0.025, momentum: 7 },
         { id: "au22_integrity", party: "alp", role: "any", weight: 3,
-          headline: "A federal integrity commission becomes {party}'s closing argument — and it sticks", appeal: 0.03, momentum: 8 },
+          headline: "A federal integrity commission becomes {party}'s closing argument, and it sticks", appeal: 0.03, momentum: 8 },
         { id: "au22_climate_pledge", party: "alp", role: "any", weight: 2,
           headline: "{party}'s 43% emissions pledge draws a line under a decade of climate wars", appeal: 0.025, momentum: 6 },
         { id: "au22_preference_scare", party: "lnp", role: "any", weight: 2,
           headline: "A preference-deal scare about Greens and teals rattles {party}'s suburban seats", appeal: -0.02, momentum: -5 },
         { id: "au22_early_voting", role: "leader", weight: 2,
-          headline: "Pre-poll queues snake around the block — {party} banks early votes in the cities", appeal: 0.02, momentum: 5 },
+          headline: "Pre-poll queues snake around the block as {party} banks early votes in the cities", appeal: 0.02, momentum: 5 },
         { id: "au22_morrison_brand", party: "lnp", role: "any", weight: 3,
-          headline: "The character question won't die — focus groups say {party}'s leader is the issue", appeal: -0.03, momentum: -7 },
+          headline: "The character question won't die. Focus groups say {party}'s leader is the issue", appeal: -0.03, momentum: -7 },
       ],
     },
   },
@@ -226,8 +226,8 @@ export const AUSTRALIA: CountryBundle = {
     { id: "newspoll_slide", headline: "Newspoll shows {party} bleeding primary vote", role: "any", weight: 3, appeal: -0.03, momentum: -8 },
     { id: "talkback_pileon", headline: "Talkback radio piles on {party} for a week straight", role: "any", weight: 2, appeal: -0.025, momentum: -6 },
     { id: "candidate_disendorsed", headline: "{party} disendorses a candidate over old social-media posts", role: "any", weight: 2, appeal: -0.025, momentum: -5 },
-    { id: "preference_row", headline: "A preference-deal row engulfs {party} — how-to-vote cards become the story", role: "any", weight: 2, appeal: -0.02, momentum: -5 },
-    { id: "palmer_blitz", headline: "Clive Palmer's yellow ad blitz clogs every feed — {party} can't buy a headline", role: "any", weight: 2, appeal: -0.02, momentum: -4 },
+    { id: "preference_row", headline: "A preference-deal row engulfs {party} as how-to-vote cards become the story", role: "any", weight: 2, appeal: -0.02, momentum: -5 },
+    { id: "palmer_blitz", headline: "Clive Palmer's yellow ad blitz clogs every feed, and {party} can't buy a headline", role: "any", weight: 2, appeal: -0.02, momentum: -4 },
     { id: "sausage_sizzle", headline: "Democracy-sausage energy: booth volunteers turn out in droves for {party}", role: "player", weight: 2, appeal: 0.02, momentum: 6 },
     { id: "costings_hole", headline: "A costings black hole dominates {party}'s week", role: "any", weight: 2, appeal: -0.03, momentum: -7 },
     { id: "premier_endorsement", headline: "State premiers and local mayors rally behind {party}", role: "any", weight: 2, appeal: 0.02, momentum: 5 },
@@ -239,9 +239,9 @@ export const AUSTRALIA: CountryBundle = {
       weight: 4,
       prompt: "A head-to-head is on the table. How do you play it?",
       choices: [
-        { id: "accept_attack", text: "Accept and go on the attack", resultText: "You land blows — and take a few. The overnight polls twitch your way.", appeal: 0.03, momentum: 10, rivalAppeal: -0.015 },
+        { id: "accept_attack", text: "Accept and go on the attack", resultText: "You land blows and take a few. The overnight polls twitch your way.", appeal: 0.03, momentum: 10, rivalAppeal: -0.015 },
         { id: "accept_safe", text: "Accept and play it safe", resultText: "A steady, on-message night. No gaffes, no fireworks.", appeal: 0.015, momentum: 4 },
-        { id: "decline", text: "Decline — protect the lead / avoid the ambush", resultText: "You dodge the studio lights. The press calls it caution.", appeal: -0.01, momentum: -4 },
+        { id: "decline", text: "Decline: protect the lead, avoid the ambush", resultText: "You dodge the studio lights. The press calls it caution.", appeal: -0.01, momentum: -4 },
       ],
     },
     {
@@ -251,9 +251,9 @@ export const AUSTRALIA: CountryBundle = {
       weight: 3,
       prompt: "How-to-vote cards are everything. What's the play?",
       choices: [
-        { id: "broad", text: "Deal broadly — maximise preferences", resultText: "The arithmetic looks better. Purity politics takes a hit.", appeal: 0.02, momentum: 5 },
-        { id: "pure", text: "Stay pure — no deals with the fringe", resultText: "Your base cheers. A few seats get harder.", appeal: 0.01, momentum: 3 },
-        { id: "contrast", text: "Weaponise the rival's preference deals", resultText: "You change the subject — and it mostly works.", appeal: 0.015, momentum: 4, rivalAppeal: -0.02 },
+        { id: "broad", text: "Deal broadly to maximise preferences", resultText: "The arithmetic looks better. Purity politics takes a hit.", appeal: 0.02, momentum: 5 },
+        { id: "pure", text: "Stay pure: no deals with the fringe", resultText: "Your base cheers. A few seats get harder.", appeal: 0.01, momentum: 3 },
+        { id: "contrast", text: "Weaponise the rival's preference deals", resultText: "You change the subject, and it mostly works.", appeal: 0.015, momentum: 4, rivalAppeal: -0.02 },
       ],
     },
     {
@@ -263,9 +263,9 @@ export const AUSTRALIA: CountryBundle = {
       weight: 3,
       prompt: "The draft is ready. Which way do you push?",
       choices: [
-        { id: "bold", text: "Go bold — a defining, risky pledge", resultText: "The base roars. The spreadsheets at HQ look nervous.", appeal: 0.035, momentum: 12 },
-        { id: "cautious", text: "Play it cautious — no hostages to fortune", resultText: "No spark, no self-inflicted wounds.", appeal: 0.01, momentum: 2 },
-        { id: "contrast", text: "Make it a contrast document against the rival", resultText: "You define them more than yourself — and it lands.", appeal: 0.02, momentum: 6, rivalAppeal: -0.02 },
+        { id: "bold", text: "Go bold with a defining, risky pledge", resultText: "The base roars. The spreadsheets at HQ look nervous.", appeal: 0.035, momentum: 12 },
+        { id: "cautious", text: "Play it cautious: no hostages to fortune", resultText: "No spark, no self-inflicted wounds.", appeal: 0.01, momentum: 2 },
+        { id: "contrast", text: "Make it a contrast document against the rival", resultText: "You define them more than yourself, and it lands.", appeal: 0.02, momentum: 6, rivalAppeal: -0.02 },
       ],
     },
   ],

@@ -17,7 +17,7 @@ export function UkSeatBar({
   const largest = order[0];
 
   return (
-    <div className="evbar" title={`Seats won — ${threshold} for a majority`}>
+    <div className="evbar" title={`Seats won: ${threshold} for a majority`}>
       <div className="endlabel dem" style={{ color: largest ? partyColor(largest) : undefined }}>
         {largest ? result.seats[largest] : 0}
       </div>

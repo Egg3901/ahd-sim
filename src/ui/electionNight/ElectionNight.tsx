@@ -165,7 +165,7 @@ type Speed = "1x" | "2x" | "instant";
 export function ElectionNight(props: RevealProps) {
   const { title, totalUnits, threshold, parties, units, playerPartyId, storageKey, map, onDone } = props;
   const unitLabel = props.unitLabel ?? "seats";
-  const noMajorityLabel = props.noMajorityLabel ?? "NO OVERALL MAJORITY — HUNG PARLIAMENT";
+  const noMajorityLabel = props.noMajorityLabel ?? "NO OVERALL MAJORITY: HUNG PARLIAMENT";
 
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
@@ -294,7 +294,7 @@ export function ElectionNight(props: RevealProps) {
                     className={`en-map-unit${called ? " called" : ""}`}
                     style={called ? { fill: called.winnerColor } : undefined}
                   >
-                    <title>{called ? `${u.name} — ${called.winnerShort}` : u.name}</title>
+                    <title>{called ? `${u.name} · ${called.winnerShort}` : u.name}</title>
                   </path>
                 );
               })}

@@ -26,7 +26,7 @@ export function StatePanel() {
   if (st.blocs.length === 0) {
     return (
       <div className="card">
-        <h3>{st.name} — {st.electoralVotes} EV</h3>
+        <h3>{st.name} · {st.electoralVotes} EV</h3>
         <p className="muted small">At-large electors, awarded to the winner of this state's combined district vote.</p>
       </div>
     );
@@ -71,7 +71,7 @@ export function StatePanel() {
 
   return (
     <div className="card scroll">
-      <h3>{st.name} — {st.electoralVotes} EV</h3>
+      <h3>{st.name} · {st.electoralVotes} EV</h3>
       <button
         className={traveling ? "primary" : "secondary"}
         onClick={toggleTravel}
@@ -79,7 +79,7 @@ export function StatePanel() {
         style={{ width: "100%", margin: "2px 0 12px", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}
       >
         <MapPin size={14} />
-        {traveling ? "Campaign stop planned — tap to cancel" : canTravel ? "Travel here — hold a rally" : "No actions left this week"}
+        {traveling ? "Campaign stop planned. Tap to cancel" : canTravel ? "Travel here to hold a rally" : "No actions left this week"}
       </button>
       {plannedSummary && (
         <div className="kv"><span className="k">Planned here</span><span style={{ color: "var(--gold)" }}>{plannedSummary}</span></div>
@@ -93,7 +93,7 @@ export function StatePanel() {
       {trend.length >= 2 && (
         <div className="trend-row">
           <div className="trend-head">
-            <span className="k">Your share — weekly trend</span>
+            <span className="k">Your share: weekly trend</span>
             <span className={`trend-delta ${trendDelta! >= 0 ? "up" : "down"}`}>
               {trendDelta! >= 0 ? "▲" : "▼"} {Math.abs(trendDelta!).toFixed(1)} pts since Wk 1
             </span>

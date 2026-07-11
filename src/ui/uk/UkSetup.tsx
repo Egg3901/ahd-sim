@@ -147,7 +147,7 @@ export function UkSetup({ onBack, initialElection, initialSeed, initialParty }: 
 
           {step === 1 && (
             <div className="field" style={{ textAlign: "left", margin: 0 }}>
-              <label>Lead which party? — your leader's traits shape your campaign</label>
+              <label>Lead which party? Your leader's traits shape your campaign</label>
               <div className="pick" style={{ gridTemplateColumns: "1fr 1fr" }}>
                 {playable.map((p) => {
                   const ld = leaderFor(election, p, partyName(p));
@@ -179,7 +179,7 @@ export function UkSetup({ onBack, initialElection, initialSeed, initialParty }: 
             <>
               <DifficultyPicker value={difficulty} onChange={setDifficulty} />
               <div className="field" style={{ textAlign: "left" }}>
-                <label>Seed — same seed replays the same events & RNG</label>
+                <label>Seed: same seed replays the same events & RNG</label>
                 <div className="su-seed">
                   <input type="text" value={seed} onChange={(e) => setSeed(e.target.value)} />
                   <button type="button" className="ghost su-reroll" title="Reroll seed" onClick={() => setSeed(randomSeed())}>

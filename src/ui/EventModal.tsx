@@ -8,8 +8,8 @@ import { BLOCS } from "@content/blocs";
 function readinessTier(r: number): { label: string; tone: "up" | "down" | "flat"; note: string } {
   if (r >= 72) return { label: "Well prepared", tone: "up", note: "Your prep amplifies a strong night and blunts the risk." };
   if (r >= 56) return { label: "Ready", tone: "flat", note: "A solid, on-script performance." };
-  if (r >= 44) return { label: "Average", tone: "flat", note: "No edge from the podium — it plays as written." };
-  return { label: "Underprepared", tone: "down", note: "Shaky command — the upside shrinks and mistakes cost more." };
+  if (r >= 44) return { label: "Average", tone: "flat", note: "No edge from the podium. It plays as written." };
+  return { label: "Underprepared", tone: "down", note: "Shaky command. The upside shrinks and mistakes cost more." };
 }
 
 // Shows the first pending event for the player. Two steps: pick a choice, see
@@ -39,7 +39,7 @@ export function EventModal() {
     <div className="overlay">
       <div className="modal">
         <div className="head">
-          <div className="tag">{event.isDebate ? "Debate Night" : "Breaking — Decision Required"}</div>
+          <div className="tag">{event.isDebate ? "Debate Night" : "Breaking: Decision Required"}</div>
           <h2>{event.title}</h2>
         </div>
         <div className="body">

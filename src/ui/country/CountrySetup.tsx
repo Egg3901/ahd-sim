@@ -41,7 +41,7 @@ export function CountrySetup({ country, onBack, initialElection, initialSeed, in
     <div className="center">
       <div className="setup">
         <div className="setup-eyebrow">
-          <span className="mark"><Vote size={18} /></span>{country.flag} {country.label.toUpperCase()} — {data.year}
+          <span className="mark"><Vote size={18} /></span>{country.flag} {country.label.toUpperCase()} · {data.year}
         </div>
         <div className="title">{BRAND.name}</div>
         <p className="sub">{data.tagline}</p>
@@ -76,7 +76,7 @@ export function CountrySetup({ country, onBack, initialElection, initialSeed, in
           )}
 
           <div className="field" style={{ textAlign: "left", margin: "0 0 10px" }}>
-            <label>Lead which side? — your leader's traits shape the campaign</label>
+            <label>Lead which side? Your leader's traits shape the campaign</label>
             <div className="pick" style={{ gridTemplateColumns: "1fr 1fr" }}>
               {playable.map((p) => {
                 const ld = country.leaders[election]?.[p];
@@ -108,7 +108,7 @@ export function CountrySetup({ country, onBack, initialElection, initialSeed, in
           <DifficultyPicker value={difficulty} onChange={setDifficulty} />
 
           <div className="field" style={{ textAlign: "left" }}>
-            <label>Seed — same seed replays the same events & RNG</label>
+            <label>Seed: same seed replays the same events & RNG</label>
             <div className="su-seed">
               <input type="text" value={seed} onChange={(e) => setSeed(e.target.value)} />
               <button type="button" className="ghost su-reroll" title="Reroll seed" onClick={() => setSeed(randomSeed())}>

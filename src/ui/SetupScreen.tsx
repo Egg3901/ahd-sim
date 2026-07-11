@@ -50,7 +50,7 @@ const DIFFICULTIES: {
   blurb: string;
   Icon: typeof Flag;
 }[] = [
-  { id: "easy", name: "Easy", blurb: "Favorable climate, a bigger war chest, and a sloppy opponent — you can win any year.", Icon: Flag },
+  { id: "easy", name: "Easy", blurb: "Favorable climate, a bigger war chest, and a sloppy opponent. You can win any year.", Icon: Flag },
   { id: "normal", name: "Normal", blurb: "A fair fight on the real map, against a disciplined campaign.", Icon: Swords },
   { id: "hard", name: "Hard", blurb: "The historical map, no help, a ruthless opponent. History is brutal.", Icon: Crosshair },
 ];
@@ -166,7 +166,7 @@ export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onEx
           {/* ── Step 1: Election ───────────────────────────────────── */}
           {step === 0 && (
             <div className="field" style={{ textAlign: "left", margin: 0 }}>
-              <label>Election year — each cycle ships its own map, decks & tickets</label>
+              <label>Election year: each cycle ships its own map, decks & tickets</label>
               <div className="scenario-grid">
                 {SCENARIO_IDS.map((id) => {
                   const s = SCENARIOS[id];
@@ -191,7 +191,7 @@ export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onEx
               </div>
               {PAYWALL_ENABLED && (
                 <p className="muted small" style={{ marginTop: 8 }}>
-                  🔒 Locked years are part of the <strong>US Historical Elections</strong> pack — redeem a code to unlock.
+                  🔒 Locked years are part of the <strong>US Historical Elections</strong> pack. Redeem a code to unlock.
                 </p>
               )}
             </div>
@@ -201,7 +201,7 @@ export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onEx
           {step === 1 && (
             <>
               <div className="field" style={{ textAlign: "left", margin: "0 0 4px" }}>
-                <label>Your candidate — the campaign you'll run</label>
+                <label>Your candidate: the campaign you'll run</label>
               </div>
               <div className="pick">
                 {(["dem", "rep"] as CandidateId[]).map((id) => {
@@ -222,7 +222,7 @@ export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onEx
               </div>
 
               <div className="field" style={{ textAlign: "left" }}>
-                <label>Running mate — shapes your coalition</label>
+                <label>Running mate: shapes your coalition</label>
                 <div className="vp-roster">
                   {roster.map((m) => (
                     <button
@@ -252,7 +252,7 @@ export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onEx
             <div className="field" style={{ textAlign: "left", margin: 0 }}>
               <label>
                 <Briefcase size={13} style={{ verticalAlign: "-2px", marginRight: 5 }} />
-                Hire up to {MAX_STAFF} staffers — passive bonuses, weekly salaries, real loyalty
+                Hire up to {MAX_STAFF} staffers: passive bonuses, weekly salaries, real loyalty
               </label>
               <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
                 {STAFF_POOL.map((s) => {
@@ -279,7 +279,7 @@ export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onEx
               <div className="su-summary" style={{ marginTop: 10 }}>
                 <div className="su-summary-row">
                   <span className="su-summary-k">Weekly payroll</span>
-                  <span className="su-summary-v">{weeklyPayroll > 0 ? `$${(weeklyPayroll / 1000).toFixed(0)}k / week` : "None — running lean"}</span>
+                  <span className="su-summary-v">{weeklyPayroll > 0 ? `$${(weeklyPayroll / 1000).toFixed(0)}k / week` : "None (running lean)"}</span>
                 </div>
                 <div className="su-summary-row">
                   <span className="su-summary-k">Loyalty</span>
@@ -303,13 +303,13 @@ export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onEx
                   <button type="button" className={`su-opt${eventMode === "plausible" ? " sel" : ""}`} onClick={() => setEventMode("plausible")}>
                     <Shuffle size={16} className="su-opt-icon" />
                     <span className="su-opt-name">Random / plausible</span>
-                    <span className="su-opt-blurb">A shuffled deck — different every run.</span>
+                    <span className="su-opt-blurb">A shuffled deck, different every run.</span>
                   </button>
                 </div>
               </div>
 
               <div className="field" style={{ textAlign: "left", margin: "0 0 10px" }}>
-                <label>Difficulty — AI opponent strength</label>
+                <label>Difficulty: AI opponent strength</label>
                 <div className="su-optgrid su-optgrid-3">
                   {DIFFICULTIES.map(({ id, name, blurb, Icon }) => (
                     <button
@@ -329,7 +329,7 @@ export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onEx
               <div className="field" style={{ textAlign: "left", margin: "0 0 10px" }}>
                 <label>
                   <FlaskConical size={13} style={{ verticalAlign: "-2px", marginRight: 5 }} />
-                  Scenario modifiers — free ways to remix the race
+                  Scenario modifiers: free ways to remix the race
                 </label>
                 <div className="su-optgrid su-optgrid-3">
                   <div className="su-opt" style={{ cursor: "default" }}>
@@ -345,13 +345,13 @@ export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onEx
                   </button>
                   <button type="button" className={`su-opt${pandemic ? " sel" : ""}`} onClick={() => setPandemic((v) => !v)}>
                     <span className="su-opt-name">Pandemic Mode</span>
-                    <span className="su-opt-blurb">COVID-era dynamics in any year — crisis management on the ballot.</span>
+                    <span className="su-opt-blurb">COVID-era dynamics in any year: crisis management on the ballot.</span>
                   </button>
                 </div>
               </div>
 
               <div className="field" style={{ textAlign: "left" }}>
-                <label>Seed — same seed replays the same events & RNG</label>
+                <label>Seed: same seed replays the same events & RNG</label>
                 <div className="su-seed">
                   <input type="text" value={seed} onChange={(e) => setSeed(e.target.value)} />
                   <button type="button" className="ghost su-reroll" title="Reroll seed" onClick={() => setSeed(randomSeed())}>

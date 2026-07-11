@@ -55,7 +55,7 @@ export function MultipartySeatPanel({
     const sum = parts.reduce((s, p) => s + seatOf(p), 0);
     mathLine = `${bits.join(" + ")} = ${sum}`;
   } else if (majority && parts) {
-    mathLine = `${nameOf(parts[0])} ${seatOf(parts[0])} — majority of ${threshold}`;
+    mathLine = `${nameOf(parts[0])} ${seatOf(parts[0])}, majority of ${threshold}`;
   }
 
   const w = (n: number) => `${total > 0 ? (n / total) * 100 : 0}%`;
@@ -64,16 +64,16 @@ export function MultipartySeatPanel({
     <div className="ens-seat-panel" data-testid="multiparty-seat-panel">
       {hung && government.kind === "hung" && (
         <div className="ens-hung" data-testid="ens-hung">
-          HUNG PARLIAMENT — no workable majority
+          HUNG PARLIAMENT: no workable majority
         </div>
       )}
       {hung && government.kind !== "hung" && (
         <div className="ens-hung soft" data-testid="ens-hung">
           {government.kind === "minority"
-            ? "NO OVERALL CONTROL — minority government"
+            ? "NO OVERALL CONTROL: minority government"
             : government.kind === "confidence_supply"
-              ? "HUNG — confidence & supply"
-              : "HUNG PARLIAMENT — coalition arithmetic"}
+              ? "HUNG: confidence & supply"
+              : "HUNG PARLIAMENT: coalition arithmetic"}
         </div>
       )}
 
@@ -96,7 +96,7 @@ export function MultipartySeatPanel({
           />
         </div>
         <div className="ens-seat-meta">
-          <span>{segments[0] ? `${segments[0].short} ${segments[0].seats}` : "—"}</span>
+          <span>{segments[0] ? `${segments[0].short} ${segments[0].seats}` : "·"}</span>
           <span className="muted">{threshold} to win · {total} {unitPlural}</span>
         </div>
       </div>

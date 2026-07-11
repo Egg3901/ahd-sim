@@ -16,7 +16,7 @@ export function UserMenu() {
 
   if (serverDown && !user) {
     return (
-      <div className="muted small" title="The campaign server is unreachable — free scenarios still play locally."
+      <div className="muted small" title="The campaign server is unreachable. Free scenarios still play locally."
         style={{ display: "flex", alignItems: "center", gap: 5 }}>
         <WifiOff size={14} /> Play offline
       </div>
@@ -47,12 +47,12 @@ export function UserMenu() {
           <div className="muted small" style={{ marginBottom: 8 }}>{user.email}</div>
           {serverDown && (
             <div className="muted small" style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}>
-              <WifiOff size={13} /> Offline — scores won't sync
+              <WifiOff size={13} /> Offline: scores won't sync
             </div>
           )}
           <div className="tag muted small">MY ACTIVATIONS</div>
           {unlocked.packIds.length === 0 && unlocked.scenarioIds.length === 0 ? (
-            <p className="muted small" style={{ margin: "6px 0 10px" }}>Free scenarios only — redeem a code to unlock more.</p>
+            <p className="muted small" style={{ margin: "6px 0 10px" }}>Free scenarios only. Redeem a code to unlock more.</p>
           ) : (
             <div style={{ margin: "6px 0 10px" }}>
               {unlocked.packIds.map((p) => (

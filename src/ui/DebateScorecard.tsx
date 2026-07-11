@@ -19,9 +19,9 @@ export function DebateScorecard() {
   const opp = cands[player === "dem" ? "rep" : "dem"].shortName;
   const banner =
     debate.winner === "tie"
-      ? "Too close to call — a draw."
+      ? "Too close to call. A draw."
       : debate.meltdown
-        ? `Debate meltdown — ${cands[debate.winner].shortName} routs ${cands[debate.winner === "dem" ? "rep" : "dem"].shortName}`
+        ? `Debate meltdown: ${cands[debate.winner].shortName} routs ${cands[debate.winner === "dem" ? "rep" : "dem"].shortName}`
         : `${cands[debate.winner].shortName} wins the debate`;
 
   // Outcome-aware verdict from the player's seat — so the narration never reads
@@ -29,13 +29,13 @@ export function DebateScorecard() {
   // tack, not the result of the head-to-head.)
   const verdict =
     debate.winner === "tie"
-      ? "A wash — neither of you broke through. The race holds where it was."
+      ? "A wash. Neither of you broke through. The race holds where it was."
       : playerWon
         ? debate.meltdown
-          ? `A commanding night — you routed ${opp}, and the spin room knows it. Momentum surges your way.`
-          : `You won the night — ${opp} came out second-best.`
+          ? `A commanding night. You routed ${opp}, and the spin room knows it. Momentum surges your way.`
+          : `You won the night. ${opp} came out second-best.`
         : debate.meltdown
-          ? `A meltdown — ${opp} dominated and the coverage will sting. Momentum swings hard against you.`
+          ? `A meltdown. ${opp} dominated and the coverage will sting. Momentum swings hard against you.`
           : `${opp} edged you tonight. Not a disaster, but not the night you wanted.`;
 
   return (

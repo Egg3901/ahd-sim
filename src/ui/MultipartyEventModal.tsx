@@ -30,7 +30,7 @@ export function MultipartyEventModal({
     <div className="overlay">
       <div className="modal">
         <div className="head">
-          <div className="tag">Breaking — Decision Required</div>
+          <div className="tag">Breaking: Decision Required</div>
           <h2>{event.title}</h2>
         </div>
         <div className="body">

@@ -47,7 +47,7 @@ function baseProps(winners: string[], onDone: () => void): RevealProps {
     units: makeUnits(winners),
     playerPartyId: "a",
     unitLabel: "seats",
-    noMajorityLabel: "NO OVERALL MAJORITY — HUNG PARLIAMENT",
+    noMajorityLabel: "NO OVERALL MAJORITY: HUNG PARLIAMENT",
     onDone,
   };
 }
@@ -101,7 +101,7 @@ describe("ElectionNight reveal (staged theater)", () => {
 
   it("shows the no-majority banner when nobody crosses the threshold", () => {
     mount(<ElectionNight {...baseProps(["a", "b", "a", "b", "a", "b", "a", "b", "a", "b"], vi.fn())} />);
-    expect(container.innerHTML).toContain("NO OVERALL MAJORITY — HUNG PARLIAMENT");
+    expect(container.innerHTML).toContain("NO OVERALL MAJORITY: HUNG PARLIAMENT");
     expect(container.innerHTML).not.toContain("PROJECTION:");
   });
 
@@ -261,7 +261,7 @@ describe("Reveal 2.0 shell — UK / country mode", () => {
     );
     expect(container.querySelector("[data-testid='ens-hung']")).toBeNull();
     expect(container.querySelector("[data-testid='ens-coalition-math']")!.textContent).toContain(
-      "Labour 412 — majority of 326",
+      "Labour 412, majority of 326",
     );
   });
 });

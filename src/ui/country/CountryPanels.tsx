@@ -27,7 +27,7 @@ export function CountrySeatBar({ country, result }: { country: CountryBundle; re
   const largest = order[0];
 
   return (
-    <div className="evbar" title={`${country.unitNamePlural} won — ${threshold} for the win`}>
+    <div className="evbar" title={`${country.unitNamePlural} won: ${threshold} for the win`}>
       <div className="endlabel dem" style={{ color: largest ? partyColor(country, largest) : undefined }}>
         {largest ? result.seats[largest] : 0}
       </div>
@@ -238,7 +238,7 @@ export function CountryRegionPanel() {
 
   return (
     <div className="card scroll">
-      <h3>{region.name} — {region.seats} {country.unitNamePlural}</h3>
+      <h3>{region.name} · {region.seats} {country.unitNamePlural}</h3>
 
       {playerStands ? (
         <div className="row" style={{ gap: 6, margin: "2px 0 12px", flexWrap: "wrap" }}>

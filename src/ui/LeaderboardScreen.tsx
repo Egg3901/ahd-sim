@@ -32,7 +32,7 @@ function DailyView() {
     <>
       <div className="card" style={{ width: "100%", textAlign: "left" }}>
         <h3 style={{ marginTop: 0 }}>🏆 Daily Champions {champions ? <span className="muted small" style={{ fontWeight: 500 }}>· {champions.totalDays} day{champions.totalDays === 1 ? "" : "s"} played</span> : null}</h3>
-        {error && <p className="muted small" style={{ color: "var(--rose)" }}>{error} — is the campaign server running?</p>}
+        {error && <p className="muted small" style={{ color: "var(--rose)" }}>{error}. Is the campaign server running?</p>}
         {!error && champions === null && <p className="muted small">Loading…</p>}
         {champions && champions.entries.length === 0 && (
           <p className="muted small">No daily results yet. Play today's challenge and post your score to start the board.</p>
@@ -166,7 +166,7 @@ export function LeaderboardScreen({ onBack }: { onBack: () => void }) {
         </div>
 
         <div className="card" style={{ width: "100%", textAlign: "left" }}>
-          {error && <p className="muted small" style={{ color: "var(--rose)" }}>{error} — is the campaign server running?</p>}
+          {error && <p className="muted small" style={{ color: "var(--rose)" }}>{error}. Is the campaign server running?</p>}
           {!error && entries === null && <p className="muted small">Loading…</p>}
           {entries !== null && entries.length === 0 && (
             <p className="muted small">No scores yet for {meta?.label ?? scenarioId}. Be the first to finish a campaign and post one.</p>
@@ -193,8 +193,8 @@ export function LeaderboardScreen({ onBack }: { onBack: () => void }) {
                         {e.username}{isMe && " (you)"}
                       </td>
                       <td style={{ padding: "7px 8px", textAlign: "right", fontWeight: 800, color: "var(--green)" }}>{Math.round(e.score)}</td>
-                      <td style={{ padding: "7px 8px", textAlign: "right" }}>{e.evMargin !== null ? (e.evMargin >= 0 ? `+${e.evMargin}` : e.evMargin) : "—"}</td>
-                      <td style={{ padding: "7px 8px", textAlign: "right" }}>{e.popularVoteMargin !== null ? `${e.popularVoteMargin >= 0 ? "+" : ""}${Number(e.popularVoteMargin).toFixed(1)}` : "—"}</td>
+                      <td style={{ padding: "7px 8px", textAlign: "right" }}>{e.evMargin !== null ? (e.evMargin >= 0 ? `+${e.evMargin}` : e.evMargin) : "·"}</td>
+                      <td style={{ padding: "7px 8px", textAlign: "right" }}>{e.popularVoteMargin !== null ? `${e.popularVoteMargin >= 0 ? "+" : ""}${Number(e.popularVoteMargin).toFixed(1)}` : "·"}</td>
                       <td style={{ padding: "7px 8px" }} className="muted">{e.difficulty}</td>
                     </tr>
                   );

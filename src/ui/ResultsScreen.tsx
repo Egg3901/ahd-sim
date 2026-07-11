@@ -64,7 +64,7 @@ export function ResultsScreen() {
   const tossupEV = Math.max(0, 538 - demEV - repEV);
   const lastCalled = revealed > 0 ? game.states.find((s) => s.id === calls[revealed - 1].stateId) : null;
 
-  const winnerName = result.winner === "tie" ? "No one — 269–269" : cands[result.winner].name;
+  const winnerName = result.winner === "tie" ? "No one: 269-269" : cands[result.winner].name;
   const playerWon = result.winner === game.playerCandidate;
   const winnerColor =
     result.winner === "tie" ? "var(--gold)" : cands[result.winner].color;
@@ -90,7 +90,7 @@ export function ResultsScreen() {
         className={`tile${called ? " called" : ""}`}
         key={id}
         style={{ background: called ? cands[sr.winner].color : "var(--navy-600)", opacity: called ? 1 : 0.45, width: size }}
-        title={`${st.name}: ${called ? (sr.winner === "dem" ? dem : rep) + " +" + sr.margin.toFixed(1) : "—"}`}
+        title={`${st.name}: ${called ? (sr.winner === "dem" ? dem : rep) + " +" + sr.margin.toFixed(1) : "·"}`}
       >
         <span>{st.abbr}</span>
         <span className="ev">{st.electoralVotes}</span>
@@ -125,7 +125,7 @@ export function ResultsScreen() {
                 ? "CONTINGENT ELECTION"
                 : "PROJECTED WINNER"
           }
-          headline={!done ? `${demEV} – ${repEV}` : winnerName}
+          headline={!done ? `${demEV}-${repEV}` : winnerName}
           headlineColor={!done ? "var(--text-strong)" : winnerColor}
           subhead={
             !done
@@ -186,7 +186,7 @@ export function ResultsScreen() {
               <>
                 <ScoreAndAchievements />
                 <div className="card">
-                  <h3>Post-Mortem — What Moved the Needle</h3>
+                  <h3>Post-Mortem: What Moved the Needle</h3>
                   <p className="muted small">Your biggest self-caused swings across the campaign.</p>
                   {result.postMortem.length === 0 && <p className="muted small">A hands-off campaign. History took its course.</p>}
                   {result.postMortem.map((c, i) => (
@@ -218,7 +218,7 @@ export function ResultsScreen() {
                       })
                     }
                   >
-                    Run it back — New Campaign →
+                    Run it back: New Campaign →
                   </button>
                 </div>
               </>
@@ -231,8 +231,8 @@ export function ResultsScreen() {
 
           {done && (
             <p className="muted small" style={{ textAlign: "center", margin: "0 0 4px" }}>
-              {dem} {result.electoralVotes.dem} — {rep} {result.electoralVotes.rep} · Popular vote:{" "}
-              {dem} {pct(result.popularShare.dem)} ({votes(result.popularVote.dem)}) — {rep}{" "}
+              {dem} {result.electoralVotes.dem} · {rep} {result.electoralVotes.rep} · Popular vote:{" "}
+              {dem} {pct(result.popularShare.dem)} ({votes(result.popularVote.dem)}) · {rep}{" "}
               {pct(result.popularShare.rep)} ({votes(result.popularVote.rep)})
             </p>
           )}
@@ -360,7 +360,7 @@ function ScoreAndAchievements() {
         turnsPlayed: game.turn,
       });
       setPostState("done");
-      setPostNote(out.posted ? `Posted — you're rank #${out.rank}.` : `Kept your personal best (${out.personalBest}). Rank #${out.rank}.`);
+      setPostNote(out.posted ? `Posted. You're rank #${out.rank}.` : `Kept your personal best (${out.personalBest}). Rank #${out.rank}.`);
     } catch (e) {
       setPostState("error");
       setPostNote(e instanceof Error ? e.message : "Could not reach the server");
@@ -415,7 +415,7 @@ function ScoreAndAchievements() {
                 {postState === "done" ? "Posted ✓" : postState === "busy" ? "Posting…" : serverDown ? "Offline" : "Post to Leaderboard"}
               </button>
             ) : serverDown ? (
-              <span className="muted small">Play offline — scores sync when the server is back</span>
+              <span className="muted small">Play offline. Scores sync when the server is back</span>
             ) : (
               <button className="primary" onClick={() => openModal("login")}>
                 <Lock size={13} style={{ verticalAlign: "-2px", marginRight: 5 }} />Log in to post
@@ -427,7 +427,7 @@ function ScoreAndAchievements() {
       </div>
 
       <div className="card">
-        <h3>🏆 Achievements — {earned.length} earned</h3>
+        <h3>🏆 Achievements: {earned.length} earned</h3>
         {earned.length === 0 ? (
           <p className="muted small">None this run. Landslides, comebacks, and debate sweeps all leave trophies.</p>
         ) : (

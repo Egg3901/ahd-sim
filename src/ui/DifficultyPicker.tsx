@@ -7,7 +7,7 @@ export type Difficulty = "easy" | "normal" | "hard";
 // "easy" grants the underdog handicap so any year is winnable; "hard" is the
 // pure-challenge headwind.
 const OPTIONS: { id: Difficulty; name: string; blurb: string; Icon: typeof Flag }[] = [
-  { id: "easy", name: "Easy", blurb: "A favorable climate, a bigger war chest, a sloppier opponent — flip even a landslide.", Icon: Flag },
+  { id: "easy", name: "Easy", blurb: "A favorable climate, a bigger war chest, a sloppier opponent. Flip even a landslide.", Icon: Flag },
   { id: "normal", name: "Normal", blurb: "The real historical fight, on the calibrated map, against a disciplined campaign.", Icon: Swords },
   { id: "hard", name: "Hard", blurb: "No help, a relentless opponent. Only the tightest races are yours to steal.", Icon: Crosshair },
 ];

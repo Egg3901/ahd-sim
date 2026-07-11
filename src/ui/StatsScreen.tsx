@@ -170,7 +170,7 @@ export function StatsScreen({ onClose }: { onClose: () => void }) {
               <div className="stat-grid">
                 <StatCell
                   label="Electoral votes"
-                  value={`${stats.last.demEV}–${stats.last.repEV}`}
+                  value={`${stats.last.demEV}-${stats.last.repEV}`}
                   color={stats.last.demEV >= stats.last.repEV ? dem.color : rep.color}
                 />
                 <StatCell
@@ -186,7 +186,7 @@ export function StatsScreen({ onClose }: { onClose: () => void }) {
 
               {/* ── National polling trend ───────────────────────────── */}
               <div className="chart-block">
-                <div className="chart-title">National Polling Average — {(player === "dem" ? dem : rep).shortName}'s two-party margin</div>
+                <div className="chart-title">National Polling Average: {(player === "dem" ? dem : rep).shortName}'s two-party margin</div>
                 <TrendChart
                   labels={labels}
                   series={[{ color: (player === "dem" ? dem : rep).color, label: "Margin", values: tl.map(playerMargin) }]}

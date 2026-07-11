@@ -13,7 +13,7 @@ type TabId = (typeof TABS)[number]["id"];
 const ACTION_GUIDE = [
   {
     name: "Advertising",
-    cost: "Variable ($1M–$30M)",
+    cost: "Variable ($1M-$30M)",
     target: "Any state",
     effect:
       "Positive ads raise your appeal among aligned blocs. Contrast ads attack the opponent but risk depressing turnout. Issue ads raise national salience of a chosen issue. Effect scales with media market cost, fundraising trait, and issue alignment. Diminishing returns apply.",
@@ -40,7 +40,7 @@ const ACTION_GUIDE = [
     cost: "1 action",
     target: "None (national)",
     effect:
-      "Haul scales with fundraising trait, national momentum, and random variance. Typical return: $8M–$12M per day for average trait.",
+      "Haul scales with fundraising trait, national momentum, and random variance. Typical return: $8M-$12M per day for average trait.",
     when: "Do early and often. Momentum bonus means fundraising gets easier as you win.",
   },
   {
@@ -48,23 +48,23 @@ const ACTION_GUIDE = [
     cost: "$1.5M + 1 staff capacity",
     target: "Any state",
     effect:
-      "Builds persistent GOTV infrastructure. Sticky — persists for rest of campaign. Required for effective GOTV later.",
-    when: "Build in battlegrounds by week 3–4. Staff is limited; prioritize states with most EV per dollar.",
+      "Builds persistent GOTV infrastructure. Sticky: persists for rest of campaign. Required for effective GOTV later.",
+    when: "Build in battlegrounds by week 3-4. Staff is limited; prioritize states with most EV per dollar.",
   },
   {
     name: "GOTV (Get Out The Vote)",
     cost: "$1M",
     target: "Any state with field offices",
     effect:
-      "Turnout push. Effective only where ground game exists. Bigger impact on low-turnout-propensity blocs. Wastes money if no field offices. Diminishing returns — repeat GOTV in one state fades, so spread it across your tight states.",
-    when: "Late game (weeks 5–9). Use where ground game is built and margin is tight.",
+      "Turnout push. Effective only where ground game exists. Bigger impact on low-turnout-propensity blocs. Wastes money if no field offices. Diminishing returns: repeat GOTV in one state fades, so spread it across your tight states.",
+    when: "Late game (weeks 5-9). Use where ground game is built and margin is tight.",
   },
   {
     name: "Opposition Research",
     cost: "$2M",
     target: "National",
     effect:
-      "55% chance to land a national scandal on the opponent (hits college whites and suburban women everywhere). 45% chance to backfire as 'desperate,' damaging media narrative. Diminishing returns, and safe states resist — it nudges the map, it doesn't flip the loyal.",
+      "55% chance to land a national scandal on the opponent (hits college whites and suburban women everywhere). 45% chance to backfire as 'desperate,' damaging media narrative. Diminishing returns, and safe states resist: it nudges the map, it doesn't flip the loyal.",
     when: "High-risk, high-reward. Use when behind and narrative is already poor. Avoid when ahead.",
   },
   {
@@ -80,7 +80,7 @@ const ACTION_GUIDE = [
     cost: "1 action",
     target: "None (buffs next debate)",
     effect:
-      "Raises policy command (+8 to Policy Knowledge) — the substance half of debate readiness. Also unlocks wonk-gated debate answers that require high policy knowledge. Decays gently, like Debate Prep.",
+      "Raises policy command (+8 to Policy Knowledge), the substance half of debate readiness. Also unlocks wonk-gated debate answers that require high policy knowledge. Decays gently, like Debate Prep.",
     when: "Pair with Debate Prep before debate weeks. Worth it for candidates with weak starting policy knowledge.",
   },
   {
@@ -131,7 +131,7 @@ const BLOC_GUIDE = [
   },
   {
     id: "young",
-    name: "Young Voters (18–29)",
+    name: "Young Voters (18-29)",
     lean: "Democratic",
     cares: "Climate, student debt, jobs, social issues",
     notes: "Low turnout propensity. GOTV and enthusiasm critical. Responsive to issue salience.",
@@ -154,11 +154,11 @@ const BLOC_GUIDE = [
 
 const CHANGELOG = [
   { version: "0.2.0", date: "2026-06", changes: [
-    "Debates are now scored head-to-head: both tickets get a 0–100 showing, a winner is called, and the margin swings national momentum. A blowout is a 'meltdown' that hits momentum hard.",
+    "Debates are now scored head-to-head: both tickets get a 0-100 showing, a winner is called, and the margin swings national momentum. A blowout is a 'meltdown' that hits momentum hard.",
     "Real debate prep: Debate Prep raises readiness (stagecraft), new Policy Prep raises policy command (substance). Both lift your debate score and decay gently.",
     "Smarter AI: paces its war chest, preps for debates, drives its best issue, goes negative when it's behind, and reaches further down the map when losing.",
     "Balance: GOTV and opposition research now have diminishing returns (no more late-game stacking).",
-    "Campaign Trends screen — national polling, EV, and momentum by week, plus per-state polling sparklines.",
+    "Campaign Trends screen: national polling, EV, and momentum by week, plus per-state polling sparklines.",
     "Historical events now name the real beats (RBG, the Comey letter, the 47% tape, Springfield, the bin Laden tape, and more).",
     "Setup redesigned as a guided wizard with a randomized seed.",
   ] },
@@ -207,7 +207,7 @@ export function GuidePage({ onClose }: { onClose: () => void }) {
           {tab === "blocs" && (
             <div className="guide-section">
               <p className="guide-intro">
-                Every state is divided into voter blocs. Each bloc has its own issue priorities, baseline lean, and turnout propensity. Campaign actions target blocs individually — a rally in Pennsylvania hits suburban women and non-college whites differently.
+                Every state is divided into voter blocs. Each bloc has its own issue priorities, baseline lean, and turnout propensity. Campaign actions target blocs individually: a rally in Pennsylvania hits suburban women and non-college whites differently.
               </p>
               {BLOC_GUIDE.map((b) => (
                 <div className="guide-card" key={b.id}>
@@ -230,14 +230,14 @@ export function GuidePage({ onClose }: { onClose: () => void }) {
               </p>
               <ol className="guide-list">
                 <li><strong>Player phase:</strong> Queue actions (ads, rallies, fundraising, etc.). You can undo before ending the turn.</li>
-                <li><strong>AI phase:</strong> Opponent acts according to difficulty — targeting, spending, and responding to events.</li>
+                <li><strong>AI phase:</strong> Opponent acts according to difficulty: targeting, spending, and responding to events.</li>
                 <li><strong>Event phase:</strong> Random or scheduled events surface. Some require immediate decisions; others apply automatically.</li>
                 <li><strong>Resolution:</strong> Polls update, momentum shifts, resources refresh. A week-in-review recap shows what moved and why.</li>
               </ol>
               <h3>Resource Limits</h3>
               <ul className="guide-list">
                 <li><strong>Cash:</strong> Spend on ads, surrogates, field offices, GOTV, oppo research. Replenished via fundraising.</li>
-                <li><strong>Actions:</strong> A weekly pool (7 + half your candidate's energy). Every move — ads, rallies, fundraising, GOTV — costs one action. Plan them across the 7 days, max 3 per day. The pool refills each week.</li>
+                <li><strong>Actions:</strong> A weekly pool (7 + half your candidate's energy). Every move (ads, rallies, fundraising, GOTV) costs one action. Plan them across the 7 days, max 3 per day. The pool refills each week.</li>
                 <li><strong>Staff capacity:</strong> Hard cap on field offices. Does not replenish.</li>
                 <li><strong>Momentum:</strong> National and state-level. Drives poll movement and fundraising efficiency. Can be positive or negative.</li>
               </ul>

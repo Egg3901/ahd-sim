@@ -33,7 +33,7 @@ export function ChallengePartyBanner({ partyLabel }: { partyLabel: string }) {
         Challenge path
       </div>
       <div className="muted small" style={{ marginTop: 4, lineHeight: 1.4 }}>
-        Leading {partyLabel} is a challenge scenario — majority wins are rare. Play for kingmaker leverage, seat gains, or the post-mortem brag.
+        Leading {partyLabel} is a challenge scenario. Majority wins are rare. Play for kingmaker leverage, seat gains, or the post-mortem brag.
       </div>
     </div>
   );

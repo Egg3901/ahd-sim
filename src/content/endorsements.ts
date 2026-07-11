@@ -11,7 +11,7 @@ export const ENDORSEMENT_EVENTS: GameEvent[] = [
   {
     id: "endorse-labor",
     title: "The Labor Federation Weighs In",
-    prompt: "The country's biggest union federation is ready to endorse — for a price. They want a public commitment on labor policy and a seat at the table.",
+    prompt: "The country's biggest union federation is ready to endorse, for a price. They want a public commitment on labor policy and a seat at the table.",
     subject: "both",
     trigger: { kind: "stochastic", baseWeight: 2.2 },
     gate: { minTurn: 1, maxTurn: 6 },
@@ -19,17 +19,17 @@ export const ENDORSEMENT_EVENTS: GameEvent[] = [
     choices: [
       {
         id: "dem-accept", side: "dem",
-        text: "Take the pledge — promise pro-labor policy and lock in the machine",
+        text: "Take the pledge: promise pro-labor policy and lock in the machine",
         effects: {
           blocDeltas: [{ blocId: "noncollege_white", margin: 0.035, enthusiasm: 0.04 }],
           positionShifts: { economy: -0.15, trade: -0.1 },
           momentum: 3,
         },
-        resultText: "Union halls light up. The federation's phone banks are yours — and so is their policy platform.",
+        resultText: "Union halls light up. The federation's phone banks are yours, and so is their policy platform.",
       },
       {
         id: "dem-decline", side: "dem",
-        text: "Stay flexible — thank them and keep your economic message centrist",
+        text: "Stay flexible: thank them and keep your economic message centrist",
         effects: { narrative: 3 },
         resultText: "Editorial boards praise your independence. The locals grumble but stay home about it.",
       },
@@ -41,7 +41,7 @@ export const ENDORSEMENT_EVENTS: GameEvent[] = [
       },
       {
         id: "rep-ignore", side: "rep",
-        text: "Shrug it off — it was never your endorsement to win",
+        text: "Shrug it off. It was never your endorsement to win",
         effects: {},
         resultText: "You wave it away and stay on message.",
       },
@@ -50,7 +50,7 @@ export const ENDORSEMENT_EVENTS: GameEvent[] = [
   {
     id: "endorse-business",
     title: "The Business Roundtable's Blessing",
-    prompt: "A coalition of CEOs and business groups is weighing an endorsement — and a joint fundraising blitz. They expect friendly tax language in return.",
+    prompt: "A coalition of CEOs and business groups is weighing an endorsement, and a joint fundraising blitz. They expect friendly tax language in return.",
     subject: "both",
     trigger: { kind: "stochastic", baseWeight: 2.2 },
     gate: { minTurn: 1, maxTurn: 6 },
@@ -58,7 +58,7 @@ export const ENDORSEMENT_EVENTS: GameEvent[] = [
     choices: [
       {
         id: "rep-accept", side: "rep",
-        text: "Embrace them — promise the tax posture and take the money",
+        text: "Embrace them: promise the tax posture and take the money",
         effects: {
           cash: 18_000_000,
           positionShifts: { taxes: 0.15 },
@@ -68,19 +68,19 @@ export const ENDORSEMENT_EVENTS: GameEvent[] = [
       },
       {
         id: "rep-distance", side: "rep",
-        text: "Keep them at arm's length — you're running as a populist",
+        text: "Keep them at arm's length. You're running as a populist",
         effects: { blocDeltas: [{ blocId: "noncollege_white", margin: 0.02 }] },
         resultText: "\"I work for you, not the boardroom.\" The base loves it; the donors sulk.",
       },
       {
         id: "dem-accept", side: "dem",
-        text: "Accept the moderates' wing of it — competence over ideology",
+        text: "Accept the moderates' wing of it: competence over ideology",
         effects: { cash: 10_000_000, narrative: 4, positionShifts: { taxes: 0.1 } },
         resultText: "A parade of centrist CEOs vouches for your steadiness. The left wing of your coalition notices the fine print.",
       },
       {
         id: "dem-decline", side: "dem",
-        text: "Decline — you can't run on fairness with their logo on the lectern",
+        text: "Decline. You can't run on fairness with their logo on the lectern",
         effects: { blocDeltas: [{ blocId: "youth", margin: 0.02, enthusiasm: 0.03 }] },
         resultText: "Young volunteers share the clip a million times. The money goes elsewhere.",
       },
@@ -89,7 +89,7 @@ export const ENDORSEMENT_EVENTS: GameEvent[] = [
   {
     id: "endorse-paper",
     title: "The Paper of Record Decides",
-    prompt: "The country's most influential editorial board is finalizing its endorsement. An interview — and a little flattery of their worldview — could tip it.",
+    prompt: "The country's most influential editorial board is finalizing its endorsement. An interview, and a little flattery of their worldview, could tip it.",
     subject: "both",
     trigger: { kind: "stochastic", baseWeight: 2 },
     gate: { minTurn: 2, maxTurn: 7 },
@@ -101,7 +101,7 @@ export const ENDORSEMENT_EVENTS: GameEvent[] = [
         resultText: "The endorsement runs Sunday. Suburban reading circles take note.",
       },
       {
-        id: "snub", text: "Snub them — run against the media itself",
+        id: "snub", text: "Snub them and run against the media itself",
         effects: { blocDeltas: [{ blocId: "noncollege_white", margin: 0.02 }], narrative: -4, momentum: 2 },
         resultText: "\"They don't speak for you.\" The crowd roars; the columnists sharpen their knives.",
       },
@@ -110,7 +110,7 @@ export const ENDORSEMENT_EVENTS: GameEvent[] = [
   {
     id: "endorse-general",
     title: "A Four-Star Endorsement",
-    prompt: "A revered retired general offers to endorse you on national security — if you'll harden your line on defense.",
+    prompt: "A revered retired general offers to endorse you on national security, if you'll harden your line on defense.",
     subject: "both",
     trigger: { kind: "stochastic", baseWeight: 1.8 },
     gate: { minTurn: 2, maxTurn: 7 },
@@ -128,7 +128,7 @@ export const ENDORSEMENT_EVENTS: GameEvent[] = [
       },
       {
         id: "decline",
-        text: "Pass — you won't be boxed in on defense policy",
+        text: "Pass. You won't be boxed in on defense policy",
         effects: {},
         resultText: "You keep your options open. The general endorses no one.",
       },
@@ -137,7 +137,7 @@ export const ENDORSEMENT_EVENTS: GameEvent[] = [
   {
     id: "endorse-celebrity",
     title: "The Megastar Moment",
-    prompt: "The biggest pop star on the planet is one DM away from endorsing you. Her fans register to vote in droves — but the backlash machine is already warming up.",
+    prompt: "The biggest pop star on the planet is one DM away from endorsing you. Her fans register to vote in droves, but the backlash machine is already warming up.",
     subject: "both",
     trigger: { kind: "stochastic", baseWeight: 1.8 },
     gate: { minTurn: 2, maxTurn: 7 },
@@ -145,7 +145,7 @@ export const ENDORSEMENT_EVENTS: GameEvent[] = [
     choices: [
       {
         id: "embrace",
-        text: "Embrace it — rallies, playlists, the works",
+        text: "Embrace it: rallies, playlists, the works",
         effects: {
           blocDeltas: [{ blocId: "youth", margin: 0.04, enthusiasm: 0.06 }, { blocId: "noncollege_white", margin: -0.008 }],
           momentum: 4,
@@ -154,7 +154,7 @@ export const ENDORSEMENT_EVENTS: GameEvent[] = [
       },
       {
         id: "lowkey",
-        text: "Accept quietly — a post, not a partnership",
+        text: "Accept quietly: a post, not a partnership",
         effects: { blocDeltas: [{ blocId: "youth", margin: 0.02 }] },
         resultText: "One perfectly-lit photo. Ten million likes. No hostages to fortune.",
       },
@@ -163,7 +163,7 @@ export const ENDORSEMENT_EVENTS: GameEvent[] = [
   {
     id: "endorse-governor",
     title: "The Swing-State Kingmaker",
-    prompt: "The popular governor of a battleground state will campaign for you — in exchange for a joint infrastructure promise for their state.",
+    prompt: "The popular governor of a battleground state will campaign for you in exchange for a joint infrastructure promise for their state.",
     subject: "both",
     trigger: { kind: "stochastic", baseWeight: 2 },
     gate: { minTurn: 1, maxTurn: 6 },
@@ -171,7 +171,7 @@ export const ENDORSEMENT_EVENTS: GameEvent[] = [
     choices: [
       {
         id: "deal",
-        text: "Make the deal — promise the projects, take the machine",
+        text: "Make the deal: promise the projects, take the machine",
         effects: {
           cash: -5_000_000,
           blocDeltas: [{ blocId: "suburban_women", margin: 0.025 }, { blocId: "noncollege_white", margin: 0.015 }],
@@ -181,7 +181,7 @@ export const ENDORSEMENT_EVENTS: GameEvent[] = [
       },
       {
         id: "no-deal",
-        text: "Decline — no state gets to hold the platform hostage",
+        text: "Decline. No state gets to hold the platform hostage",
         effects: { narrative: 2 },
         resultText: "You keep the platform national. The governor campaigns for nobody.",
       },
@@ -190,7 +190,7 @@ export const ENDORSEMENT_EVENTS: GameEvent[] = [
   {
     id: "endorse-faith",
     title: "The Faith Coalition",
-    prompt: "A national coalition of faith leaders offers its blessing — and its formidable Sunday turnout operation — for a firmer line on their issues.",
+    prompt: "A national coalition of faith leaders offers its blessing, and its formidable Sunday turnout operation, for a firmer line on their issues.",
     subject: "both",
     trigger: { kind: "stochastic", baseWeight: 1.8 },
     gate: { minTurn: 1, maxTurn: 6 },
@@ -198,12 +198,12 @@ export const ENDORSEMENT_EVENTS: GameEvent[] = [
     choices: [
       {
         id: "rep-accept", side: "rep",
-        text: "Stand with them — firm up the social-issues line",
+        text: "Stand with them and firm up the social-issues line",
         effects: {
           blocDeltas: [{ blocId: "noncollege_white", margin: 0.025, enthusiasm: 0.04 }, { blocId: "seniors", margin: 0.02 }],
           positionShifts: { abortion: 0.1 },
         },
-        resultText: "Pulpits hum. The turnout machine is real — and so is the platform plank you just signed.",
+        resultText: "Pulpits hum. The turnout machine is real, and so is the platform plank you just signed.",
       },
       {
         id: "rep-soften", side: "rep",
@@ -215,7 +215,7 @@ export const ENDORSEMENT_EVENTS: GameEvent[] = [
         id: "dem-progressive", side: "dem",
         text: "Court the social-justice congregations instead",
         effects: { blocDeltas: [{ blocId: "black", margin: 0.03, enthusiasm: 0.04 }] },
-        resultText: "Souls to the polls. The organizing tradition is older than television — and it still works.",
+        resultText: "Souls to the polls. The organizing tradition is older than television, and it still works.",
       },
       {
         id: "dem-secular", side: "dem",
@@ -228,7 +228,7 @@ export const ENDORSEMENT_EVENTS: GameEvent[] = [
   {
     id: "endorse-tech",
     title: "Silicon Money",
-    prompt: "A clutch of tech billionaires dangles a nine-figure super-PAC commitment. All they want is a softer touch on regulation — publicly.",
+    prompt: "A clutch of tech billionaires dangles a nine-figure super-PAC commitment. All they want is a softer touch on regulation, publicly.",
     subject: "both",
     trigger: { kind: "stochastic", baseWeight: 1.8 },
     gate: { minTurn: 2, maxTurn: 7 },

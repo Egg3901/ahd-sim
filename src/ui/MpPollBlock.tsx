@@ -27,7 +27,7 @@ export function MpPollBlock({
     <>
       <h3 style={{ marginTop: 14 }}>National poll (noisy)</h3>
       <p className="muted small" style={{ marginBottom: 8 }}>
-        Blurred view of the true model — house effects and sampling noise. Not ground truth.
+        Blurred view of the true model: house effects and sampling noise. Not ground truth.
       </p>
       {order.slice(0, 6).map((p) => (
         <div className="bloc" key={p}>

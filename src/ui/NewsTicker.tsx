@@ -17,7 +17,7 @@ function buildHeadlines(game: GameState, live: Projection | null): string[] {
   const out: string[] = [];
 
   if (game.turn === 0) {
-    out.push(`${dem.name} vs ${rep.name} — the ${scen.year} campaign begins.`);
+    out.push(`${dem.name} vs ${rep.name}. The ${scen.year} campaign begins.`);
     out.push(scen.tagline);
   }
 
@@ -28,27 +28,27 @@ function buildHeadlines(game: GameState, live: Projection | null): string[] {
     const readyish = debateReadiness(game, game.playerCandidate) >= 56;
     const when = toDebate === 1 ? "NEXT WEEK" : "IN 2 WEEKS";
     out.push(
-      `⚑ DEBATE ${when} — ${readyish ? "you look ready; bank more prep to dominate." : "prep now (Debate Prep + Policy Prep) to lift your score."}`,
+      `⚑ DEBATE ${when}: ${readyish ? "you look ready; bank more prep to dominate." : "prep now (Debate Prep + Policy Prep) to lift your score."}`,
     );
   }
 
-  out.push(`NATIONAL POLL — ${dem.shortName} ${pct(natl)} · ${rep.shortName} ${pct(1 - natl)}`);
+  out.push(`NATIONAL POLL: ${dem.shortName} ${pct(natl)} · ${rep.shortName} ${pct(1 - natl)}`);
 
   if (live) {
     const tos = live.tossupEv ? ` · ${live.tossupEv} tossup` : "";
-    out.push(`PROJECTED — ${dem.shortName} ${live.ev.dem} EV, ${rep.shortName} ${live.ev.rep} EV${tos}`);
+    out.push(`PROJECTED: ${dem.shortName} ${live.ev.dem} EV, ${rep.shortName} ${live.ev.rep} EV${tos}`);
     const close = [...live.contests]
       .filter((c) => game.states.find((s) => s.id === c.stateId)?.battleground)
       .sort((a, b) => Math.abs(a.demShare - 0.5) - Math.abs(b.demShare - 0.5))[0];
     if (close) {
       const st = game.states.find((s) => s.id === close.stateId);
-      if (st) out.push(`${st.name.toUpperCase()} — a dead heat at ${leanLabel(close.demShare)}`);
+      if (st) out.push(`${st.name.toUpperCase()}: a dead heat at ${leanLabel(close.demShare)}`);
     }
   }
 
   if (game.turn > 0) {
     for (const r of game.lastRecap.filter((x) => !/electoral votes/i.test(x.label)).slice(0, 3)) {
-      out.push(`${r.label.toUpperCase()} — ${r.detail}`);
+      out.push(`${r.label.toUpperCase()}: ${r.detail}`);
     }
   }
 

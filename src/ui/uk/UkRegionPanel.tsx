@@ -42,7 +42,7 @@ export function UkRegionPanel() {
 
   return (
     <div className="card scroll">
-      <h3>{region.name} — {region.seats} seats</h3>
+      <h3>{region.name} · {region.seats} seats</h3>
 
       {playerStands ? (
         <div className="row" style={{ gap: 6, margin: "2px 0 12px", flexWrap: "wrap" }}>

@@ -25,7 +25,7 @@ export interface UkBlocDef {
 }
 
 export const UK_BLOCS: UkBlocDef[] = [
-  { id: "young", name: "Young voters (18–29)", share: 0.18, turnoutPropensity: 0.55,
+  { id: "young", name: "Young voters (18-29)", share: 0.18, turnoutPropensity: 0.55,
     tilt: { lab: 0.35, grn: 0.45, ld: 0.1, con: -0.5, ref: -0.4 } },
   { id: "graduate", name: "Graduates", share: 0.30, turnoutPropensity: 0.74,
     tilt: { lab: 0.2, ld: 0.3, grn: 0.25, con: -0.15, ref: -0.6 } },

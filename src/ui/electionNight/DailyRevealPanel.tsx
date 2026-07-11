@@ -107,7 +107,7 @@ export function DailyRevealPanel({
       const out = await api.postDaily({ score, facts, evMargin, popularVoteMargin });
       setPostState("done");
       setMyRank(out.rank);
-      setNote(out.posted ? `On the board — rank #${out.rank} today.` : `Kept your best (${out.personalBest}). Rank #${out.rank}.`);
+      setNote(out.posted ? `On the board: rank #${out.rank} today.` : `Kept your best (${out.personalBest}). Rank #${out.rank}.`);
     } catch (e) {
       setPostState("error");
       setNote(e instanceof Error ? e.message : "Could not reach the server");

@@ -70,7 +70,7 @@ export function usReveal(game: GameState): RevealData {
     playerPartyId: game.playerCandidate,
     unitLabel: "EV",
     map: usRevealMap(units),
-    noMajorityLabel: "269–269 — ELECTION GOES TO THE HOUSE",
+    noMajorityLabel: "269-269: ELECTION GOES TO THE HOUSE",
     storageKey: `reveal-${game.seed}-us-${scenarioId}`,
   };
 }
@@ -142,7 +142,7 @@ export function ukReveal(game: UkGameState): RevealData {
     playerPartyId: game.playerParty,
     unitLabel: "seats",
     map: { viewBox: UK_VIEWBOX, shapes: REGION_PATHS },
-    noMajorityLabel: "NO OVERALL MAJORITY — HUNG PARLIAMENT",
+    noMajorityLabel: "NO OVERALL MAJORITY: HUNG PARLIAMENT",
     storageKey: `reveal-${game.seed}-uk-${game.electionId}`,
   };
 }
@@ -163,7 +163,7 @@ export function countryReveal(country: CountryBundle, game: CountryGameState): R
     playerPartyId: game.playerParty,
     unitLabel: country.unitNamePlural,
     map: country.map, // all shipped bundles carry one; undefined ⇒ chip-only
-    noMajorityLabel: "NO OVERALL MAJORITY — HUNG PARLIAMENT",
+    noMajorityLabel: "NO OVERALL MAJORITY: HUNG PARLIAMENT",
     storageKey: `reveal-${game.seed}-${country.id.toLowerCase()}-${game.electionId}`,
   };
 }

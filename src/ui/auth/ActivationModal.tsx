@@ -26,7 +26,7 @@ export function ActivationModal() {
     setError("");
     setSuccess("");
     if (!isValidActivationCode(normalized)) {
-      setError("Invalid format — expected CAMP-XXXX-XXXX-XXXX");
+      setError("Invalid format: expected CAMP-XXXX-XXXX-XXXX");
       return;
     }
     setBusy(true);
@@ -34,7 +34,7 @@ export function ActivationModal() {
     setBusy(false);
     if (out.error) { setError(out.error); return; }
     setCode("");
-    setSuccess(out.packName ? `${out.packName} unlocked — every scenario in the pack is now yours.` : "Scenario unlocked.");
+    setSuccess(out.packName ? `${out.packName} unlocked. Every scenario in the pack is now yours.` : "Scenario unlocked.");
   };
 
   return (
@@ -55,14 +55,14 @@ export function ActivationModal() {
           )}
           {!user ? (
             <p className="muted">
-              You need an account to redeem codes —{" "}
+              You need an account to redeem codes:{" "}
               <button className="su-link" onClick={() => openModal("login", paywallScenarioId)}>log in</button> or{" "}
               <button className="su-link" onClick={() => openModal("register", paywallScenarioId)}>register</button> first.
             </p>
           ) : (
             <form onSubmit={submit}>
               <div className="field" style={{ textAlign: "left" }}>
-                <label>Code — CAMP-XXXX-XXXX-XXXX</label>
+                <label>Code: CAMP-XXXX-XXXX-XXXX</label>
                 <input
                   type="text" value={code} required autoFocus placeholder="CAMP-…"
                   onChange={(e) => setCode(e.target.value.toUpperCase())}
@@ -72,7 +72,7 @@ export function ActivationModal() {
               </div>
               {!formatOk && (
                 <p className="muted small" style={{ color: "var(--rose)" }}>
-                  Use the form CAMP-XXXX-XXXX-XXXX (letters A–Z except O/I/L, digits 2–9).
+                  Use the form CAMP-XXXX-XXXX-XXXX (letters A-Z except O/I/L, digits 2-9).
                 </p>
               )}
               {error && <p className="muted small" style={{ color: "var(--rose)" }}>{error}</p>}

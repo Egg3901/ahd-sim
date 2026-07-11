@@ -73,17 +73,17 @@ export const FRANCE: CountryBundle = {
   compatible: () => false,
   governmentText: (g: Government, partyName) => {
     if (g.kind === "majority") return `${partyName(g.party)} wins the presidency with ${g.seats} points.`;
-    if (g.kind === "minority") return `${partyName(g.party)} scrapes the narrowest of wins — ${g.seats} points.`;
+    if (g.kind === "minority") return `${partyName(g.party)} scrapes the narrowest of wins: ${g.seats} points.`;
     if (g.kind === "hung") return `Dead heat. France recounts through the night; the Republic holds its breath.`;
     return undefined;
   },
 
   issues: [
-    { id: "cost_of_living", name: "Pouvoir d'achat", blurb: "Purchasing power — the issue that decides French elections." },
+    { id: "cost_of_living", name: "Pouvoir d'achat", blurb: "Purchasing power: the issue that decides French elections." },
     { id: "immigration_identity", name: "Immigration & identity", blurb: "The RN's home turf: borders, laïcité, national identity." },
     { id: "security", name: "Security", blurb: "Crime, policing, and the sense of order." },
     { id: "pensions", name: "Pensions", blurb: "The retirement-age wound that never closed." },
-    { id: "europe", name: "Europe & the franc débat", blurb: "France's place in the EU — and who pays for it." },
+    { id: "europe", name: "Europe & the franc débat", blurb: "France's place in the EU, and who pays for it." },
     { id: "public_services", name: "Public services", blurb: "Hospitals, schools, and the deserted countryside." },
   ],
 
@@ -94,7 +94,7 @@ export const FRANCE: CountryBundle = {
       tilt: { rn: 0.5, ens: -0.5 } },
     { id: "rural", name: "Rural France", share: 0.20, turnoutPropensity: 0.7,
       tilt: { rn: 0.3, ens: -0.3 } },
-    { id: "young", name: "Young voters (18–29)", share: 0.16, turnoutPropensity: 0.52,
+    { id: "young", name: "Young voters (18-29)", share: 0.16, turnoutPropensity: 0.52,
       tilt: { rn: 0.15, ens: -0.15 } },
     { id: "senior", name: "Seniors (65+)", share: 0.24, turnoutPropensity: 0.85,
       tilt: { ens: 0.45, rn: -0.45 } },
@@ -152,11 +152,11 @@ export const FRANCE: CountryBundle = {
         COM:  { v: { ens: 0.52, rn: 0.48 }, s: { ens: 2, rn: 1 } },
       },
       events: [
-        { id: "succession_2027", headline: "The post-Macron succession scramble spills into the open — the centre squabbles over its own crown", role: "any", party: "ens", weight: 3, appeal: -0.02, momentum: -5, turn: 0 },
+        { id: "succession_2027", headline: "The post-Macron succession scramble spills into the open as the centre squabbles over its own crown", role: "any", party: "ens", weight: 3, appeal: -0.02, momentum: -5, turn: 0 },
         { id: "normalisation_2027", headline: "Normalization pays: prime-time profiles cast the RN as a party of government, suits and spreadsheets", role: "any", party: "rn", weight: 3, appeal: 0.03, momentum: 7, turn: 1 },
-        { id: "degradation_dette_2027", headline: "A ratings agency downgrades French debt — the bill for the Macron years lands on the centre's doorstep", role: "any", party: "ens", weight: 3, appeal: -0.03, momentum: -7, turn: 2 },
+        { id: "degradation_dette_2027", headline: "A ratings agency downgrades French debt, and the bill for the Macron years lands on the centre's doorstep", role: "any", party: "ens", weight: 3, appeal: -0.03, momentum: -7, turn: 2 },
         { id: "peur_cohabitation_2027", headline: "Cohabitation dread: markets and Brussels game out an RN Élysée, and hesitant voters flinch", role: "any", party: "rn", weight: 3, appeal: -0.03, momentum: -7, turn: 3 },
-        { id: "front_republicain_2027", headline: "One more time with feeling: the front républicain question — eliminated candidates' voters break, reluctantly, for the centre", role: "any", party: "ens", weight: 3, appeal: 0.035, momentum: 8, turn: 4 },
+        { id: "front_republicain_2027", headline: "One more time with feeling: the front républicain question. Eliminated candidates' voters break, reluctantly, for the centre", role: "any", party: "ens", weight: 3, appeal: 0.035, momentum: 8, turn: 4 },
         { id: "banlieue_2027", headline: "A banlieue security flashpoint drags the final days onto the RN's ground", role: "any", party: "rn", weight: 2, appeal: 0.02, momentum: 5 },
       ],
     },
@@ -183,14 +183,14 @@ export const FRANCE: CountryBundle = {
         COM:  { v: { ens: 0.410, rn: 0.590 }, s: { ens: 1, rn: 2 } },
       },
       events: [
-        { id: "mckinsey_2022", headline: "The McKinsey affair: millions in consulting fees, zero corporate tax — 'l'État McKinsey' sticks to the incumbent", role: "any", party: "ens", weight: 3, appeal: -0.03, momentum: -7, turn: 0 },
-        { id: "retraite_65_2022", headline: "Retraite à 65 ans: the pension line detonates on the left — Macron's own reform becomes the attack ad", role: "any", party: "ens", weight: 3, appeal: -0.03, momentum: -6, turn: 1 },
+        { id: "mckinsey_2022", headline: "The McKinsey affair: millions in consulting fees, zero corporate tax. 'l'État McKinsey' sticks to the incumbent", role: "any", party: "ens", weight: 3, appeal: -0.03, momentum: -7, turn: 0 },
+        { id: "retraite_65_2022", headline: "Retraite à 65 ans: the pension line detonates on the left, and Macron's own reform becomes the attack ad", role: "any", party: "ens", weight: 3, appeal: -0.03, momentum: -6, turn: 1 },
         { id: "pouvoir_achat_2022", headline: "One theme, hammered daily: Le Pen's pouvoir d'achat campaign owns the caddie and the fuel pump", role: "any", party: "rn", weight: 3, appeal: 0.035, momentum: 8, turn: 2 },
-        { id: "prets_russes_2022", headline: "The Putin handshake photo, brandished on set: the Russian bank loan — 'vous dépendez du pouvoir russe'", role: "any", party: "rn", weight: 3, appeal: -0.035, momentum: -8, turn: 3 },
+        { id: "prets_russes_2022", headline: "The Putin handshake photo, brandished on set: the Russian bank loan. 'Vous dépendez du pouvoir russe'", role: "any", party: "rn", weight: 3, appeal: -0.035, momentum: -8, turn: 3 },
         { id: "debat_2022", headline: "A calmer entre-deux-tours: Le Pen survives the rematch, but loses it on points", role: "any", party: "ens", weight: 4, appeal: 0.04, momentum: 9, turn: 4 },
-        { id: "melenchon_3e_tour_2022", headline: "'Élisez-moi Premier ministre' — Mélenchon reframes the runoff as round one of a troisième tour, deflating {party}", role: "any", weight: 3, appeal: -0.02, momentum: -5 },
-        { id: "essence_2022", headline: "Pump prices spike again — every full tank is a Le Pen leaflet, and the incumbent owns the price board", role: "any", party: "ens", weight: 2, appeal: -0.02, momentum: -5 },
-        { id: "caddie_2022", headline: "Split-screen politics: McKinsey invoices against the supermarket caddie — the cost-of-living contrast lands for the RN", role: "any", party: "rn", weight: 2, appeal: 0.02, momentum: 5 },
+        { id: "melenchon_3e_tour_2022", headline: "'Élisez-moi Premier ministre': Mélenchon reframes the runoff as round one of a troisième tour, deflating {party}", role: "any", weight: 3, appeal: -0.02, momentum: -5 },
+        { id: "essence_2022", headline: "Pump prices spike again. Every full tank is a Le Pen leaflet, and the incumbent owns the price board", role: "any", party: "ens", weight: 2, appeal: -0.02, momentum: -5 },
+        { id: "caddie_2022", headline: "Split-screen politics: McKinsey invoices against the supermarket caddie. The cost-of-living contrast lands for the RN", role: "any", party: "rn", weight: 2, appeal: 0.02, momentum: 5 },
         { id: "stature_ukraine_2022", headline: "War on the continent: Kyiv calls the Élysée and the commander-in-chief effect kicks in for the centre", role: "any", party: "ens", weight: 2, appeal: 0.03, momentum: 7 },
       ],
     },
@@ -199,7 +199,7 @@ export const FRANCE: CountryBundle = {
       id: "2017",
       year: 2017,
       label: "2017 · The Front Républicain",
-      tagline: "May 7, 2017. A 39-year-old insurgent with a startup for a party against the FN's first runoff since 2002. The dam holds everywhere — the only question is by how much.",
+      tagline: "May 7, 2017. A 39-year-old insurgent with a startup for a party against the FN's first runoff since 2002. The dam holds everywhere. The only question is by how much.",
       salience: { cost_of_living: 0.6, immigration_identity: 0.7, security: 0.6, pensions: 0.35, public_services: 0.5, europe: 0.85 },
       regions: {
         HDF:  { v: { ens: 0.529, rn: 0.471 }, s: { ens: 5, rn: 4 } },
@@ -217,13 +217,13 @@ export const FRANCE: CountryBundle = {
         COM:  { v: { ens: 0.620, rn: 0.380 }, s: { ens: 2, rn: 1 } },
       },
       events: [
-        { id: "whirlpool_2017", headline: "The Whirlpool car park: Le Pen's selfies against Macron's hour in the crowd — both camps claim Amiens", role: "any", weight: 3, appeal: 0.03, momentum: 8, turn: 1 },
-        { id: "front_republicain_2017", headline: "The front républicain holds its nose and rallies: 'contre l'extrême droite' — and so, for Macron", role: "any", party: "ens", weight: 3, appeal: 0.03, momentum: 7, turn: 2 },
-        { id: "obama_2017", headline: "'En Marche!' — Obama's endorsement video hands the insurgent a global-stage glow", role: "any", party: "ens", weight: 2, appeal: 0.02, momentum: 6, turn: 3 },
-        { id: "debat_2017", headline: "Debate meltdown: an aggressive, fact-free entre-deux-tours — Le Pen loses the presidency on live TV", role: "any", party: "rn", weight: 4, appeal: -0.045, momentum: -12, turn: 4 },
-        { id: "macronleaks_2017", headline: "#MacronLeaks dumps 36 hours before the vote — the campaign blackout blunts it, the doubt lingers", role: "any", party: "ens", weight: 3, appeal: -0.02, momentum: -6, turn: 5 },
-        { id: "ni_ni_2017", headline: "'Ni-ni' — Mélenchon won't say the name, and the abstention question gnaws at the centre's margin", role: "any", party: "ens", weight: 3, appeal: -0.025, momentum: -6 },
-        { id: "marine_seule_2017", headline: "Le Pen steps 'above the party' for the runoff — the de-demonized Marine plays presidential for a news cycle", role: "any", party: "rn", weight: 3, appeal: 0.025, momentum: 6 },
+        { id: "whirlpool_2017", headline: "The Whirlpool car park: Le Pen's selfies against Macron's hour in the crowd. Both camps claim Amiens", role: "any", weight: 3, appeal: 0.03, momentum: 8, turn: 1 },
+        { id: "front_republicain_2017", headline: "The front républicain holds its nose and rallies: 'contre l'extrême droite', and so, for Macron", role: "any", party: "ens", weight: 3, appeal: 0.03, momentum: 7, turn: 2 },
+        { id: "obama_2017", headline: "'En Marche!' Obama's endorsement video hands the insurgent a global-stage glow", role: "any", party: "ens", weight: 2, appeal: 0.02, momentum: 6, turn: 3 },
+        { id: "debat_2017", headline: "Debate meltdown: an aggressive, fact-free entre-deux-tours. Le Pen loses the presidency on live TV", role: "any", party: "rn", weight: 4, appeal: -0.045, momentum: -12, turn: 4 },
+        { id: "macronleaks_2017", headline: "#MacronLeaks dumps 36 hours before the vote. The campaign blackout blunts it, the doubt lingers", role: "any", party: "ens", weight: 3, appeal: -0.02, momentum: -6, turn: 5 },
+        { id: "ni_ni_2017", headline: "'Ni-ni': Mélenchon won't say the name, and the abstention question gnaws at the centre's margin", role: "any", party: "ens", weight: 3, appeal: -0.025, momentum: -6 },
+        { id: "marine_seule_2017", headline: "Le Pen steps 'above the party' for the runoff, and the de-demonized Marine plays presidential for a news cycle", role: "any", party: "rn", weight: 3, appeal: 0.025, momentum: 6 },
         { id: "colere_ouvriere_2017", headline: "Deindustrialized France seethes: shuttered factories put pouvoir d'achat on the RN's side of the ledger", role: "any", party: "rn", weight: 2, appeal: 0.02, momentum: 5 },
       ],
     },
@@ -248,8 +248,8 @@ export const FRANCE: CountryBundle = {
 
   events: [
     { id: "debat_entre_deux", headline: "{party}'s candidate wins the entre-deux-tours debate", role: "any", weight: 4, appeal: 0.035, momentum: 12 },
-    { id: "front_republicain", headline: "The front républicain stirs — eliminated candidates' voters break for {party}", role: "any", weight: 3, appeal: 0.03, momentum: 8 },
-    { id: "derapage", headline: "A dérapage — an ugly remark from a {party} surrogate dominates the cycle", role: "any", weight: 3, appeal: -0.035, momentum: -9 },
+    { id: "front_republicain", headline: "The front républicain stirs, and eliminated candidates' voters break for {party}", role: "any", weight: 3, appeal: 0.03, momentum: 8 },
+    { id: "derapage", headline: "A dérapage: an ugly remark from a {party} surrogate dominates the cycle", role: "any", weight: 3, appeal: -0.035, momentum: -9 },
     { id: "prix_essence", headline: "A fuel-price spike lands hardest on {party}", role: "leader", weight: 2, appeal: -0.025, momentum: -5 },
     { id: "securite_incident", headline: "A security incident pushes the campaign onto {party}'s ground", role: "any", weight: 2, appeal: 0.03, momentum: 7 },
     { id: "abstention_alarm", headline: "Abstention warnings mobilize {party}'s ground game", role: "player", weight: 2, appeal: 0.02, momentum: 6 },
@@ -262,9 +262,9 @@ export const FRANCE: CountryBundle = {
       weight: 4,
       prompt: "A head-to-head is on the table. How do you play it?",
       choices: [
-        { id: "accept_attack", text: "Accept and go on the attack", resultText: "You land blows — and take a few. The overnight polls twitch your way.", appeal: 0.03, momentum: 10, rivalAppeal: -0.015 },
+        { id: "accept_attack", text: "Accept and go on the attack", resultText: "You land blows and take a few. The overnight polls twitch your way.", appeal: 0.03, momentum: 10, rivalAppeal: -0.015 },
         { id: "accept_safe", text: "Accept and play it safe", resultText: "A steady, on-message night. No gaffes, no fireworks.", appeal: 0.015, momentum: 4 },
-        { id: "decline", text: "Decline — protect the lead / avoid the ambush", resultText: "You dodge the studio lights. The press calls it caution.", appeal: -0.01, momentum: -4 },
+        { id: "decline", text: "Decline: protect the lead, avoid the ambush", resultText: "You dodge the studio lights. The press calls it caution.", appeal: -0.01, momentum: -4 },
       ],
     },
     {
@@ -274,9 +274,9 @@ export const FRANCE: CountryBundle = {
       weight: 3,
       prompt: "The runoff arithmetic is everything. What's the play?",
       choices: [
-        { id: "court_centre", text: "Court the centre — soft tone, broad tent", resultText: "Moderates warm up. Your base yawns.", appeal: 0.02, momentum: 5 },
-        { id: "base_first", text: "Base first — turn out your own", resultText: "The faithful roar. The centre looks away.", appeal: 0.025, momentum: 8 },
-        { id: "contrast", text: "Make it a contrast night against the rival", resultText: "You define them — and it lands.", appeal: 0.02, momentum: 6, rivalAppeal: -0.02 },
+        { id: "court_centre", text: "Court the centre: soft tone, broad tent", resultText: "Moderates warm up. Your base yawns.", appeal: 0.02, momentum: 5 },
+        { id: "base_first", text: "Base first: turn out your own", resultText: "The faithful roar. The centre looks away.", appeal: 0.025, momentum: 8 },
+        { id: "contrast", text: "Make it a contrast night against the rival", resultText: "You define them, and it lands.", appeal: 0.02, momentum: 6, rivalAppeal: -0.02 },
       ],
     },
     {
@@ -286,9 +286,9 @@ export const FRANCE: CountryBundle = {
       weight: 3,
       prompt: "The draft is ready. Which way do you push?",
       choices: [
-        { id: "bold", text: "Go bold — a defining, risky pledge", resultText: "The base roars. The spreadsheets at HQ look nervous.", appeal: 0.035, momentum: 12 },
-        { id: "cautious", text: "Play it cautious — no hostages to fortune", resultText: "No spark, no self-inflicted wounds.", appeal: 0.01, momentum: 2 },
-        { id: "contrast", text: "Make it a contrast document against the rival", resultText: "You define them more than yourself — and it lands.", appeal: 0.02, momentum: 6, rivalAppeal: -0.02 },
+        { id: "bold", text: "Go bold with a defining, risky pledge", resultText: "The base roars. The spreadsheets at HQ look nervous.", appeal: 0.035, momentum: 12 },
+        { id: "cautious", text: "Play it cautious: no hostages to fortune", resultText: "No spark, no self-inflicted wounds.", appeal: 0.01, momentum: 2 },
+        { id: "contrast", text: "Make it a contrast document against the rival", resultText: "You define them more than yourself, and it lands.", appeal: 0.02, momentum: 6, rivalAppeal: -0.02 },
       ],
     },
   ],

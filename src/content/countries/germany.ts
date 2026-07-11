@@ -68,7 +68,7 @@ export const GERMANY: CountryBundle = {
   ],
 
   blocs: [
-    { id: "young", name: "Young voters (18–29)", share: 0.18, turnoutPropensity: 0.68,
+    { id: "young", name: "Young voters (18-29)", share: 0.18, turnoutPropensity: 0.68,
       tilt: { lnk: 0.5, grn: 0.25, afd: 0.15, fdp: 0.35, cdu: -0.35, spd: -0.3 } },
     { id: "graduate", name: "University graduates", share: 0.28, turnoutPropensity: 0.83,
       tilt: { grn: 0.4, cdu: 0.05, lnk: 0.1, fdp: 0.15, spd: 0.0, afd: -0.5 } },
@@ -102,7 +102,7 @@ export const GERMANY: CountryBundle = {
       id: "2025",
       year: 2025,
       label: "2025 · Merz v. Scholz",
-      tagline: "Winter 2025. The traffic-light coalition has collapsed, the economy is in its second year of recession, and the AfD polls second. Hold the centre — or ride the revolt.",
+      tagline: "Winter 2025. The traffic-light coalition has collapsed, the economy is in its second year of recession, and the AfD polls second. Hold the centre, or ride the revolt.",
       salience: { migration: 0.9, economy: 0.88, ukraine_security: 0.65, pensions: 0.55, energy_climate: 0.5, housing: 0.5 },
       regions: {
         NORTH: { v: { cdu: 0.28, spd: 0.21, afd: 0.17, grn: 0.12, lnk: 0.07, oth: 0.15 }, s: { cdu: 33, spd: 25, afd: 20, grn: 12, lnk: 4, oth: 1 } },
@@ -115,15 +115,15 @@ export const GERMANY: CountryBundle = {
       },
       // The real story beats of winter 2025, in campaign order.
       events: [
-        { id: "musk_weidel_stream", headline: "Musk endorses the AfD and livestreams with Weidel — the base roars, the centre recoils", role: "any", party: "afd", weight: 3, appeal: -0.02, momentum: 9, turn: 0 },
-        { id: "aschaffenburg", headline: "The Aschaffenburg attack reignites the migration debate — {party} owns the week", role: "any", party: "afd", weight: 3, appeal: 0.03, momentum: 8, turn: 1 },
-        { id: "migrationsantrag", headline: "Merz's migration motion passes with AfD votes — the hardline base rallies to {party}", role: "any", party: "cdu", weight: 3, appeal: 0.03, momentum: 7, turn: 2 },
-        { id: "brandmauer_beben", headline: "Hundreds of thousands march against the firewall breach — Merkel rebukes Merz, and the centre flinches from {party}", role: "any", party: "cdu", weight: 3, appeal: -0.035, momentum: -8, turn: 3 },
+        { id: "musk_weidel_stream", headline: "Musk endorses the AfD and livestreams with Weidel. The base roars, the centre recoils", role: "any", party: "afd", weight: 3, appeal: -0.02, momentum: 9, turn: 0 },
+        { id: "aschaffenburg", headline: "The Aschaffenburg attack reignites the migration debate, and {party} owns the week", role: "any", party: "afd", weight: 3, appeal: 0.03, momentum: 8, turn: 1 },
+        { id: "migrationsantrag", headline: "Merz's migration motion passes with AfD votes, and the hardline base rallies to {party}", role: "any", party: "cdu", weight: 3, appeal: 0.03, momentum: 7, turn: 2 },
+        { id: "brandmauer_beben", headline: "Hundreds of thousands march against the firewall breach. Merkel rebukes Merz, and the centre flinches from {party}", role: "any", party: "cdu", weight: 3, appeal: -0.035, momentum: -8, turn: 3 },
         { id: "tv_duell_kanzler", headline: "{party}'s chancellor candidate takes the TV-Duell on points", role: "any", weight: 3, appeal: 0.03, momentum: 10, turn: 4 },
-        { id: "vw_schliessungen", headline: "VW plant closures and a second year of recession put the economy minister on trial — {party} bleeds", role: "any", party: "grn", weight: 2, appeal: -0.03, momentum: -7 },
-        { id: "spd_1887", headline: "'Worst result since 1887' — the doom loop tightens around {party}", role: "any", party: "spd", weight: 2, appeal: -0.03, momentum: -8 },
-        { id: "splitter_zittern", headline: "BSW and FDP flirt with the 5% line — wasted-vote warnings squeeze {party}", role: "any", party: "oth", weight: 2, appeal: -0.025, momentum: -6 },
-        { id: "kuechentisch", headline: "Habeck's kitchen-table campaign finds its audience — a quiet lift for {party}", role: "any", party: "grn", weight: 2, appeal: 0.025, momentum: 6 },
+        { id: "vw_schliessungen", headline: "VW plant closures and a second year of recession put the economy minister on trial, and {party} bleeds", role: "any", party: "grn", weight: 2, appeal: -0.03, momentum: -7 },
+        { id: "spd_1887", headline: "'Worst result since 1887': the doom loop tightens around {party}", role: "any", party: "spd", weight: 2, appeal: -0.03, momentum: -8 },
+        { id: "splitter_zittern", headline: "BSW and FDP flirt with the 5% line, and wasted-vote warnings squeeze {party}", role: "any", party: "oth", weight: 2, appeal: -0.025, momentum: -6 },
+        { id: "kuechentisch", headline: "Habeck's kitchen-table campaign finds its audience, a quiet lift for {party}", role: "any", party: "grn", weight: 2, appeal: 0.025, momentum: 6 },
       ],
     },
 
@@ -147,14 +147,14 @@ export const GERMANY: CountryBundle = {
       },
       // The real story beats of autumn 2021, in campaign order.
       events: [
-        { id: "flutkatastrophe_lachen", headline: "Cameras catch Laschet laughing behind the President in the flood zone — the clip is everywhere", role: "any", party: "cdu", weight: 3, appeal: -0.04, momentum: -10, turn: 0 },
+        { id: "flutkatastrophe_lachen", headline: "Cameras catch Laschet laughing behind the President in the flood zone, and the clip is everywhere", role: "any", party: "cdu", weight: 3, appeal: -0.04, momentum: -10, turn: 0 },
         { id: "lebenslauf_sommer", headline: "The CV-and-plagiarism summer catches up with Baerbock again", role: "any", party: "grn", weight: 3, appeal: -0.035, momentum: -8, turn: 1 },
-        { id: "triell_sieger", headline: "Scholz wins the third Triell in a row — who else?", role: "any", party: "spd", weight: 3, appeal: 0.035, momentum: 10, turn: 3 },
+        { id: "triell_sieger", headline: "Scholz wins the third Triell in a row. Who else?", role: "any", party: "spd", weight: 3, appeal: 0.035, momentum: 10, turn: 3 },
         { id: "ampel_oder_jamaika", headline: "Ampel or Jamaika? Final-week coalition arithmetic pulls tactical voters toward {party}", role: "challenger", weight: 3, appeal: 0.025, momentum: 6, turn: 5 },
-        { id: "scholzomat", headline: "The 'Scholzomat' steady-hand surge — boring is the new electable for {party}", role: "any", party: "spd", weight: 2, appeal: 0.025, momentum: 8 },
-        { id: "cumex_wirecard", headline: "Cum-ex and Wirecard questions dog {party}'s candidate — but never quite land", role: "any", party: "spd", weight: 2, appeal: -0.03, momentum: -7 },
-        { id: "erstwaehler_welle", headline: "First-time voters break for {party} — the yellow wave runs through every school gym", role: "any", party: "fdp", weight: 2, appeal: 0.03, momentum: 9 },
-        { id: "fuenf_prozent_zittern", headline: "{party} stares down the 5% cliff — only three direct mandates can save the list", role: "any", party: "lnk", weight: 2, appeal: -0.03, momentum: -8 },
+        { id: "scholzomat", headline: "The 'Scholzomat' steady-hand surge: boring is the new electable for {party}", role: "any", party: "spd", weight: 2, appeal: 0.025, momentum: 8 },
+        { id: "cumex_wirecard", headline: "Cum-ex and Wirecard questions dog {party}'s candidate, but never quite land", role: "any", party: "spd", weight: 2, appeal: -0.03, momentum: -7 },
+        { id: "erstwaehler_welle", headline: "First-time voters break for {party} as the yellow wave runs through every school gym", role: "any", party: "fdp", weight: 2, appeal: 0.03, momentum: 9 },
+        { id: "fuenf_prozent_zittern", headline: "{party} stares down the 5% cliff. Only three direct mandates can save the list", role: "any", party: "lnk", weight: 2, appeal: -0.03, momentum: -8 },
         { id: "union_schlussspurt", headline: "A red-red-green scare campaign rallies the {party} base in the final stretch", role: "any", party: "cdu", weight: 2, appeal: 0.03, momentum: 7 },
       ],
     },
@@ -179,7 +179,7 @@ export const GERMANY: CountryBundle = {
   },
 
   events: [
-    { id: "wirtschaft_zahlen", headline: "Grim industrial numbers dominate the news — pressure on {party}", role: "leader", weight: 3, appeal: -0.03, momentum: -7 },
+    { id: "wirtschaft_zahlen", headline: "Grim industrial numbers dominate the news, putting pressure on {party}", role: "leader", weight: 3, appeal: -0.03, momentum: -7 },
     { id: "migration_debatte", headline: "A border incident reignites the migration debate, and {party} owns the airwaves", role: "any", weight: 3, appeal: 0.03, momentum: 7 },
     { id: "tv_duell", headline: "{party}'s leader wins the TV-Duell on points", role: "any", weight: 3, appeal: 0.03, momentum: 10 },
     { id: "brandmauer_row", headline: "A firewall row over voting with the far right bruises {party}", role: "leader", weight: 2, appeal: -0.035, momentum: -8 },
@@ -188,7 +188,7 @@ export const GERMANY: CountryBundle = {
     { id: "jugend_welle", headline: "A social-media wave breaks for {party} among young voters", role: "challenger", weight: 2, appeal: 0.025, momentum: 8 },
     { id: "wahlkampf_panne", headline: "{party}'s leader fumbles a live interview", role: "any", weight: 2, appeal: -0.03, momentum: -6 },
     { id: "endorsement_de", headline: "Business leaders and papers line up behind {party}", role: "any", weight: 2, appeal: 0.02, momentum: 5 },
-    { id: "ukraine_moment", headline: "A security shock puts statesmanship first — {party} looks the part", role: "leader", weight: 2, appeal: 0.025, momentum: 6 },
+    { id: "ukraine_moment", headline: "A security shock puts statesmanship first, and {party} looks the part", role: "leader", weight: 2, appeal: 0.025, momentum: 6 },
     {
       id: "tv_duell_call",
       headline: "The networks offer {party} a TV-Duell slot",
@@ -196,9 +196,9 @@ export const GERMANY: CountryBundle = {
       weight: 4,
       prompt: "A head-to-head is on the table. How do you play it?",
       choices: [
-        { id: "accept_attack", text: "Accept and go on the attack", resultText: "You land blows — and take a few. The overnight polls twitch your way.", appeal: 0.03, momentum: 10, rivalAppeal: -0.015 },
+        { id: "accept_attack", text: "Accept and go on the attack", resultText: "You land blows and take a few. The overnight polls twitch your way.", appeal: 0.03, momentum: 10, rivalAppeal: -0.015 },
         { id: "accept_safe", text: "Accept and play it safe", resultText: "A steady, on-message night. No gaffes, no fireworks.", appeal: 0.015, momentum: 4 },
-        { id: "decline", text: "Decline — protect the lead / avoid the ambush", resultText: "You dodge the studio lights. The press calls it caution.", appeal: -0.01, momentum: -4 },
+        { id: "decline", text: "Decline: protect the lead, avoid the ambush", resultText: "You dodge the studio lights. The press calls it caution.", appeal: -0.01, momentum: -4 },
       ],
     },
     {
@@ -208,9 +208,9 @@ export const GERMANY: CountryBundle = {
       weight: 3,
       prompt: "How do you handle the Brandmauer?",
       choices: [
-        { id: "hard_line", text: "Draw a hard line — no deals, no votes", resultText: "The centre breathes easier. Your right flank fumes.", appeal: 0.02, momentum: 5 },
-        { id: "ambiguous", text: "Keep it ambiguous — case by case", resultText: "Everyone hears what they want. Trust erodes a little.", appeal: -0.01, momentum: -3 },
-        { id: "contrast", text: "Turn it into an attack on the rival", resultText: "You change the subject — and it mostly works.", appeal: 0.015, momentum: 4, rivalAppeal: -0.02 },
+        { id: "hard_line", text: "Draw a hard line: no deals, no votes", resultText: "The centre breathes easier. Your right flank fumes.", appeal: 0.02, momentum: 5 },
+        { id: "ambiguous", text: "Keep it ambiguous, case by case", resultText: "Everyone hears what they want. Trust erodes a little.", appeal: -0.01, momentum: -3 },
+        { id: "contrast", text: "Turn it into an attack on the rival", resultText: "You change the subject, and it mostly works.", appeal: 0.015, momentum: 4, rivalAppeal: -0.02 },
       ],
     },
     {
@@ -220,9 +220,9 @@ export const GERMANY: CountryBundle = {
       weight: 3,
       prompt: "The draft is ready. Which way do you push?",
       choices: [
-        { id: "bold", text: "Go bold — a defining, risky pledge", resultText: "The base roars. The spreadsheets at HQ look nervous.", appeal: 0.035, momentum: 12 },
-        { id: "cautious", text: "Play it cautious — no hostages to fortune", resultText: "No spark, no self-inflicted wounds.", appeal: 0.01, momentum: 2 },
-        { id: "contrast", text: "Make it a contrast document against the rival", resultText: "You define them more than yourself — and it lands.", appeal: 0.02, momentum: 6, rivalAppeal: -0.02 },
+        { id: "bold", text: "Go bold with a defining, risky pledge", resultText: "The base roars. The spreadsheets at HQ look nervous.", appeal: 0.035, momentum: 12 },
+        { id: "cautious", text: "Play it cautious: no hostages to fortune", resultText: "No spark, no self-inflicted wounds.", appeal: 0.01, momentum: 2 },
+        { id: "contrast", text: "Make it a contrast document against the rival", resultText: "You define them more than yourself, and it lands.", appeal: 0.02, momentum: 6, rivalAppeal: -0.02 },
       ],
     },
   ],

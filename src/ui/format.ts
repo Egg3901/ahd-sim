@@ -32,7 +32,7 @@ const WEEK_LABELS = [
   "Week of Oct 6",
   "Week of Oct 13",
   "Week of Oct 20",
-  "Final Week — Oct 27",
+  "Final Week: Oct 27",
 ];
 
 export function turnLabel(turn: number, total: number): string {

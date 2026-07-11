@@ -36,7 +36,7 @@ export const EVENTS: GameEvent[] = [
           narrative: 10,
         },
         resultText:
-          "You refuse to take the bait. The split-screen does the work — pundits call it steady and reassuring.",
+          "You refuse to take the bait. The split-screen does the work; pundits call it steady and reassuring.",
       },
       {
         id: "aggressive",
@@ -77,7 +77,7 @@ export const EVENTS: GameEvent[] = [
     id: "vp_debate",
     title: "Vice-Presidential Debate (Salt Lake City)",
     prompt:
-      "Your running mate takes the stage opposite the other ticket's VP — behind plexiglass, before a calmer audience. What's the brief you give them?",
+      "Your running mate takes the stage opposite the other ticket's VP, behind plexiglass, before a calmer audience. What's the brief you give them?",
     subject: "both",
     trigger: { kind: "scheduled", turn: 5 },
     isDebate: true,
@@ -95,7 +95,7 @@ export const EVENTS: GameEvent[] = [
           momentum: 4,
           narrative: 6,
         },
-        resultText: "A poised, disciplined performance. No knockout, no stumble — exactly the plan.",
+        resultText: "A poised, disciplined performance. No knockout, no stumble. Exactly the plan.",
       },
       {
         id: "attack_record",
@@ -151,7 +151,7 @@ export const EVENTS: GameEvent[] = [
           momentum: 5,
           narrative: 3,
         },
-        resultText: "You drive the conversation back to pocketbooks — your strongest turf with working voters.",
+        resultText: "You drive the conversation back to pocketbooks, your strongest turf with working voters.",
       },
     ],
   },
@@ -168,17 +168,17 @@ export const EVENTS: GameEvent[] = [
     choices: [
       {
         id: "expand_map",
-        text: "Go big — expand the map into reach states.",
+        text: "Go big and expand the map into reach states.",
         effects: {
           blocDeltas: [{ blocId: "hispanic", margin: 0.03 }, { blocId: "college_white", margin: 0.02 }],
           momentum: 6,
           narrative: 4,
         },
-        resultText: "You announce ad buys in surprising places. Bold — and a little risky with the budget.",
+        resultText: "You announce ad buys in surprising places. Bold, and a little risky with the budget.",
       },
       {
         id: "defend_core",
-        text: "Stay disciplined — bank the bounce and defend the core.",
+        text: "Stay disciplined: bank the bounce and defend the core.",
         effects: {
           blocDeltas: [{ blocId: "seniors", margin: 0.03 }, { blocId: "suburban_women", margin: 0.02 }],
           momentum: 3,
@@ -225,7 +225,7 @@ export const EVENTS: GameEvent[] = [
           salienceDeltas: { economy: 0.08, covid_response: 0.06 },
           momentum: 3,
         },
-        resultText: "You speak to the exhausted and the out-of-work — at a cost with the most cautious voters.",
+        resultText: "You speak to the exhausted and the out-of-work, at a cost with the most cautious voters.",
       },
     ],
   },
@@ -240,7 +240,7 @@ export const EVENTS: GameEvent[] = [
     choices: [
       {
         id: "fire_up_base",
-        text: "Frame it as a fight for the future of the Court — rally the base.",
+        text: "Frame it as a fight for the future of the Court and rally the base.",
         effects: {
           blocDeltas: [
             { blocId: "youth", margin: 0.04, enthusiasm: 0.03 },
@@ -274,7 +274,7 @@ export const EVENTS: GameEvent[] = [
     id: "economic_data",
     title: "Blockbuster Jobs Report",
     prompt:
-      "A surprise jobs report lands — the recovery looks stronger than forecast. Both campaigns scramble to spin it. What's your line?",
+      "A surprise jobs report lands, and the recovery looks stronger than forecast. Both campaigns scramble to spin it. What's your line?",
     subject: "both",
     trigger: { kind: "scheduled", turn: 6 },
     oncePerGame: true,
@@ -316,7 +316,7 @@ export const EVENTS: GameEvent[] = [
     choices: [
       {
         id: "reform_and_calm",
-        text: "Condemn violence AND call for real police reform — both, firmly.",
+        text: "Condemn violence AND call for real police reform. Both, firmly.",
         effects: {
           blocDeltas: [
             { blocId: "black", margin: 0.04 },
@@ -330,7 +330,7 @@ export const EVENTS: GameEvent[] = [
       },
       {
         id: "law_order",
-        text: "Lead with law and order — back the police, restore the streets.",
+        text: "Lead with law and order: back the police, restore the streets.",
         effects: {
           blocDeltas: [
             { blocId: "noncollege_white", margin: 0.05 },
@@ -358,7 +358,7 @@ export const EVENTS: GameEvent[] = [
     choices: [
       {
         id: "amplify",
-        text: "Amplify it everywhere — cut it into an ad overnight.",
+        text: "Amplify it everywhere. Cut it into an ad overnight.",
         effects: {
           blocDeltas: [{ blocId: "youth", margin: 0.03, enthusiasm: 0.02 }, { blocId: "suburban_women", margin: 0.03 }],
           momentum: 5,
@@ -381,7 +381,7 @@ export const EVENTS: GameEvent[] = [
     id: "endorsement",
     title: "A Surprise Endorsement",
     prompt:
-      "A respected, cross-partisan figure offers to endorse you — but they'll want a speaking role and some message alignment. Accept?",
+      "A respected, cross-partisan figure offers to endorse you, but they'll want a speaking role and some message alignment. Accept?",
     subject: "both",
     trigger: { kind: "stochastic", baseWeight: 0.9 },
     gate: { minTurn: 1 },
@@ -398,7 +398,7 @@ export const EVENTS: GameEvent[] = [
       },
       {
         id: "decline",
-        text: "Politely decline — avoid muddying your message.",
+        text: "Politely decline to avoid muddying your message.",
         effects: { blocDeltas: [{ blocId: "youth", margin: 0.01 }], momentum: 1 },
         resultText: "You keep the spotlight on your own ticket. No harm, no headlines.",
       },
@@ -414,13 +414,13 @@ export const EVENTS: GameEvent[] = [
     choices: [
       {
         id: "blitz",
-        text: "Push the blitz — ride the wave.",
+        text: "Push the blitz and ride the wave.",
         effects: { cash: 18_000_000, momentum: 2, blocDeltas: [{ blocId: "youth", enthusiasm: 0.01, margin: 0 }] },
         resultText: "The grassroots delivers. The war chest swells overnight.",
       },
       {
         id: "soft_ask",
-        text: "Keep it tasteful — a soft ask, protect the brand.",
+        text: "Keep it tasteful: a soft ask, protect the brand.",
         effects: { cash: 7_000_000 },
         resultText: "A modest haul, but you avoid donor fatigue.",
       },
@@ -469,7 +469,7 @@ export const EVENTS: GameEvent[] = [
     choices: [
       {
         id: "full_assault",
-        text: "Full assault — make it the only story for a week.",
+        text: "Full assault. Make it the only story for a week.",
         effects: {
           blocDeltas: [
             { blocId: "noncollege_white", margin: 0.03 },
@@ -572,12 +572,12 @@ export const EVENTS: GameEvent[] = [
       },
       {
         id: "embrace",
-        text: "Quietly let it run — it's landing.",
+        text: "Quietly let it run. It's landing.",
         effects: {
           blocDeltas: [{ blocId: "noncollege_white", margin: 0.03 }, { blocId: "suburban_women", margin: -0.03 }],
           narrative: -3,
         },
-        resultText: "The ad does damage to the opponent — and a little to your own halo.",
+        resultText: "The ad does damage to the opponent, and a little to your own halo.",
       },
     ],
   },
@@ -585,14 +585,14 @@ export const EVENTS: GameEvent[] = [
     id: "celebrity_rally",
     title: "A Celebrity Wants to Headline",
     prompt:
-      "A megastar offers to headline a get-out-the-vote concert in a swing state. It'll draw a huge young crowd — and some risk. Book it?",
+      "A megastar offers to headline a get-out-the-vote concert in a swing state. It'll draw a huge young crowd, and some risk. Book it?",
     subject: "both",
     trigger: { kind: "stochastic", baseWeight: 0.6 },
     gate: { minTurn: 4 },
     choices: [
       {
         id: "book",
-        text: "Book the show — turn out the youth vote.",
+        text: "Book the show and turn out the youth vote.",
         effects: {
           blocDeltas: [{ blocId: "youth", margin: 0.04, enthusiasm: 0.05 }],
           momentum: 3,
@@ -602,7 +602,7 @@ export const EVENTS: GameEvent[] = [
       },
       {
         id: "pass",
-        text: "Pass — celebrity politics can backfire.",
+        text: "Pass. Celebrity politics can backfire.",
         effects: { blocDeltas: [{ blocId: "noncollege_white", margin: 0.01 }] },
         resultText: "You keep the focus on kitchen-table issues. No spectacle, no risk.",
       },
@@ -612,14 +612,14 @@ export const EVENTS: GameEvent[] = [
     id: "town_hall",
     title: "Network Town Hall",
     prompt:
-      "A network offers a prime-time town hall — undecided voters asking real questions, live. It's exposure and it's a tightrope. Your posture?",
+      "A network offers a prime-time town hall: undecided voters asking real questions, live. It's exposure and it's a tightrope. Your posture?",
     subject: "both",
     trigger: { kind: "stochastic", baseWeight: 0.7 },
     gate: { minTurn: 3 },
     choices: [
       {
         id: "empathy",
-        text: "Lead with empathy — meet each voter where they are.",
+        text: "Lead with empathy and meet each voter where they are.",
         effects: {
           blocDeltas: [
             { blocId: "suburban_women", margin: 0.04 },
@@ -633,7 +633,7 @@ export const EVENTS: GameEvent[] = [
       },
       {
         id: "command",
-        text: "Command the facts — project total mastery of the issues.",
+        text: "Command the facts and project total mastery of the issues.",
         requires: { trait: "policyKnowledge", min: 65 },
         effects: {
           blocDeltas: [{ blocId: "college_white", margin: 0.04 }, { blocId: "seniors", margin: 0.02 }],

@@ -70,7 +70,7 @@ export const STAFF_POOL: StaffDef[] = [
   },
   {
     id: "veteran_manager", name: "Claudia Marsh", emoji: "♟️", role: "Campaign Manager",
-    blurb: "Three cycles, two upsets. Steadies the whole operation — a bit of everything.",
+    blurb: "Three cycles, two upsets. Steadies the whole operation with a bit of everything.",
     salaryPerWeek: 600_000, loyalty: 55,
     effects: { maxActions: 1, fundraiseMult: 1.05, adMult: 1.04 },
   },

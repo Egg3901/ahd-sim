@@ -309,7 +309,7 @@ export const UK_ELECTIONS: Record<string, UkElectionData> = {
   "1951": {
     id: "1951", year: 1951,
     label: "1951 · Churchill v. Attlee",
-    tagline: "October 1951. Six years of Labour austerity, rationing still on the shelves, and Churchill promising to set the people free. Can Attlee hold on — or does the old lion get one last roar?",
+    tagline: "October 1951. Six years of Labour austerity, rationing still on the shelves, and Churchill promising to set the people free. Can Attlee hold on, or does the old lion get one last roar?",
     salience: { economy: 0.90, cost_of_living: 0.80, housing: 0.80, nhs: 0.70, defence: 0.70, taxation: 0.60, crime: 0.30, europe: 0.20, scottish_independence: 0.10, immigration: 0.10, climate: 0.00 },
     majority: { total: 625, threshold: 313 },
     goalText: "313 of 625 seats",
@@ -318,7 +318,7 @@ export const UK_ELECTIONS: Record<string, UkElectionData> = {
   "2024": {
     id: "2024", year: 2024,
     label: "2024 · Starmer v. Sunak",
-    tagline: "July 2024. Fourteen years of Tory government, a cost-of-living squeeze, and Reform eating the right. Labour smells a landslide — don't fumble it.",
+    tagline: "July 2024. Fourteen years of Tory government, a cost-of-living squeeze, and Reform eating the right. Labour smells a landslide. Don't fumble it.",
     salience: { cost_of_living: 0.92, nhs: 0.85, economy: 0.85, immigration: 0.7, housing: 0.55, crime: 0.5, taxation: 0.6, europe: 0.3, climate: 0.4, defence: 0.35, scottish_independence: 0.25 },
     majority: { total: 650, threshold: 326 },
     goalText: "326 of 650 seats",
@@ -336,7 +336,7 @@ export const UK_ELECTIONS: Record<string, UkElectionData> = {
   "2017": {
     id: "2017", year: 2017,
     label: "2017 · May v. Corbyn",
-    tagline: "June 2017. A snap election called from a commanding lead — but a manifesto wobble and a surging opposition turn a coronation into a knife-edge.",
+    tagline: "June 2017. A snap election called from a commanding lead, but a manifesto wobble and a surging opposition turn a coronation into a knife-edge.",
     salience: { europe: 0.85, nhs: 0.8, economy: 0.78, taxation: 0.6, immigration: 0.55, crime: 0.55, defence: 0.5, cost_of_living: 0.5, housing: 0.5, climate: 0.4, scottish_independence: 0.45 },
     majority: { total: 650, threshold: 326 },
     goalText: "326 of 650 seats",
@@ -345,7 +345,7 @@ export const UK_ELECTIONS: Record<string, UkElectionData> = {
   "2010": {
     id: "2010", year: 2010,
     label: "2010 · Brown v. Cameron v. Clegg",
-    tagline: "May 2010. A banking crash, an expenses scandal, and the first TV debates of the age. 'I agree with Nick' — and nobody wins outright.",
+    tagline: "May 2010. A banking crash, an expenses scandal, and the first TV debates of the age. 'I agree with Nick', and nobody wins outright.",
     salience: { economy: 0.95, nhs: 0.7, taxation: 0.65, immigration: 0.6, crime: 0.55, europe: 0.4, housing: 0.5, climate: 0.45, defence: 0.45, cost_of_living: 0.6, scottish_independence: 0.3 },
     majority: { total: 650, threshold: 326 },
     goalText: "326 of 650 seats",
@@ -354,7 +354,7 @@ export const UK_ELECTIONS: Record<string, UkElectionData> = {
   "2015": {
     id: "2015", year: 2015,
     label: "2015 · Cameron v. Miliband",
-    tagline: "May 2015. Five years of coalition, a UKIP surge, and an SNP tide rising in Scotland. The polls say a dead heat — they're about to be wrong.",
+    tagline: "May 2015. Five years of coalition, a UKIP surge, and an SNP tide rising in Scotland. The polls say a dead heat. They're about to be wrong.",
     salience: { economy: 0.9, nhs: 0.8, immigration: 0.72, europe: 0.55, taxation: 0.6, cost_of_living: 0.6, scottish_independence: 0.6, housing: 0.5, crime: 0.45, defence: 0.4, climate: 0.4 },
     majority: { total: 650, threshold: 326 },
     goalText: "326 of 650 seats",
@@ -363,7 +363,7 @@ export const UK_ELECTIONS: Record<string, UkElectionData> = {
   "1997": {
     id: "1997", year: 1997,
     label: "1997 · Blair v. Major",
-    tagline: "May 1997. Eighteen years of Conservative rule, a tired government, and a rebranded opposition. Things can only get better — can you finish the job?",
+    tagline: "May 1997. Eighteen years of Conservative rule, a tired government, and a rebranded opposition. Things can only get better. Can you finish the job?",
     salience: { economy: 0.85, nhs: 0.78, taxation: 0.6, crime: 0.6, europe: 0.5, immigration: 0.4, defence: 0.45, housing: 0.5, climate: 0.25, cost_of_living: 0.55, scottish_independence: 0.35 },
     majority: { total: 659, threshold: 330 },
     goalText: "330 of 659 seats",
@@ -372,7 +372,7 @@ export const UK_ELECTIONS: Record<string, UkElectionData> = {
   "2005": {
     id: "2005", year: 2005,
     label: "2005 · Blair v. Howard",
-    tagline: "May 2005. Iraq hangs over a third Labour term, the Lib Dems surge on the anti-war vote, and Howard's Tories claw back. A majority — but a chastened one.",
+    tagline: "May 2005. Iraq hangs over a third Labour term, the Lib Dems surge on the anti-war vote, and Howard's Tories claw back. A majority, but a chastened one.",
     salience: { nhs: 0.78, economy: 0.7, immigration: 0.66, crime: 0.6, defence: 0.62, europe: 0.5, taxation: 0.55, housing: 0.5, cost_of_living: 0.5, climate: 0.35, scottish_independence: 0.3 },
     majority: { total: 646, threshold: 324 },
     goalText: "324 of 646 seats",
@@ -390,7 +390,7 @@ export const UK_ELECTIONS: Record<string, UkElectionData> = {
   "1992": {
     id: "1992", year: 1992,
     label: "1992 · Major v. Kinnock",
-    tagline: "April 1992. A recession, a new Conservative leader, and Labour ahead in the polls. The election Labour was sure to win — and the shock that followed.",
+    tagline: "April 1992. A recession, a new Conservative leader, and Labour ahead in the polls. The election Labour was sure to win, and the shock that followed.",
     salience: { economy: 0.92, taxation: 0.78, nhs: 0.75, housing: 0.62, europe: 0.5, crime: 0.5, immigration: 0.4, defence: 0.45, cost_of_living: 0.6, climate: 0.2, scottish_independence: 0.38 },
     majority: { total: 651, threshold: 326 },
     goalText: "326 of 651 seats",
@@ -408,7 +408,7 @@ export const UK_ELECTIONS: Record<string, UkElectionData> = {
   "1983": {
     id: "1983", year: 1983,
     label: "1983 · Thatcher v. Foot",
-    tagline: "June 1983. A Falklands triumph, mass unemployment, and a divided left — Labour's 'longest suicide note in history' against a rising Alliance. The landslide year.",
+    tagline: "June 1983. A Falklands triumph, mass unemployment, and a divided left: Labour's 'longest suicide note in history' against a rising Alliance. The landslide year.",
     salience: { defence: 0.82, economy: 0.86, taxation: 0.58, nhs: 0.6, europe: 0.42, crime: 0.5, housing: 0.5, immigration: 0.4, cost_of_living: 0.6, climate: 0.12, scottish_independence: 0.26 },
     majority: { total: 650, threshold: 326 },
     goalText: "326 of 650 seats",
@@ -417,7 +417,7 @@ export const UK_ELECTIONS: Record<string, UkElectionData> = {
   "1979": {
     id: "1979", year: 1979,
     label: "1979 · Thatcher v. Callaghan",
-    tagline: "May 1979. The Winter of Discontent — strikes, the rubbish piled high, the dead unburied. A tired Labour government meets a new kind of Conservative. Labour isn't working.",
+    tagline: "May 1979. The Winter of Discontent: strikes, the rubbish piled high, the dead unburied. A tired Labour government meets a new kind of Conservative. Labour isn't working.",
     salience: { economy: 0.9, cost_of_living: 0.72, taxation: 0.62, defence: 0.52, nhs: 0.6, crime: 0.52, immigration: 0.42, housing: 0.5, europe: 0.3, climate: 0.1, scottish_independence: 0.3 },
     majority: { total: 635, threshold: 318 },
     goalText: "318 of 635 seats",
