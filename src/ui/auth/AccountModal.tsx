@@ -69,7 +69,7 @@ export function AccountModal() {
               <span>{user.email}</span>
             </div>
             <div className="account-row">
-              <span className="k"><Link2 size={12} style={{ verticalAlign: "-2px", marginRight: 4 }} />A House Divided</span>
+              <span className="k"><Link2 size={12} style={{ verticalAlign: "-2px", marginRight: 4 }} />Lakeside Games account</span>
               {user.ahdLinked ? (
                 <span className="account-chip linked">Linked</span>
               ) : (

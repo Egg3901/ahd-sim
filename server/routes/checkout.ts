@@ -20,6 +20,13 @@ function getStripe(): Stripe | null {
 
 export const DEFAULT_BASE_URL = "https://sim.ahousedividedgame.com";
 
+// BASE_URL is also a Vite-reserved env name ("/" under vitest), so only honor
+// values that are actual absolute URLs.
+export function configuredBaseUrl(): string {
+  const raw = process.env.BASE_URL;
+  return (raw && /^https?:\/\//.test(raw) ? raw : DEFAULT_BASE_URL).replace(/\/+$/, "");
+}
+
 // The SPA lives at the root on sim.* but under /games/electioneer/ on the
 // Lakeside site, so success/cancel redirects need the right path prefix.
 const ORIGIN_BASE_PATHS: Record<string, string> = {
@@ -31,7 +38,7 @@ const ORIGIN_BASE_PATHS: Record<string, string> = {
 /** App base URL (with trailing slash) for the requesting origin. */
 export function checkoutBase(origin: string | undefined): string {
   if (origin && ORIGIN_BASE_PATHS[origin]) return origin + ORIGIN_BASE_PATHS[origin];
-  const base = (process.env.BASE_URL ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
+  const base = configuredBaseUrl();
   return ORIGIN_BASE_PATHS[base] ? base + ORIGIN_BASE_PATHS[base] : base + "/";
 }
 

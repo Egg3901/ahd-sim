@@ -114,7 +114,7 @@ function NoticeBanner() {
       : notice.kind === "purchase-cancelled"
         ? "Checkout cancelled. Nothing was charged."
         : notice.kind === "lakeside-signed-in"
-          ? `Signed in as ${notice.username} with your A House Divided account.`
+          ? `Signed in as ${notice.username} with your Lakeside Games account.`
           : "That sign in link expired. Try again from the login screen.";
   return (
     <div className={`notice-banner${good ? " good" : ""}`} role="status">

@@ -28,13 +28,13 @@ import {
   checkInternalToken, getLakesideIdentity, linkOrCreateUser,
   mintHandoffCode, redeemHandoffCode, resolveReturnUrl,
 } from "../lakeside.js";
-import { DEFAULT_BASE_URL } from "./checkout.js";
+import { configuredBaseUrl } from "./checkout.js";
 import { PACKS_BY_ID } from "../../src/content/packs.js";
 
 const AHD_LOGIN_URL = "https://www.ahousedividedgame.com/login";
 
 function baseUrl(): string {
-  return (process.env.BASE_URL ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
+  return configuredBaseUrl();
 }
 
 export const lakesideRouter = Router();
