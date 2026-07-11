@@ -19,7 +19,7 @@ const COUNTRY_NAMES: Record<CountryCode, string> = {
 
 const COUNTRY_BLURBS: Record<CountryCode, string> = {
   US: "Winner-take-all duels for 270 electoral votes.",
-  UK: "Multiparty FPTP — coalitions, landslides, hung parliaments.",
+  UK: "Multiparty FPTP: coalitions, landslides, hung parliaments.",
   CA: "343 seats, five parties, coast to coast to coast.",
   DE: "Proportional Bundestag politics and the firewall.",
   FR: "The two-round runoff for the Élysée.",
@@ -146,28 +146,33 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
   };
 
   return (
-    <div className="center" style={{ alignItems: "flex-start", paddingTop: 18 }}>
-      <div className="setup" style={{ maxWidth: 980 }}>
-        {/* Top bar: brand left, auth right */}
-        <div className="row" style={{ justifyContent: "space-between", flexWrap: "wrap", width: "100%", marginBottom: 6 }}>
-          <div className="setup-eyebrow" style={{ margin: 0 }}>
-            <span className="mark"><Vote size={18} /></span>{BRAND.nameCaps} — {BRAND.eyebrow}
-          </div>
-          <div className="row" style={{ gap: 6 }}>
+    <div className="landing">
+      {/* Sticky topbar: game brand left, auth right */}
+      <div className="landing-topbar">
+        <div className="landing-topbar-inner">
+          <span className="landing-brand">
+            <span className="mark"><Vote size={18} /></span>{BRAND.name}
+          </span>
+          <span className="row" style={{ gap: 6 }}>
             <button className="ghost small" onClick={() => onGo({ kind: "leaderboard" })}>
               <Trophy size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Leaderboard
             </button>
             <UserMenu />
-          </div>
+          </span>
         </div>
+      </div>
 
-        <div className="title">{BRAND.name}</div>
-        <p className="sub">
-          {SCENARIO_REGISTRY.length} elections across {new Set(SCENARIO_REGISTRY.map((s) => s.country)).size} countries — presidential duels, multiparty brawls, two-round runoffs.
-          {PAYWALL_ENABLED
-            ? " Two are free forever. The rest unlock with a pack code."
-            : " All of them are free to play right now."}
-        </p>
+      <div className="landing-body">
+        <header className="landing-hero">
+          <div className="kicker">Election strategy · {BRAND.eyebrow}</div>
+          <h1>{BRAND.name}</h1>
+          <p className="sub">
+            {SCENARIO_REGISTRY.length} elections across {new Set(SCENARIO_REGISTRY.map((s) => s.country)).size} countries: presidential duels, multiparty brawls, two-round runoffs.
+            {PAYWALL_ENABLED
+              ? " Two are free forever. The rest unlock with a pack code."
+              : " All of them are free to play right now."}
+          </p>
+        </header>
 
         {/* Daily Challenge — one seeded race, same for everyone, every day */}
         <div className="field" style={{ textAlign: "left", margin: "10px 0 4px" }}>
@@ -176,7 +181,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
 
         {/* Featured starters, front and center */}
         <div className="field" style={{ textAlign: "left", margin: "10px 0 4px" }}>
-          <label>{PAYWALL_ENABLED ? "Play free — no account needed" : "Start here — no account needed"}</label>
+          <label>{PAYWALL_ENABLED ? "Play free, no account needed" : "Start here, no account needed"}</label>
           <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
             {free.map((s) => (
               <ScenarioCard key={s.scenarioId} s={s} unlocked onPlay={() => play(s)} onLocked={() => {}} />
@@ -189,7 +194,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
           <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
             <label>
               {country
-                ? `${COUNTRY_NAMES[country]} — pick an election`
+                ? `${COUNTRY_NAMES[country]}: pick an election`
                 : "Browse by country"}
             </label>
             {country && (
@@ -216,7 +221,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
                     <ChevronRight size={15} style={{ marginLeft: "auto", color: "var(--muted)" }} />
                   </span>
                   <span className="scenario-match" style={{ fontWeight: 700 }}>
-                    {c.count === 1 ? `1 election · ${c.to}` : `${c.count} elections · ${c.from}–${c.to}`}
+                    {c.count === 1 ? `1 election · ${c.to}` : `${c.count} elections · ${c.from}-${c.to}`}
                   </span>
                   <span className="muted small" style={{ fontSize: 11, lineHeight: 1.4 }}>{c.blurb}</span>
                 </button>
@@ -239,7 +244,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
 
         {/* Packs strip */}
         <div className="field" style={{ textAlign: "left", margin: "16px 0 0" }}>
-          <label>{PAYWALL_ENABLED ? "Scenario packs — redeem a code to unlock" : "Scenario packs — everything is playable free while we're in open beta"}</label>
+          <label>{PAYWALL_ENABLED ? "Scenario packs: redeem a code to unlock" : "Scenario packs: everything is playable free while we're in open beta"}</label>
           <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))" }}>
             {PACKS.map((p) => {
               const owned = unlocked.packIds.includes(p.id);
@@ -260,12 +265,15 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
           </div>
         </div>
 
-        {/* Footer: legal + attribution */}
-        <div className="row muted small" style={{ justifyContent: "center", gap: 14, width: "100%", margin: "22px 0 8px", flexWrap: "wrap" }}>
+        {/* Footer: legal + studio credit + attribution */}
+        <div className="landing-foot">
           <button className="ghost small" onClick={() => onGo({ kind: "legal", tab: "privacy" })}>Privacy</button>
           <button className="ghost small" onClick={() => onGo({ kind: "legal", tab: "terms" })}>Terms</button>
-          <span style={{ alignSelf: "center" }}>{BRAND.from}</span>
-          <span style={{ alignSelf: "center" }}>Cover photos: Wikimedia Commons / public domain</span>
+          <a className="lakeside-credit" href="https://lakesidegames.net" target="_blank" rel="noopener">
+            <img src="lakeside-mark.svg" alt="Lakeside Games logo" width={20} height={20} />
+            by Lakeside Games
+          </a>
+          <span>Cover photos: Wikimedia Commons / public domain</span>
         </div>
       </div>
     </div>

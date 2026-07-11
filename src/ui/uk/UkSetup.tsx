@@ -87,7 +87,7 @@ export function UkSetup({ onBack, initialElection, initialSeed, initialParty }: 
     <div className="center">
       <div className="setup">
         <div className="setup-eyebrow">
-          <span className="mark"><Vote size={18} /></span>UNITED KINGDOM — GENERAL ELECTION
+          <span className="mark"><Vote size={18} /></span>UNITED KINGDOM · GENERAL ELECTION
         </div>
         <div className="title">{BRAND.name}</div>
         <p className="sub">{data.tagline}</p>
@@ -115,7 +115,7 @@ export function UkSetup({ onBack, initialElection, initialSeed, initialParty }: 
         <div className="su-panel" key={step}>
           {step === 0 && (
             <div className="field" style={{ textAlign: "left", margin: 0 }}>
-              <label>Election year — each ships its real regional results & leaders</label>
+              <label>Election year: each ships its real regional results & leaders</label>
               <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
                 {ids.map((id) => {
                   const cover = ukNativeCover(id);
