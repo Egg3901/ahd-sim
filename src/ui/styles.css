@@ -767,6 +767,81 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
 }
 .daily-banner-cta.played { background: transparent; color: var(--green); border: 1px solid var(--edge-up); }
 
+/* ── Packs, purchases, Lakeside ID ──────────────────────────────────── */
+
+/* Pack card is a plain div (the buy button inside is the only control), so it
+   needs the surface treatment buttons get for free. */
+.pack-card {
+  background: var(--panel); border: 1px solid var(--border);
+  gap: 4px; padding: 12px 12px 10px;
+}
+.pack-card:hover { border-color: var(--navy-350); }
+.pack-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);
+}
+.pack-price { font-weight: 800; font-variant-numeric: tabular-nums; font-size: 14px; }
+.pack-beta-note { font-size: 11px; color: var(--green); }
+
+/* "Continue with A House Divided": the Lakeside door on login/register. */
+.lakeside-btn {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 10px 14px; border-radius: var(--radius-md);
+  background: var(--panel-2); border: 1px solid var(--navy-350);
+  color: var(--ink-100); text-decoration: none; text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.lakeside-btn:hover { border-color: var(--accent); background: var(--surface-hover); }
+.lakeside-btn img { flex-shrink: 0; border-radius: 5px; }
+.lakeside-btn span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.lakeside-btn strong { font-size: 13.5px; font-weight: 700; }
+.lakeside-btn small { font-size: 11px; color: var(--ink-500); }
+
+.auth-divider {
+  display: flex; align-items: center; gap: 10px; margin: 14px 0;
+  color: var(--ink-500); font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.auth-divider::before, .auth-divider::after {
+  content: ""; flex: 1; height: 1px; background: var(--border);
+}
+
+/* Account view: calm hairline cards. */
+.account-card {
+  background: var(--well); border: 1px solid var(--border); border-radius: var(--radius-md);
+  padding: 12px 14px; margin-bottom: 12px;
+}
+.account-title {
+  font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--ink-500); margin-bottom: 4px;
+}
+.account-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  padding: 5px 0; font-size: 13px;
+}
+.account-row + .account-row { border-top: 1px solid var(--border); }
+.account-row .k { color: var(--ink-500); font-size: 12px; }
+.account-chip {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+  border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; color: var(--ink-500);
+}
+.account-chip.linked { color: var(--green); border-color: var(--edge-up); }
+
+/* Post-redirect notice (Stripe result, Lakeside sign-in). */
+.notice-banner {
+  display: flex; align-items: center; gap: 8px;
+  margin: 16px 0 0; padding: 10px 12px; border-radius: var(--radius-md);
+  background: var(--panel); border: 1px solid var(--border);
+  font-size: 13px; color: var(--ink-300);
+}
+.notice-banner.good { border-color: var(--edge-up); color: var(--ink-100); }
+.notice-banner.good svg { color: var(--green); flex-shrink: 0; }
+.notice-banner span { flex: 1; }
+.notice-close {
+  background: transparent; border: none; padding: 2px; color: var(--ink-500);
+  cursor: pointer; line-height: 0;
+}
+.notice-close:hover { color: var(--ink-100); }
+
 /* ── Reduced motion ─────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

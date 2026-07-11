@@ -1,22 +1,35 @@
 import { create } from "zustand";
-import { api, ApiError, clearSession, getStoredUser, getToken, storeSession, type ApiUser, type Unlocked } from "@lib/api";
+import { api, ApiError, clearSession, getStoredUser, getToken, storeSession, type ApiUser, type Purchase, type Unlocked } from "@lib/api";
 import { isFreeScenario } from "@content/scenarioRegistry";
+import { PACKS_BY_ID } from "@content/packs";
+
+// Post-redirect notices (Stripe success/cancel, Lakeside sign-in).
+export type AuthNotice =
+  | { kind: "purchase-success"; packName: string | null }
+  | { kind: "purchase-cancelled" }
+  | { kind: "lakeside-signed-in"; username: string }
+  | { kind: "lakeside-failed" };
 
 interface AuthStore {
   user: ApiUser | null;
   unlocked: Unlocked;
+  purchases: Purchase[];
+  notice: AuthNotice | null;
   // Which auth modal is open, if any. `paywallScenarioId` remembers the locked
   // scenario the user clicked so we can resume after login/activation.
-  modal: "login" | "register" | "activate" | null;
+  modal: "login" | "register" | "activate" | "account" | null;
   paywallScenarioId: string | null;
   serverDown: boolean;
 
   openModal: (m: AuthStore["modal"], paywallScenarioId?: string | null) => void;
   closeModal: () => void;
+  dismissNotice: () => void;
 
   login: (email: string, password: string) => Promise<string | null>;
   register: (username: string, email: string, password: string) => Promise<string | null>;
   activate: (code: string) => Promise<{ error?: string; packName?: string }>;
+  buyPack: (packId: string) => Promise<string | null>;
+  loadPurchases: () => Promise<void>;
   logout: () => void;
   refresh: () => Promise<void>;
 
@@ -26,12 +39,15 @@ interface AuthStore {
 export const useAuthStore = create<AuthStore>((set, get) => ({
   user: getStoredUser(),
   unlocked: { scenarioIds: [], packIds: [] },
+  purchases: [],
+  notice: null,
   modal: null,
   paywallScenarioId: null,
   serverDown: false,
 
   openModal: (m, paywallScenarioId = null) => set({ modal: m, paywallScenarioId }),
   closeModal: () => set({ modal: null, paywallScenarioId: null }),
+  dismissNotice: () => set({ notice: null }),
 
   login: async (email, password) => {
     try {
@@ -66,9 +82,28 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     }
   },
 
+  buyPack: async (packId) => {
+    try {
+      const { url } = await api.checkout(packId);
+      window.location.assign(url);
+      return null;
+    } catch (e) {
+      return e instanceof ApiError ? e.message : "Could not reach the server";
+    }
+  },
+
+  loadPurchases: async () => {
+    try {
+      const { purchases } = await api.purchases();
+      set({ purchases });
+    } catch {
+      /* account view shows an empty list; nothing to do */
+    }
+  },
+
   logout: () => {
     clearSession();
-    set({ user: null, unlocked: { scenarioIds: [], packIds: [] } });
+    set({ user: null, unlocked: { scenarioIds: [], packIds: [] }, purchases: [] });
   },
 
   refresh: async () => {
@@ -102,5 +137,45 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 }));
 
-// Restore entitlements once on module load (fire-and-forget).
-void useAuthStore.getState().refresh();
+// Handle redirect landings once on module load, before the entitlement
+// refresh: ?lakeside_code= (Lakeside sign-in bounce) and ?purchase= (Stripe
+// success/cancel). Consumed params are stripped from the URL so reloads and
+// share links stay clean.
+async function consumeRedirectParams(): Promise<void> {
+  if (typeof window === "undefined") return;
+  let params: URLSearchParams;
+  try {
+    params = new URLSearchParams(window.location.search);
+  } catch {
+    return;
+  }
+  const lakesideCode = params.get("lakeside_code");
+  const purchase = params.get("purchase");
+  const packId = params.get("pack");
+  if (!lakesideCode && !purchase) return;
+
+  for (const p of ["lakeside_code", "purchase", "pack", "session_id"]) params.delete(p);
+  const clean = window.location.pathname + (params.toString() ? `?${params}` : "") + window.location.hash;
+  window.history.replaceState(null, "", clean);
+
+  if (lakesideCode) {
+    try {
+      const { token, user, unlocked } = await api.lakesideExchange(lakesideCode);
+      storeSession(token, user);
+      useAuthStore.setState({ user, unlocked, notice: { kind: "lakeside-signed-in", username: user.username } });
+    } catch {
+      useAuthStore.setState({ notice: { kind: "lakeside-failed" } });
+    }
+  }
+  if (purchase === "success") {
+    useAuthStore.setState({
+      notice: { kind: "purchase-success", packName: packId ? PACKS_BY_ID[packId]?.name ?? null : null },
+    });
+  } else if (purchase === "cancelled") {
+    useAuthStore.setState({ notice: { kind: "purchase-cancelled" } });
+  }
+}
+
+// Restore entitlements once on module load (fire-and-forget). The redirect
+// params run first so a fresh Lakeside session or purchase is reflected.
+void consumeRedirectParams().then(() => useAuthStore.getState().refresh());

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuthStore } from "@store/authStore";
 import { X } from "lucide-react";
+import { LakesideButton, AuthDivider } from "./LakesideButton";
 
 export function LoginModal() {
   const login = useAuthStore((s) => s.login);
@@ -33,6 +34,8 @@ export function LoginModal() {
           <button className="sheet-close" onClick={closeModal} aria-label="Close"><X size={18} /></button>
         </div>
         <div className="body">
+          <LakesideButton />
+          <AuthDivider />
           <form onSubmit={submit}>
             <div className="field" style={{ textAlign: "left" }}>
               <label>Email</label>

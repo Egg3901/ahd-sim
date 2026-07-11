@@ -63,6 +63,9 @@ export function UserMenu() {
               ))}
             </div>
           )}
+          <button className="ghost small" style={{ width: "100%", marginBottom: 6 }} onClick={() => { setOpen(false); openModal("account"); }}>
+            <CircleUser size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Your account
+          </button>
           <div className="row" style={{ gap: 6 }}>
             <button className="ghost small" style={{ flex: 1 }} onClick={() => { setOpen(false); openModal("activate"); }}>
               <KeyRound size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Redeem

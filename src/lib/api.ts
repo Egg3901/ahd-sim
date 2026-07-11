@@ -10,6 +10,19 @@ export interface ApiUser {
   id: string;
   username: string;
   email: string;
+  /** True when this account is linked to an A House Divided account. */
+  ahdLinked?: boolean;
+}
+
+export interface Purchase {
+  packId: string | null;
+  packName: string | null;
+  scenarioId: string | null;
+  provider: "stripe" | "code";
+  amountCents: number;
+  currency: string;
+  status: "paid" | "refunded";
+  createdAt: number;
 }
 
 export interface Unlocked {
@@ -84,6 +97,16 @@ export const api = {
       "/api/auth/activate", { method: "POST", body: JSON.stringify({ code }) }),
 
   activations: () => call<{ unlocked: Unlocked }>("/api/auth/activations"),
+
+  // ── Purchases + Lakeside ID ──
+  checkout: (packId: string) =>
+    call<{ url: string }>("/api/checkout", { method: "POST", body: JSON.stringify({ packId }) }),
+
+  purchases: () => call<{ purchases: Purchase[] }>("/api/purchases"),
+
+  lakesideExchange: (code: string) =>
+    call<{ token: string; user: ApiUser; unlocked: Unlocked }>(
+      "/api/lakeside/exchange", { method: "POST", body: JSON.stringify({ code }) }),
 
   leaderboard: (scenarioId: string, difficulty?: string, limit = 20) =>
     call<{ entries: LeaderboardEntry[] }>(
@@ -164,6 +187,24 @@ export interface DailyChampionEntry {
 export interface DailyChampions {
   totalDays: number;
   entries: DailyChampionEntry[];
+}
+
+// ── Lakeside sign-in URL ─────────────────────────────────────────────────────
+// The A House Divided cookie only reaches sim.ahousedividedgame.com, so the
+// button always drives that host's /api/lakeside/login. It bounces back to the
+// CURRENT page (any allowed origin) with a one-time ?lakeside_code=, which the
+// SPA exchanges for its normal token. Works identically whether the app is
+// served from sim.ahousedividedgame.com or lakesidegames.net/games/electioneer.
+export function lakesideLoginUrl(): string {
+  const loc = window.location;
+  const onSim = loc.hostname === "sim.ahousedividedgame.com";
+  // Same-origin relative endpoint on sim (and in dev, where Vite proxies /api);
+  // cross to sim explicitly from the lakesidegames.net mount.
+  const endpoint = onSim || loc.hostname === "localhost" || loc.hostname === "127.0.0.1"
+    ? "api/lakeside/login"
+    : "https://sim.ahousedividedgame.com/api/lakeside/login";
+  const ret = onSim ? loc.pathname + loc.search : loc.origin + loc.pathname + loc.search;
+  return `${endpoint}?return=${encodeURIComponent(ret)}`;
 }
 
 export interface MyRanking {

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuthStore } from "@store/authStore";
 import { X } from "lucide-react";
+import { LakesideButton, AuthDivider } from "./LakesideButton";
 
 export function RegisterModal() {
   const register = useAuthStore((s) => s.register);
@@ -33,6 +34,8 @@ export function RegisterModal() {
           <button className="sheet-close" onClick={closeModal} aria-label="Close"><X size={18} /></button>
         </div>
         <div className="body">
+          <LakesideButton />
+          <AuthDivider />
           <form onSubmit={submit}>
             <div className="field" style={{ textAlign: "left" }}>
               <label>Username: shown on the leaderboard</label>

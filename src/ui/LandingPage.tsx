@@ -5,7 +5,7 @@ import { countryCover, scenarioCover } from "@content/covers";
 import { useAuthStore } from "@store/authStore";
 import { UserMenu } from "@ui/auth/UserMenu";
 import { DailyCard } from "@ui/DailyCard";
-import { Vote, Lock, Play, Trophy, KeyRound, ChevronLeft, ChevronRight } from "lucide-react";
+import { Vote, Lock, Play, Trophy, KeyRound, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
 import { BRAND } from "../brand";
 
 const COUNTRY_NAMES: Record<CountryCode, string> = {
@@ -101,12 +101,48 @@ function ScenarioCard({ s, unlocked, onPlay, onLocked, showCover = true }: {
   );
 }
 
+// Quiet one-line banner for post-redirect notices (Stripe result, Lakeside
+// sign-in). Success gets the green edge; cancel stays neutral.
+function NoticeBanner() {
+  const notice = useAuthStore((s) => s.notice);
+  const dismiss = useAuthStore((s) => s.dismissNotice);
+  if (!notice) return null;
+  const good = notice.kind === "purchase-success" || notice.kind === "lakeside-signed-in";
+  const text =
+    notice.kind === "purchase-success"
+      ? `Payment complete. ${notice.packName ?? "Your pack"} is unlocked on this account.`
+      : notice.kind === "purchase-cancelled"
+        ? "Checkout cancelled. Nothing was charged."
+        : notice.kind === "lakeside-signed-in"
+          ? `Signed in as ${notice.username} with your A House Divided account.`
+          : "That sign in link expired. Try again from the login screen.";
+  return (
+    <div className={`notice-banner${good ? " good" : ""}`} role="status">
+      {good ? <Check size={14} /> : null}
+      <span>{text}</span>
+      <button className="notice-close" onClick={dismiss} aria-label="Dismiss"><X size={14} /></button>
+    </div>
+  );
+}
+
 export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void }) {
   const canPlay = useAuthStore((s) => s.canPlay);
   const unlocked = useAuthStore((s) => s.unlocked);
   const openModal = useAuthStore((s) => s.openModal);
   const user = useAuthStore((s) => s.user);
+  const buyPack = useAuthStore((s) => s.buyPack);
   const [country, setCountry] = useState<CountryCode | null>(null);
+  const [buyBusy, setBuyBusy] = useState<string | null>(null);
+  const [buyError, setBuyError] = useState<string | null>(null);
+
+  const buy = async (packId: string) => {
+    if (!user) { openModal("register"); return; }
+    setBuyBusy(packId);
+    setBuyError(null);
+    const err = await buyPack(packId);
+    setBuyBusy(null);
+    if (err) setBuyError(err);
+  };
 
   // Country-first browsing: one card per country, then that country's
   // elections (newest first) once picked.
@@ -164,6 +200,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
       </div>
 
       <div className="landing-body">
+        <NoticeBanner />
         <header className="landing-hero">
           <div className="kicker">Election strategy · {BRAND.eyebrow}</div>
           <h1>{BRAND.name}</h1>
@@ -250,18 +287,30 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
             {PACKS.map((p) => {
               const owned = unlocked.packIds.includes(p.id);
               return (
-                <button key={p.id} type="button" className={`scenario-card${owned ? " sel" : ""}`}
-                  style={{ textAlign: "left", alignItems: "flex-start" }}
-                  onClick={() => openModal(user ? "activate" : "register")}>
+                <div key={p.id} className={`scenario-card pack-card${owned ? " sel" : ""}`}
+                  style={{ textAlign: "left", alignItems: "flex-start" }}>
                   <span className="scenario-year" style={{ fontSize: 14 }}>
-                    {p.name} {owned && "✓"}
+                    {p.name} {owned && <Check size={13} style={{ verticalAlign: "-2px", color: "var(--green)" }} />}
                   </span>
-                  <span className="scenario-match">{p.scenarios.length} scenarios · ${(p.price / 100).toFixed(2)}</span>
+                  <span className="scenario-match">{p.scenarios.length} scenarios</span>
                   <span className="muted small" style={{ fontSize: 11 }}>{p.description}</span>
-                </button>
+                  <span className="pack-foot">
+                    <span className="pack-price">${(p.price / 100).toFixed(2)}</span>
+                    {owned ? (
+                      <span className="muted small">Owned</span>
+                    ) : PAYWALL_ENABLED ? (
+                      <button className="primary small" disabled={buyBusy === p.id} onClick={() => buy(p.id)}>
+                        {buyBusy === p.id ? "Opening…" : "Buy"}
+                      </button>
+                    ) : (
+                      <span className="pack-beta-note">Free during open beta</span>
+                    )}
+                  </span>
+                </div>
               );
             })}
           </div>
+          {buyError && <p className="muted small" style={{ color: "var(--rose)", marginTop: 8 }}>{buyError}</p>}
         </div>
 
         {/* Footer: legal + studio credit + attribution */}
