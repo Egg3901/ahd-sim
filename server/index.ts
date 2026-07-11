@@ -15,6 +15,7 @@ import { leaderboardRouter, achievementsRouter } from "./routes/leaderboard.js";
 import { dailyRouter } from "./routes/daily.js";
 import { checkoutRouter, stripeWebhook } from "./routes/checkout.js";
 import { lakesideRouter } from "./routes/lakeside.js";
+import { secretEquals } from "./lakeside.js";
 
 const PORT = Number(process.env.PORT ?? 3401);
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -43,7 +44,7 @@ app.use(lakesideRouter);   // /api/lakeside/*, /api/internal/*
 // Ops backdoor for minting more codes (never exposed in the client).
 app.post("/api/admin/codes", (req, res) => {
   const { secret, packId, scenarioId, count } = req.body ?? {};
-  if (!process.env.ADMIN_SECRET || secret !== process.env.ADMIN_SECRET) {
+  if (!secretEquals(secret, process.env.ADMIN_SECRET)) {
     return res.status(401).json({ error: "Unauthorized" });
   }
   const n = Math.min(1000, Math.max(1, Number(count) || 10));

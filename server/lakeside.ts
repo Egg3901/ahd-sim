@@ -144,6 +144,14 @@ export function checkInternalToken(header: string | undefined): boolean {
   return got.length === want.length && timingSafeEqual(got, want);
 }
 
+/** Constant-time secret compare; false when the secret is unset (fail closed). */
+export function secretEquals(provided: unknown, expected: string | undefined): boolean {
+  if (!expected || typeof provided !== "string") return false;
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 // ── Return URL allowlist (contract: https only, exact hostnames) ─────────────
 
 const ALLOWED_RETURN_HOSTS = new Set(["lakesidegames.net", "www.lakesidegames.net", "sim.ahousedividedgame.com"]);
