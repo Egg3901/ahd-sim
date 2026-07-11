@@ -71,8 +71,8 @@
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 
   /* ── Glass & glow ────────────────────────────────────────────────── */
-  --glass-bg: rgba(10, 15, 20, 0.86);
-  --glass-blur: 10px;
+  --glass-bg: rgba(13, 20, 28, 0.92);
+  --glass-blur: 6px;
   --glow-gold: 0 0 0 1.5px var(--gold), 0 0 18px rgba(245, 185, 66, 0.32);
   --glow-accent: 0 0 0 1.5px var(--accent), 0 0 18px rgba(224, 92, 75, 0.3);
   --glow-dem: 0 0 0 3px rgba(37, 99, 235, 0.25);
@@ -604,8 +604,7 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
 .ticker {
   display: flex; align-items: center; gap: 12px; overflow: hidden;
   padding: 7px 22px; border-bottom: 1px solid var(--border);
-  background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  background: var(--panel);
   position: sticky; top: 0; z-index: 19; white-space: nowrap;
 }
 .ticker-tag { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;
@@ -723,8 +722,7 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
 .landing { min-height: 100%; display: flex; flex-direction: column; }
 .landing-topbar {
   position: sticky; top: 0; z-index: 30;
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur));
+  background: var(--panel);
   border-bottom: 1px solid var(--border);
 }
 .landing-topbar-inner {
@@ -734,18 +732,18 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
 .landing-brand { display: inline-flex; align-items: center; gap: 10px;
   font-weight: 700; font-size: 15px; letter-spacing: -0.2px; }
 .landing-brand .mark { color: var(--accent); display: inline-flex; }
-.landing-body { max-width: 1020px; width: 100%; margin: 0 auto; padding: 10px 20px 30px; text-align: left; }
+.landing-body { max-width: 1020px; width: 100%; margin: 0 auto; padding: 10px 20px 64px; text-align: left; }
 .kicker { font-size: 0.74rem; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.8px; color: var(--accent); }
-.landing-hero { margin: 26px 0 8px; }
+.landing-hero { margin: 48px 0 20px; }
 .landing-hero h1 {
   font-size: clamp(2rem, 5vw, 2.8rem); font-weight: 800;
   letter-spacing: -1.2px; line-height: 1.08; margin: 6px 0 10px; text-wrap: balance;
 }
-.landing-hero .sub { color: var(--muted); font-size: 0.96rem; max-width: 58ch; margin: 0 0 8px; line-height: 1.6; }
+.landing-hero .sub { color: var(--muted); font-size: 1rem; max-width: 56ch; margin: 0; line-height: 1.65; }
 .landing-foot {
   display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap;
-  margin: 30px 0 8px; padding-top: 18px; border-top: 1px solid var(--border);
+  margin: 48px 0 8px; padding-top: 22px; border-top: 1px solid var(--border);
   color: var(--text-3); font-size: 12px;
 }
 .lakeside-credit { display: inline-flex; align-items: center; gap: 8px;
@@ -753,6 +751,21 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
 .lakeside-credit img { width: 20px; height: 20px; display: block; }
 .lakeside-credit:hover { color: var(--text); }
 @media (max-width: 560px) { .landing-hero h1 { font-size: 1.9rem; } }
+
+/* Daily Challenge: compact banner, no cover art */
+.daily-banner {
+  width: 100%; display: flex; align-items: center; gap: 16px;
+  text-align: left; padding: 14px 16px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-lg);
+}
+.daily-banner:hover:not(:disabled) { border-color: var(--gold); background: var(--surface-hover); }
+.daily-banner-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.daily-banner-cta {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 700; color: var(--accent-ink);
+  background: var(--gold); border-radius: var(--radius-md); padding: 8px 14px;
+}
+.daily-banner-cta.played { background: transparent; color: var(--green); border: 1px solid var(--edge-up); }
 
 /* ── Reduced motion ─────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {

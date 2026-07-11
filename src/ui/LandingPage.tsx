@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { PAYWALL_ENABLED, SCENARIO_REGISTRY, type CountryCode, type ScenarioMeta } from "@content/scenarioRegistry";
 import { PACKS } from "@content/packs";
-import { countryCover, packCover, scenarioCover } from "@content/covers";
+import { countryCover, scenarioCover } from "@content/covers";
 import { useAuthStore } from "@store/authStore";
 import { UserMenu } from "@ui/auth/UserMenu";
 import { DailyCard } from "@ui/DailyCard";
@@ -53,13 +53,14 @@ function CoverImg({ src, alt, tall }: { src?: string; alt: string; tall?: boolea
   );
 }
 
-function ScenarioCard({ s, unlocked, onPlay, onLocked }: {
+function ScenarioCard({ s, unlocked, onPlay, onLocked, showCover = true }: {
   s: ScenarioMeta;
   unlocked: boolean;
   onPlay: () => void;
   onLocked: () => void;
+  showCover?: boolean;
 }) {
-  const cover = scenarioCover(s.scenarioId);
+  const cover = showCover ? scenarioCover(s.scenarioId) : undefined;
   return (
     <button
       type="button"
@@ -174,23 +175,23 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
           </p>
         </header>
 
-        {/* Daily Challenge — one seeded race, same for everyone, every day */}
-        <div className="field" style={{ textAlign: "left", margin: "10px 0 4px" }}>
+        {/* Daily Challenge: one seeded race, same for everyone, every day */}
+        <div className="field" style={{ textAlign: "left", margin: "28px 0 0" }}>
           <DailyCard onPlay={() => onGo({ kind: "daily" })} />
         </div>
 
-        {/* Featured starters, front and center */}
-        <div className="field" style={{ textAlign: "left", margin: "10px 0 4px" }}>
+        {/* Featured starters, text-led (portraits live in the setup wizard) */}
+        <div className="field" style={{ textAlign: "left", margin: "36px 0 0" }}>
           <label>{PAYWALL_ENABLED ? "Play free, no account needed" : "Start here, no account needed"}</label>
           <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
             {free.map((s) => (
-              <ScenarioCard key={s.scenarioId} s={s} unlocked onPlay={() => play(s)} onLocked={() => {}} />
+              <ScenarioCard key={s.scenarioId} s={s} unlocked showCover={false} onPlay={() => play(s)} onLocked={() => {}} />
             ))}
           </div>
         </div>
 
         {/* Full catalog: pick a country, then a date */}
-        <div className="field" style={{ textAlign: "left", margin: "14px 0 0" }}>
+        <div className="field" style={{ textAlign: "left", margin: "36px 0 0" }}>
           <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
             <label>
               {country
@@ -242,18 +243,16 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
           )}
         </div>
 
-        {/* Packs strip */}
-        <div className="field" style={{ textAlign: "left", margin: "16px 0 0" }}>
+        {/* Packs strip: text-led, no cover art */}
+        <div className="field" style={{ textAlign: "left", margin: "36px 0 0" }}>
           <label>{PAYWALL_ENABLED ? "Scenario packs: redeem a code to unlock" : "Scenario packs: everything is playable free while we're in open beta"}</label>
           <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))" }}>
             {PACKS.map((p) => {
               const owned = unlocked.packIds.includes(p.id);
-              const cover = packCover(p.id);
               return (
-                <button key={p.id} type="button" className={`scenario-card${owned ? " sel" : ""}${cover ? " has-cover" : ""}`}
-                  style={{ textAlign: "left", alignItems: cover ? "stretch" : "flex-start" }}
+                <button key={p.id} type="button" className={`scenario-card${owned ? " sel" : ""}`}
+                  style={{ textAlign: "left", alignItems: "flex-start" }}
                   onClick={() => openModal(user ? "activate" : "register")}>
-                  <CoverImg src={cover} alt="" />
                   <span className="scenario-year" style={{ fontSize: 14 }}>
                     {p.name} {owned && "✓"}
                   </span>
