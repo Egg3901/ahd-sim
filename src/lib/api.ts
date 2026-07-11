@@ -57,7 +57,7 @@ export class ApiError extends Error {
 
 async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getToken();
-  const res = await fetch(path, {
+  const res = await fetch(path.replace(/^\//, ""), {
     ...init,
     headers: {
       "Content-Type": "application/json",

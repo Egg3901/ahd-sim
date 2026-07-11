@@ -10,6 +10,7 @@ try { release = execSync("git rev-parse --short HEAD").toString().trim(); } catc
 // Static SPA build. Output is plain static assets so it wraps directly in Tauri
 // later with no rewrite. No SSR, no server framework.
 export default defineConfig({
+  base: "./",
   plugins: [react()],
   define: {
     "import.meta.env.VITE_RELEASE": JSON.stringify(release),
