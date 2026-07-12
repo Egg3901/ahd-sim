@@ -7,6 +7,7 @@ import { usNativeCover } from "@content/covers";
 import { defaultRunningMate } from "@content/runningMates";
 import { STAFF_POOL, MAX_STAFF, STAFF_BY_ID } from "@content/staff";
 import { GuidePage } from "@ui/GuidePage";
+import { EditorScreen } from "@ui/EditorScreen";
 import { CandidateScreen } from "@ui/CandidateScreen";
 import { mateBonusChips } from "@ui/labels";
 import { Avatar } from "@ui/Avatar";
@@ -83,6 +84,7 @@ export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onEx
   const [seed, setSeed] = useState<string>(() => initialSeed ?? randomSeed());
   const [guideOpen, setGuideOpen] = useState(false);
   const [candOpen, setCandOpen] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
 
   const globalId = (id: string) => `us-${id}`;
   const unlocked = canPlay(globalId(scenarioId));
@@ -414,8 +416,11 @@ export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onEx
           <button className="su-link" onClick={() => setGuideOpen(true)}>How to Play</button>
           <span className="su-link-sep">·</span>
           <button className="su-link" onClick={() => setCandOpen(true)}>Candidates</button>
+          <span className="su-link-sep">·</span>
+          <button className="su-link" onClick={() => setEditorOpen(true)}>Create custom</button>
         </div>
       </div>
+      {editorOpen && <EditorScreen onClose={() => setEditorOpen(false)} />}
       {guideOpen && <GuidePage onClose={() => setGuideOpen(false)} />}
       {candOpen && <CandidateScreen scenarioId={scenarioId} onClose={() => setCandOpen(false)} />}
     </div>
