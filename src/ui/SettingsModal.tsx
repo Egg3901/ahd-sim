@@ -8,7 +8,13 @@ const SHORTCUTS: { keys: string; does: string }[] = [
   { keys: "?", does: "Show this list" },
 ];
 
-export function SettingsModal({ onClose }: { onClose: () => void }) {
+export function SettingsModal({
+  onClose,
+  onReplayTutorial,
+}: {
+  onClose: () => void;
+  onReplayTutorial?: () => void;
+}) {
   const soundOn = useSettingsStore((s) => s.soundOn);
   const volume = useSettingsStore((s) => s.volume);
   const reducedMotion = useSettingsStore((s) => s.reducedMotion);
@@ -90,6 +96,19 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
               </tbody>
             </table>
           </div>
+
+          {onReplayTutorial && (
+            <div className="guide-section">
+              <h3>Help</h3>
+              <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+                <span>First-run tour</span>
+                <button className="ghost small" onClick={onReplayTutorial}>
+                  Replay tutorial
+                </button>
+              </div>
+              <p className="guide-text">Walks through the map, actions, and where everything lives.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

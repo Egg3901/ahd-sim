@@ -69,11 +69,11 @@ describe("OnboardingCoach", () => {
     vi.useRealTimers();
   });
 
-  it("first run: hidden before the arm delay, shows step 1 of 6 after it", () => {
+  it("first run: hidden before the arm delay, shows step 1 of 8 after it", () => {
     const m = mount();
     expect(m.html()).toBe(""); // synchronous render never sees the coach
     arm();
-    expect(m.html()).toContain("TOUR · 1/6");
+    expect(m.html()).toContain("TOUR · 1/8");
     expect(m.html()).toContain("war room");
     expect(m.html()).toContain("270 electoral votes");
     expect(m.html()).toContain("Skip tour");
@@ -111,12 +111,79 @@ describe("OnboardingCoach", () => {
     const m = mount();
     arm();
     clickButton(m.container, "Show me"); // step 1 -> map step
-    expect(m.html()).toContain("TOUR · 2/6");
+    expect(m.html()).toContain("TOUR · 2/8");
     act(() => {
       useGameStore.getState().selectState("PA");
     });
-    expect(m.html()).toContain("TOUR · 3/6");
+    expect(m.html()).toContain("TOUR · 3/8");
     expect(m.html()).toContain("coalition of voter blocs");
     m.cleanup();
+  });
+
+  it("steps through the whole tour to completion without errors", () => {
+    const m = mount();
+    arm();
+
+    // Step 1: welcome
+    expect(m.html()).toContain("TOUR · 1/8");
+    clickButton(m.container, "Show me"); // -> step 2, map
+
+    // Step 2: map, waits for a state pick
+    expect(m.html()).toContain("TOUR · 2/8");
+    act(() => {
+      useGameStore.getState().selectState("PA");
+    });
+
+    // Step 3: coalitions
+    expect(m.html()).toContain("TOUR · 3/8");
+    clickButton(m.container, "Next"); // -> step 4, plan your week
+
+    // Step 4: actions, waits for a queued action
+    expect(m.html()).toContain("TOUR · 4/8");
+    expect(m.html()).toContain("Queue your week");
+    act(() => {
+      useGameStore.getState().queueAction({ type: "rally", candidate: "dem", stateId: "PA" });
+    });
+
+    // Step 5: lock it in, waits for the turn to advance
+    expect(m.html()).toContain("TOUR · 5/8");
+    act(() => {
+      useGameStore.getState().endTurn();
+    });
+
+    // Step 6: events/debates (informational)
+    expect(m.html()).toContain("TOUR · 6/8");
+    expect(m.html()).toContain("Curveballs");
+    expect(m.html()).toContain("debates");
+    clickButton(m.container, "Next");
+
+    // Step 7: where Settings/Guide/Timeline live
+    expect(m.html()).toContain("TOUR · 7/8");
+    expect(m.html()).toContain("Replay tutorial");
+    clickButton(m.container, "Next");
+
+    // Step 8: final step, "Done" closes and marks it complete
+    expect(m.html()).toContain("TOUR · 8/8");
+    clickButton(m.container, "Done");
+    expect(window.localStorage.getItem(COACH_DONE_KEY)).toBe("1");
+    expect(m.html()).toBe("");
+    m.cleanup();
+  });
+
+  it("forceOpen replays the tour, bypassing the done key and turn-0 gate", () => {
+    window.localStorage.setItem(COACH_DONE_KEY, "1");
+    act(() => {
+      useGameStore.getState().endTurn(); // turn 0 -> 1
+    });
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    act(() => {
+      root.render(<OnboardingCoach forceOpen />);
+    });
+    arm();
+    expect(container.innerHTML).toContain("TOUR · 1/8");
+    act(() => root.unmount());
+    container.remove();
   });
 });
