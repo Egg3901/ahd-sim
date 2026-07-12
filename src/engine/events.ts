@@ -16,6 +16,50 @@ function favorSign(candidate: CandidateId): number {
   return candidate === "dem" ? 1 : -1;
 }
 
+// The scheduled-event decks author their turn numbers against the 9-week default
+// campaign. Games can now run 5/9/14 weeks, so we remap each literal turn N onto
+// the actual campaign length at queue time rather than rewriting the content.
+//
+//   effectiveTurn = round(N * totalTurns / 9), clamped to [0, totalTurns - 1]
+//
+// Collisions (two beats landing on the same turn) are resolved by nudging the
+// later one to the next free turn, so nothing is silently dropped and the
+// calendar order of the deck is preserved (assignments are non-decreasing). If
+// the campaign is shorter than the number of beats and no free turn remains, the
+// beat shares the final turn rather than being lost.
+//
+// When totalTurns === 9 this is a strict identity (round(N) === N, no
+// remapping), so 9-week games are bit-identical to before this mapping existed.
+const DEFAULT_TOTAL_TURNS = 9;
+
+export function scheduledTurnMap(deck: readonly GameEvent[], totalTurns: number): Map<string, number> {
+  const map = new Map<string, number>();
+  const scheduled = deck.filter(
+    (e): e is GameEvent & { trigger: { kind: "scheduled"; turn: number } } =>
+      e.trigger.kind === "scheduled",
+  );
+  if (totalTurns === DEFAULT_TOTAL_TURNS) {
+    // No-op: preserve the authored turns exactly.
+    for (const e of scheduled) map.set(e.id, e.trigger.turn);
+    return map;
+  }
+  const maxTurn = Math.max(0, totalTurns - 1);
+  // Assign in calendar order so the remap keeps the authored sequence.
+  const ordered = [...scheduled].sort((a, b) => a.trigger.turn - b.trigger.turn);
+  const used = new Set<number>();
+  let lastTurn = -1;
+  for (const e of ordered) {
+    const base = Math.round((e.trigger.turn * totalTurns) / DEFAULT_TOTAL_TURNS);
+    // Clamp, and never move a later beat earlier than an earlier one.
+    let t = clamp(Math.max(base, lastTurn), 0, maxTurn);
+    while (used.has(t) && t < maxTurn) t++;
+    map.set(e.id, t);
+    used.add(t);
+    lastTurn = t;
+  }
+  return map;
+}
+
 // Weeks until the next scheduled debate (0 = this week, null = none left). Lets
 // the UI nudge the player to prep before showtime.
 export function turnsUntilDebate(game: GameState): number | null {
@@ -23,11 +67,15 @@ export function turnsUntilDebate(game: GameState): number | null {
   const deck = historical
     ? HISTORICAL_EVENTS[game.scenarioId ?? "2020"] ?? HISTORICAL_EVENTS["2020"]
     : GENERIC_DEBATES;
+  const turnFor = scheduledTurnMap(deck, game.totalTurns);
   let best: number | null = null;
   for (const e of deck) {
-    if (e.isDebate && e.trigger.kind === "scheduled" && e.trigger.turn >= game.turn) {
-      const dt = e.trigger.turn - game.turn;
-      if (best === null || dt < best) best = dt;
+    if (e.isDebate && e.trigger.kind === "scheduled") {
+      const effTurn = turnFor.get(e.id) ?? e.trigger.turn;
+      if (effTurn >= game.turn) {
+        const dt = effTurn - game.turn;
+        if (best === null || dt < best) best = dt;
+      }
     }
   }
   return best;
@@ -254,11 +302,15 @@ export function queueEventsForTurn(game: GameState, rng: Rng) {
   const scheduledDeck = historical
     ? HISTORICAL_EVENTS[game.scenarioId ?? "2020"] ?? HISTORICAL_EVENTS["2020"]
     : GENERIC_DEBATES;
+  // Remap each authored (9-week-calibrated) turn onto the actual campaign length
+  // so short games still see every beat and long games don't front-load them.
+  const turnFor = scheduledTurnMap(scheduledDeck, game.totalTurns);
   for (const event of scheduledDeck) {
     if (event.trigger.kind !== "scheduled") continue;
+    const effTurn = turnFor.get(event.id) ?? event.trigger.turn;
     // The opening week is event-free (no modal on load), so the turn-0 beat (the
     // convention / the ticket switch) would be lost — surface it with week 2.
-    const due = event.trigger.turn === game.turn || (game.turn === 1 && event.trigger.turn === 0);
+    const due = effTurn === game.turn || (game.turn === 1 && effTurn === 0);
     if (due) queue(event);
   }
 
