@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { PAYWALL_ENABLED, SCENARIO_REGISTRY, type CountryCode, type ScenarioMeta } from "@content/scenarioRegistry";
 import { PACKS } from "@content/packs";
 import { countryCover, scenarioCover } from "@content/covers";
@@ -6,7 +6,12 @@ import { useAuthStore } from "@store/authStore";
 import { usePackPrices } from "@lib/usePackPrices";
 import { UserMenu } from "@ui/auth/UserMenu";
 import { DailyCard } from "@ui/DailyCard";
-import { Vote, Lock, Play, Trophy, KeyRound, ChevronLeft, ChevronRight, Check, X, ShoppingBag } from "lucide-react";
+import { EvBar } from "@ui/EvBar";
+import { Sparkline } from "@ui/Sparkline";
+import {
+  Vote, Lock, Play, Trophy, KeyRound, ChevronLeft, ChevronRight, Check, X, ShoppingBag,
+  LineChart, Mic2, Globe2, MessageCircleQuestion,
+} from "lucide-react";
 import { BRAND } from "../brand";
 
 const COUNTRY_NAMES: Record<CountryCode, string> = {
@@ -99,6 +104,107 @@ function ScenarioCard({ s, unlocked, onPlay, onLocked, showCover = true }: {
         </span>
       )}
     </button>
+  );
+}
+
+// Sample polling swing used only to illustrate the mechanic on the landing
+// page. Not tied to any real scenario or player data.
+const SAMPLE_POLL_TREND = [0.47, 0.49, 0.48, 0.51, 0.53, 0.52, 0.55];
+
+// Mock projection shape (same type EvBar takes in-game) used purely as an
+// illustration of the electoral tally bar. Numbers are made up.
+const SAMPLE_PROJECTION = {
+  ev: { dem: 236, rep: 235 },
+  tossupEv: 67,
+} as unknown as Parameters<typeof EvBar>[0]["projection"];
+
+function FeatureBlock({
+  icon, title, blurb, children,
+}: { icon: ReactNode; title: string; blurb: string; children: ReactNode }) {
+  return (
+    <div className="feature-card">
+      <div className="feature-illustration">{children}</div>
+      <span className="feature-icon">{icon}</span>
+      <h3>{title}</h3>
+      <p className="muted small" style={{ lineHeight: 1.5 }}>{blurb}</p>
+    </div>
+  );
+}
+
+function FeaturesSection() {
+  return (
+    <div className="field" style={{ margin: "8px 0 0" }}>
+      <div className="feature-grid">
+        <FeatureBlock
+          icon={<LineChart size={18} />}
+          title="Polling that moves like the real thing"
+          blurb="Every rally, ad buy, and news cycle nudges a state's polling average. Track the swing turn by turn instead of watching a single fixed number."
+        >
+          <Sparkline values={SAMPLE_POLL_TREND} color="var(--dem-bright)" />
+        </FeatureBlock>
+        <FeatureBlock
+          icon={<Mic2 size={18} />}
+          title="Debates and events change the race"
+          blurb="Scripted debates, scandals, and endorsements land on the calendar and shift the electoral map. The tally bar updates live as tossup states break."
+        >
+          <EvBar projection={SAMPLE_PROJECTION} />
+        </FeatureBlock>
+        <FeatureBlock
+          icon={<Globe2 size={18} />}
+          title="Six countries, six voting systems"
+          blurb="US electoral college duels, UK multiparty first-past-the-post with hung parliaments, French two-round runoffs, German proportional Bundestag seats, and more."
+        >
+          <div className="feature-flags">
+            {["\u{1F1FA}\u{1F1F8}", "\u{1F1EC}\u{1F1E7}", "\u{1F1E9}\u{1F1EA}", "\u{1F1EB}\u{1F1F7}", "\u{1F1E8}\u{1F1E6}", "\u{1F1E6}\u{1F1FA}"].map((f) => (
+              <span key={f}>{f}</span>
+            ))}
+          </div>
+        </FeatureBlock>
+      </div>
+    </div>
+  );
+}
+
+const FAQ_ITEMS: { q: string; a: string }[] = [
+  {
+    q: "What's actually free?",
+    a: "Two full scenarios plus a new daily challenge every day, no account and no payment required. Nothing is time limited or ad supported.",
+  },
+  {
+    q: "What do I get if I pay?",
+    a: "Scenario packs unlock more elections (extra US years, the UK, Canada, Germany, France, Australia). It's a one time purchase per pack through the Lakeside store, not a subscription.",
+  },
+  {
+    q: "Where do I buy packs?",
+    a: `Through lakesidegames.net/store. After checkout the pack unlocks automatically on your account, or you can redeem a code from the "Unlock with a code" prompt on a locked scenario.`,
+  },
+  {
+    q: "Can I play offline or without an account?",
+    a: "Yes for the free scenarios and daily challenge: progress saves in your browser. An account is only needed to keep a purchased pack across devices and to appear on leaderboards.",
+  },
+  {
+    q: "What's your refund policy?",
+    a: "Refunds for scenario packs follow the Lakeside store's standard policy. Contact Lakeside support through the store or reach us directly if a purchase didn't unlock correctly.",
+  },
+  {
+    q: "What platforms does this run on?",
+    a: "It's a browser game: desktop and mobile, any modern browser, nothing to install.",
+  },
+];
+
+function FaqSection() {
+  return (
+    <div className="field" style={{ textAlign: "left", margin: "36px 0 0" }}>
+      <label><MessageCircleQuestion size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Frequently asked</label>
+      <div className="faq-list">
+        {FAQ_ITEMS.map((item) => (
+          <details className="faq-item" key={item.q}>
+            <summary>{item.q}</summary>
+            <p className="muted small" style={{ lineHeight: 1.55 }}>{item.a}</p>
+          </details>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -207,15 +313,19 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
       <div className="landing-body">
         <NoticeBanner />
         <header className="landing-hero">
-          <div className="kicker">Election strategy · {BRAND.eyebrow}</div>
+          <div className="kicker">Turn-based election campaign sim · {BRAND.eyebrow}</div>
           <h1>{BRAND.name}</h1>
           <p className="sub">
-            {SCENARIO_REGISTRY.length} elections across {new Set(SCENARIO_REGISTRY.map((s) => s.country)).size} countries: presidential duels, multiparty brawls, two-round runoffs.
+            Run a real campaign turn by turn: allocate a budget, pick rally states, run ads, survive debates,
+            and watch the polling average move in response. {SCENARIO_REGISTRY.length} historical elections
+            across {new Set(SCENARIO_REGISTRY.map((s) => s.country)).size} countries.
             {PAYWALL_ENABLED
-              ? " Two are free forever. The rest unlock with a scenario pack."
+              ? " Two scenarios and the daily challenge are free forever."
               : " All of them are free to play right now."}
           </p>
         </header>
+
+        <FeaturesSection />
 
         {/* Daily Challenge: one seeded race, same for everyone, every day */}
         <div className="field" style={{ textAlign: "left", margin: "28px 0 0" }}>
@@ -285,6 +395,35 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
           )}
         </div>
 
+        {/* Pricing: honest free vs paid, no fake tiers */}
+        <div className="field" style={{ textAlign: "left", margin: "44px 0 0" }}>
+          <label>Pricing</label>
+          <div className="pricing-grid">
+            <div className="pricing-card">
+              <h3>Free</h3>
+              <p className="pricing-price">$0</p>
+              <ul className="pricing-list">
+                <li><Check size={13} /> 2 full scenarios, no account needed</li>
+                <li><Check size={13} /> A new daily challenge every day</li>
+                <li><Check size={13} /> Leaderboards with a free account</li>
+              </ul>
+              <p className="muted small" style={{ marginTop: 8 }}>No ads, no time limit, no trial.</p>
+            </div>
+            <div className="pricing-card">
+              <h3>Scenario packs</h3>
+              <p className="pricing-price">Priced per pack</p>
+              <ul className="pricing-list">
+                <li><Check size={13} /> {SCENARIO_REGISTRY.length - free.length} additional elections across {PACKS.length} packs</li>
+                <li><Check size={13} /> One time purchase, yours to keep, no subscription</li>
+                <li><Check size={13} /> Bought and delivered through the Lakeside store</li>
+              </ul>
+              <button className="ghost small" style={{ marginTop: 8 }} onClick={() => { window.location.href = "https://lakesidegames.net/store/"; }}>
+                <ShoppingBag size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Browse packs on lakesidegames.net
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Packs strip: text-led, no cover art */}
         <div className="field" style={{ textAlign: "left", margin: "36px 0 0" }}>
           <label>{PAYWALL_ENABLED ? "Scenario packs" : "Scenario packs: everything is playable free while we're in open beta"}</label>
@@ -318,10 +457,15 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
           {buyError && <p className="muted small" style={{ color: "var(--rose)", marginTop: 8 }}>{buyError}</p>}
         </div>
 
-        {/* Footer: legal + studio credit + attribution */}
+        <FaqSection />
+
+        {/* Footer: legal + studio credit + contact + attribution */}
         <div className="landing-foot">
           <button className="ghost small" onClick={() => onGo({ kind: "legal", tab: "privacy" })}>Privacy</button>
           <button className="ghost small" onClick={() => onGo({ kind: "legal", tab: "terms" })}>Terms</button>
+          <a className="ghost small" href={`mailto:support@${BRAND.domain}`}>Contact</a>
+          <a className="ghost small" href="https://lakesidegames.net/store/" target="_blank" rel="noopener">Store</a>
+          <span className="muted small" title="Coming soon">Discord (coming soon)</span>
           <a className="lakeside-credit" href="https://lakesidegames.net" target="_blank" rel="noopener">
             <img src="lakeside-mark.svg" alt="Lakeside Games logo" width={20} height={20} />
             by Lakeside Games

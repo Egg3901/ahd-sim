@@ -752,6 +752,53 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
 .lakeside-credit:hover { color: var(--text); }
 @media (max-width: 560px) { .landing-hero h1 { font-size: 1.9rem; } }
 
+/* Feature blocks: vote model, debates/events, multi-country */
+.feature-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+}
+.feature-card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 16px; display: flex; flex-direction: column; gap: 8px;
+}
+.feature-illustration {
+  display: flex; align-items: center; justify-content: center; min-height: 44px;
+  padding: 6px 2px 10px;
+}
+.feature-icon { color: var(--gold); display: inline-flex; }
+.feature-card h3 { font-size: 14px; font-weight: 700; margin: 0; letter-spacing: -0.1px; }
+.feature-flags { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; font-size: 22px; }
+@media (max-width: 760px) { .feature-grid { grid-template-columns: 1fr; } }
+
+/* Pricing: honest free vs paid, no fake tiers */
+.pricing-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;
+}
+.pricing-card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 18px;
+}
+.pricing-card h3 { margin: 0 0 4px; font-size: 15px; font-weight: 700; }
+.pricing-price { font-size: 20px; font-weight: 800; margin: 0 0 10px; color: var(--gold); }
+.pricing-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pricing-list li { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text); }
+.pricing-list svg { color: var(--green); flex-shrink: 0; }
+@media (max-width: 700px) { .pricing-grid { grid-template-columns: 1fr; } }
+
+/* FAQ */
+.faq-list { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.faq-item {
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-md);
+  padding: 10px 14px;
+}
+.faq-item summary {
+  cursor: pointer; font-size: 13.5px; font-weight: 600; list-style: none;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after { content: "+"; color: var(--muted); font-weight: 400; }
+.faq-item[open] summary::after { content: "\2212"; }
+.faq-item p { margin: 8px 0 0; }
+
 /* Daily Challenge: compact banner, no cover art */
 .daily-banner {
   width: 100%; display: flex; align-items: center; gap: 16px;
