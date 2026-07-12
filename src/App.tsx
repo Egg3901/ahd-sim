@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useGameStore } from "@store/gameStore";
+import { useAuthStore } from "@store/authStore";
 import { SetupScreen } from "@ui/SetupScreen";
 import { USMap } from "@ui/USMap";
 import { StatePanel } from "@ui/StatePanel";
@@ -74,6 +75,7 @@ function SaveControls() {
   const exportSave = useGameStore((s) => s.exportSave);
   const importSave = useGameStore((s) => s.importSave);
   const saveGame = useGameStore((s) => s.saveGame);
+  const signedIn = useAuthStore((s) => !!s.user);
   const fileRef = useRef<HTMLInputElement>(null);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -103,11 +105,16 @@ function SaveControls() {
 
   return (
     <div className="row" style={{ gap: 6 }}>
-      <button className="ghost small" onClick={async () => { await saveGame(`Save ${new Date().toLocaleString()}`); flash("Saved locally"); }}>Save</button>
+      <button className="ghost small" onClick={async () => { await saveGame(`Save ${new Date().toLocaleString()}`); flash(signedIn ? "Saved and syncing" : "Saved locally"); }}>Save</button>
       <button className="ghost small" onClick={doExport}>Export</button>
       <button className="ghost small" onClick={() => fileRef.current?.click()}>Import</button>
       <input ref={fileRef} type="file" accept="application/json" style={{ display: "none" }}
         onChange={(e) => { const f = e.target.files?.[0]; if (f) doImport(f); e.target.value = ""; }} />
+      <span className="muted small" title={signedIn
+        ? "Your saves sync to your account across devices."
+        : "Saves are kept in this browser only. Sign in to sync across devices."}>
+        {signedIn ? "Synced" : "Local only"}
+      </span>
       {toast && <div className="toast">{toast}</div>}
     </div>
   );

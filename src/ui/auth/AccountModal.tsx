@@ -82,6 +82,9 @@ export function AccountModal() {
                 <LakesideButton />
               </div>
             )}
+            <p className="muted small" style={{ margin: "10px 0 0" }}>
+              Your saved games sync to this account while you are signed in, so you can pick up a campaign on any device.
+            </p>
           </div>
 
           {/* Purchases */}

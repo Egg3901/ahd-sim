@@ -137,7 +137,50 @@ export const api = {
     call<DailyBoard>(`/api/daily/board?date=${encodeURIComponent(date)}`),
 
   dailyChampions: () => call<DailyChampions>("/api/daily/champions"),
+
+  // ── Cloud saves (signed-in cross-device sync) ──
+  // These mirror the local Dexie saves for a logged-in player. All callers must
+  // treat failures as "stay local only"; the RemoteSyncProvider wraps them so
+  // gameplay never depends on the network.
+  listSaves: () => call<{ saves: RemoteSaveMeta[] }>("/api/saves"),
+  getSave: (id: string) => call<RemoteSaveRecord>(`/api/saves/${encodeURIComponent(id)}`),
+  putSave: (id: string, record: RemoteSavePut) =>
+    call<{ ok: boolean; id: string; updatedAt: number }>(
+      `/api/saves/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(record) }),
+  deleteSave: (id: string) =>
+    call<{ ok: boolean }>(`/api/saves/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  getReplay: (id: string) =>
+    call<{ id: string; updatedAt: number; log: unknown }>(`/api/saves/${encodeURIComponent(id)}/replay`),
+  putReplay: (id: string, body: { log: unknown; updatedAt: number }) =>
+    call<{ ok: boolean }>(`/api/saves/${encodeURIComponent(id)}/replay`, { method: "PUT", body: JSON.stringify(body) }),
 };
+
+export interface RemoteSaveMeta {
+  id: string;
+  name: string;
+  turn: number;
+  playerCandidate: unknown;
+  updatedAt: number;
+  hasReplay: boolean;
+}
+
+export interface RemoteSaveRecord {
+  id: string;
+  name: string;
+  turn: number;
+  playerCandidate: unknown;
+  state: unknown;
+  replay: unknown;
+  updatedAt: number;
+}
+
+export interface RemoteSavePut {
+  name: string;
+  turn: number;
+  playerCandidate: unknown;
+  state: unknown;
+  updatedAt: number;
+}
 
 export interface LeaderboardEntry {
   rank: number;

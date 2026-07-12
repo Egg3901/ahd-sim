@@ -1,56 +1,116 @@
 import type { ReplayRecord, SaveMeta, SaveRecord, SyncProvider } from "./types";
+import type { GameState } from "@engine/index";
+import type { ReplayLog } from "@lib/replay";
+import { api, getToken } from "@lib/api";
 
-// STUB ONLY (Section 10). Defines the thin REST shape a future cloud-save
-// backend would implement (PUT/GET/LIST/DELETE saves by id). Not wired up — the
-// MVP is fully offline. Implementing this + a server is the only work needed to
-// light up cloud saves later; nothing else in the app changes.
+// Server-backed save sync for signed-in players. This is the cross-device
+// mirror, NOT the source of truth: src/persistence/local.ts (Dexie) always
+// works offline and is written first. Every method here is wrapped so a network
+// failure degrades to local-only silently (console.warn only) and never blocks
+// or breaks play. Reads fail soft to null / empty list; writes fire-and-forget
+// with a single retry.
+//
+// isActive() lets callers skip remote work entirely when logged out.
 export class RemoteSyncProvider implements SyncProvider {
   readonly kind = "remote" as const;
-  constructor(private baseUrl: string, private token?: string) {}
 
-  // The auth header a real implementation would send on every request.
-  // PUT /saves/:id, GET /saves/:id, GET /saves, DELETE /saves/:id.
-  protected headers(): HeadersInit {
-    return {
-      "Content-Type": "application/json",
-      ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
-    };
+  // Only sync when the player is signed in (a token is stored).
+  isActive(): boolean {
+    return !!getToken();
+  }
+
+  private warn(op: string, err: unknown): void {
+    console.warn(`[cloud-saves] ${op} failed, staying local only:`, err);
+  }
+
+  // Run a write with one retry, swallowing failures. Never throws.
+  private async push(op: string, fn: () => Promise<unknown>): Promise<void> {
+    if (!this.isActive()) return;
+    try {
+      await fn();
+    } catch (first) {
+      try {
+        await fn();
+      } catch (second) {
+        void first;
+        this.warn(op, second);
+      }
+    }
   }
 
   async save(record: SaveRecord): Promise<void> {
-    // PUT /saves/:id  — not implemented in MVP.
-    void this.baseUrl;
-    void this.headers;
-    void record;
-    throw new Error("RemoteSyncProvider is a stub: cloud saves are not enabled in the MVP.");
+    await this.push("save", () =>
+      api.putSave(record.id, {
+        name: record.name,
+        turn: record.turn,
+        playerCandidate: record.playerCandidate,
+        state: record.state,
+        updatedAt: record.updatedAt,
+      }),
+    );
   }
 
   async load(id: string): Promise<SaveRecord | null> {
-    void id;
-    throw new Error("RemoteSyncProvider is a stub: cloud saves are not enabled in the MVP.");
+    if (!this.isActive()) return null;
+    try {
+      const r = await api.getSave(id);
+      return {
+        id: r.id,
+        name: r.name,
+        updatedAt: r.updatedAt,
+        turn: r.turn,
+        playerCandidate: r.playerCandidate as GameState["playerCandidate"],
+        state: r.state as GameState,
+      };
+    } catch (err) {
+      this.warn("load", err);
+      return null;
+    }
   }
 
   async list(): Promise<SaveMeta[]> {
-    throw new Error("RemoteSyncProvider is a stub: cloud saves are not enabled in the MVP.");
+    if (!this.isActive()) return [];
+    try {
+      const { saves } = await api.listSaves();
+      return saves.map((s) => ({
+        id: s.id,
+        name: s.name,
+        updatedAt: s.updatedAt,
+        turn: s.turn,
+        playerCandidate: s.playerCandidate as GameState["playerCandidate"],
+      }));
+    } catch (err) {
+      this.warn("list", err);
+      return [];
+    }
   }
 
   async remove(id: string): Promise<void> {
-    void id;
-    throw new Error("RemoteSyncProvider is a stub: cloud saves are not enabled in the MVP.");
+    await this.push("remove", () => api.deleteSave(id));
   }
 
   async saveReplay(record: ReplayRecord): Promise<void> {
-    void record;
-    throw new Error("RemoteSyncProvider is a stub: cloud saves are not enabled in the MVP.");
+    await this.push("saveReplay", () =>
+      api.putReplay(record.id, { log: record.log, updatedAt: record.updatedAt }),
+    );
   }
 
   async loadReplay(id: string): Promise<ReplayRecord | null> {
-    void id;
-    throw new Error("RemoteSyncProvider is a stub: cloud saves are not enabled in the MVP.");
+    if (!this.isActive()) return null;
+    try {
+      const r = await api.getReplay(id);
+      return { id: r.id, updatedAt: r.updatedAt, log: r.log as ReplayLog };
+    } catch (err) {
+      this.warn("loadReplay", err);
+      return null;
+    }
   }
 
   async removeReplay(id: string): Promise<void> {
+    // The replay lives on the save row server-side; deleting the save removes
+    // it. A standalone replay delete is a no-op the local provider handles.
     void id;
-    throw new Error("RemoteSyncProvider is a stub: cloud saves are not enabled in the MVP.");
   }
 }
+
+export const remoteProvider = new RemoteSyncProvider();

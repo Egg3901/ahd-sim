@@ -19,6 +19,7 @@ import {
 import { EVENTS_BY_ID } from "@content/events";
 import { STAFF_BY_ID, staffEffects } from "@content/staff";
 import { localProvider } from "@persistence/local";
+import { remoteProvider } from "@persistence/remote";
 import type { SaveMeta, SaveRecord } from "@persistence/types";
 import type { ReplayLog, ReplayMode } from "@lib/replay";
 import { truncateToTurn } from "@lib/replay";
@@ -69,6 +70,18 @@ interface GameStore {
   importSave: (json: string) => void;
 }
 
+// Merge local and remote save lists by id, newest updatedAt wins, sorted newest
+// first. Local-only and remote-only ids both survive; a shared id keeps whichever
+// side was touched last. Used by refreshSaves so cross-device saves appear.
+function mergeSaveMetas(local: SaveMeta[], remote: SaveMeta[]): SaveMeta[] {
+  const byId = new Map<string, SaveMeta>();
+  for (const m of [...local, ...remote]) {
+    const prev = byId.get(m.id);
+    if (!prev || m.updatedAt > prev.updatedAt) byId.set(m.id, m);
+  }
+  return [...byId.values()].sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
 function autosave(game: GameState) {
   const record: SaveRecord = {
     id: AUTOSAVE_ID,
@@ -80,15 +93,18 @@ function autosave(game: GameState) {
   };
   // Fire-and-forget; persistence failures never block gameplay.
   void localProvider.save(record).catch(() => {});
+  // Mirror to the cloud when signed in. RemoteSyncProvider swallows failures,
+  // so this never affects offline play.
+  void remoteProvider.save(record);
 }
 
 // Persist the replay log next to the autosave so a resumed game (or a results
 // screen reached after reload) still has its full timeline. Fire-and-forget.
 function autosaveReplay(log: ReplayLog | null) {
   if (!log) return;
-  void localProvider
-    .saveReplay({ id: AUTOSAVE_ID, updatedAt: Date.now(), log })
-    .catch(() => {});
+  const rec = { id: AUTOSAVE_ID, updatedAt: Date.now(), log };
+  void localProvider.saveReplay(rec).catch(() => {});
+  void remoteProvider.saveReplay(rec);
 }
 
 // Bring a loaded replay log back in step with the game it belongs to. Two
@@ -291,31 +307,46 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   refreshSaves: async () => {
-    const saves = await localProvider.list();
-    set({ saves });
+    // Local-first: Dexie is the source of truth and always works offline. When
+    // signed in, fold in any cloud saves and let the newest updatedAt win per
+    // id, so a save made on another device shows up here.
+    const local = await localProvider.list();
+    const remote = await remoteProvider.list(); // [] when logged out or offline
+    set({ saves: mergeSaveMetas(local, remote) });
   },
 
   saveGame: async (name) => {
     const game = get().game;
     if (!game) return;
     const id = `save-${Date.now()}`;
-    await localProvider.save({
+    const updatedAt = Date.now();
+    const record: SaveRecord = {
       id,
       name,
-      updatedAt: Date.now(),
+      updatedAt,
       turn: game.turn,
       playerCandidate: game.playerCandidate,
       state: game,
-    });
+    };
+    await localProvider.save(record);
+    void remoteProvider.save(record); // fire-and-forget cloud mirror
     const log = get().replay;
-    if (log) await localProvider.saveReplay({ id, updatedAt: Date.now(), log }).catch(() => {});
+    if (log) {
+      const rec = { id, updatedAt, log };
+      await localProvider.saveReplay(rec).catch(() => {});
+      void remoteProvider.saveReplay(rec);
+    }
     await get().refreshSaves();
   },
 
   loadGame: async (id) => {
-    const record = await localProvider.load(id);
+    // Prefer the local copy; fall back to the cloud (e.g. a save made on
+    // another device that has not been pulled into this browser yet).
+    let record = await localProvider.load(id);
+    if (!record) record = await remoteProvider.load(id);
     if (!record) return;
-    const replayRec = await localProvider.loadReplay(id).catch(() => null);
+    let replayRec = await localProvider.loadReplay(id).catch(() => null);
+    if (!replayRec) replayRec = await remoteProvider.loadReplay(id);
     const replay = resumeReplayLog(record.state, replayRec?.log ?? null);
     autosaveReplay(replay);
     set({ game: record.state, history: [], replay, lastEventResult: null });
@@ -323,6 +354,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   deleteSave: async (id) => {
     await localProvider.remove(id);
+    void remoteProvider.remove(id);
     await get().refreshSaves();
   },
 

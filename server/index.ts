@@ -12,6 +12,7 @@ import { getDb } from "./db.js";
 import { authRouter } from "./routes/auth.js";
 import { leaderboardRouter, achievementsRouter } from "./routes/leaderboard.js";
 import { dailyRouter } from "./routes/daily.js";
+import { savesRouter } from "./routes/saves.js";
 import { lakesideRouter } from "./routes/lakeside.js";
 import { requireAuth, type AuthedRequest } from "./auth.js";
 import { fetchPlatformPurchases, identityForUser } from "./entitlements.js";
@@ -44,6 +45,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/leaderboard", leaderboardRouter);
 app.use("/api/achievements", achievementsRouter);
 app.use("/api/daily", dailyRouter);
+app.use("/api/saves", savesRouter);
 app.use(lakesideRouter);   // /api/lakeside/*, /api/internal/*
 
 // Same-origin proxy so the client can list the current user's platform

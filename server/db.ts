@@ -94,6 +94,22 @@ export function getDb(): Database.Database {
     );
     CREATE UNIQUE INDEX IF NOT EXISTS purchases_provider_ref ON purchases(provider_ref);
 
+    -- Cross-device cloud saves. One row per (user, save id); the game snapshot
+    -- and the optional replay/timeline log are stored as JSON blobs. Dexie stays
+    -- the client's source of truth, so this is a mirror the client pushes to and
+    -- merges from, never a hard dependency for play.
+    CREATE TABLE IF NOT EXISTS cloud_saves (
+      user_id TEXT NOT NULL REFERENCES users(id),
+      save_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      turn INTEGER NOT NULL,
+      player_candidate TEXT,
+      state TEXT NOT NULL,
+      replay TEXT,
+      updated_at INTEGER NOT NULL,
+      PRIMARY KEY (user_id, save_id)
+    );
+
     -- Single-use SSO handoff codes for lakesidegames.net consumers (60s TTL).
     CREATE TABLE IF NOT EXISTS handoff_codes (
       code TEXT PRIMARY KEY,
