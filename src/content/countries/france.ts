@@ -5,8 +5,13 @@
 // produce the second-round map. The authored per-région `v` below are the
 // real second-round shares (calibration anchors); `FIRST_ROUND` +
 // `TRANSFERS` document how those maps arise and are checked in runoff tests.
-// Three runoffs ship: speculative 2027 (Philippe–Bardella), real 2022
-// (Macron 58.55 / Le Pen 41.45), real 2017 (Macron 66.1 / 33.9).
+// Four runoffs ship: speculative 2027 (Philippe–Bardella), real 2022
+// (Macron 58.55 / Le Pen 41.45), real 2017 (Macron 66.1 / 33.9), and real
+// 2012 (Hollande 51.64 / Sarkozy 48.36). The bundle only carries two party
+// slots (ens / rn), so 2012 maps the left finalist Hollande (PS) onto `ens`
+// and the incumbent right finalist Sarkozy (UMP) onto `rn`: a left-vs-right
+// runoff, not a centre-vs-far-right one. The leaders and labels carry the real
+// identities; the far right (Le Pen) is a first-round casualty that turn.
 
 import type { CountryBundle } from "@engine/countryGame";
 import { FR_MAP } from "./paths/fr";
@@ -21,6 +26,10 @@ export const FR_FIRST_ROUND: Record<string, RoundShares> = {
   "2022": { ens: 0.279, rn: 0.232, lfi: 0.220, lr: 0.048, other: 0.221 },
   // 2027 speculative: centre and RN clear, left fragmented, right collapsed.
   "2027": { ens: 0.26, rn: 0.25, lfi: 0.18, lr: 0.10, other: 0.21 },
+  // 2012 first round: Hollande 28.6, Sarkozy 27.2, Le Pen 17.9, Mélenchon 11.1,
+  // Bayrou 9.1. `ens` = Hollande (PS), `rn` = Sarkozy (UMP); here `lr` carries
+  // the eliminated Le Pen (FN) vote that breaks to the right finalist.
+  "2012": { ens: 0.286, rn: 0.272, lfi: 0.111, lr: 0.179, other: 0.152 },
 };
 
 /** Bloc-transfer matrices from eliminated first-round candidates into the runoff. */
@@ -42,6 +51,14 @@ export const FR_TRANSFERS: Record<string, TransferMatrix> = {
     lfi: { ens: 0.35, rn: 0.25, _abstain: 0.40 },
     lr: { ens: 0.45, rn: 0.40, _abstain: 0.15 },
     other: { ens: 0.40, rn: 0.35, _abstain: 0.25 },
+  },
+  // 2012: the left (Mélenchon) breaks hard for Hollande (`ens`); the FN vote
+  // (`lr` slot) breaks to Sarkozy (`rn`); Bayrou's centre (`other`) splits with
+  // a slight edge to Hollande. The net leaves Hollande narrowly ahead.
+  "2012": {
+    lfi: { ens: 0.80, rn: 0.06, _abstain: 0.14 },
+    lr: { ens: 0.20, rn: 0.60, _abstain: 0.20 },
+    other: { ens: 0.42, rn: 0.38, _abstain: 0.20 },
   },
 };
 
@@ -227,6 +244,40 @@ export const FRANCE: CountryBundle = {
         { id: "colere_ouvriere_2017", headline: "Deindustrialized France seethes: shuttered factories put pouvoir d'achat on the RN's side of the ledger", role: "any", party: "rn", weight: 2, appeal: 0.02, momentum: 5 },
       ],
     },
+
+    "2012": {
+      id: "2012",
+      year: 2012,
+      label: "2012 · Hollande v. Sarkozy",
+      // ens = Hollande (Parti socialiste); rn = Sarkozy (UMP). A left-vs-right
+      // runoff mapped onto the bundle's two slots.
+      tagline: "May 6, 2012. A one-term incumbent nobody warmed to against a Socialist who promised to be normal. 'Le changement, c'est maintenant' against a crisis president. Two weeks, and a narrow win either way.",
+      salience: { cost_of_living: 0.85, public_services: 0.6, europe: 0.6, security: 0.55, immigration_identity: 0.5, pensions: 0.55 },
+      regions: {
+        HDF:  { v: { ens: 0.535, rn: 0.465 }, s: { ens: 5, rn: 4 } },
+        NOR:  { v: { ens: 0.515, rn: 0.485 }, s: { ens: 3, rn: 2 } },
+        GE:   { v: { ens: 0.455, rn: 0.545 }, s: { ens: 4, rn: 4 } },
+        BRE:  { v: { ens: 0.565, rn: 0.435 }, s: { ens: 3, rn: 2 } },
+        PDL:  { v: { ens: 0.515, rn: 0.485 }, s: { ens: 3, rn: 3 } },
+        IDF:  { v: { ens: 0.555, rn: 0.445 }, s: { ens: 10, rn: 8 } },
+        BFC:  { v: { ens: 0.515, rn: 0.485 }, s: { ens: 2, rn: 2 } },
+        CVL:  { v: { ens: 0.505, rn: 0.495 }, s: { ens: 2, rn: 2 } },
+        NAQ:  { v: { ens: 0.565, rn: 0.435 }, s: { ens: 5, rn: 4 } },
+        ARA:  { v: { ens: 0.490, rn: 0.510 }, s: { ens: 6, rn: 6 } },
+        OCC:  { v: { ens: 0.560, rn: 0.440 }, s: { ens: 5, rn: 4 } },
+        PACA: { v: { ens: 0.430, rn: 0.570 }, s: { ens: 3, rn: 5 } },
+        COM:  { v: { ens: 0.580, rn: 0.420 }, s: { ens: 2, rn: 1 } },
+      },
+      events: [
+        { id: "crise_2012", headline: "The euro crisis is the backdrop to everything: austerity, unemployment past three million, and {party} owns five years of it", role: "any", party: "rn", weight: 3, appeal: -0.03, momentum: -7, turn: 0 },
+        { id: "merah_2012", headline: "The Toulouse and Montauban killings freeze the campaign, and the security-and-identity ground briefly favours the incumbent's {party}", role: "any", party: "rn", weight: 3, appeal: 0.03, momentum: 7, turn: 1 },
+        { id: "president_normal_2012", headline: "'Moi, président de la République': the 'normal president' anaphora lands the debate for {party}", role: "any", party: "ens", weight: 4, appeal: 0.035, momentum: 9, turn: 2 },
+        { id: "front_national_2012", headline: "'Ni Sarkozy': after a record far-right first round, Le Pen's voters won't be told where to go, and the right finalist's {party} can't bank them all", role: "any", party: "rn", weight: 3, appeal: -0.025, momentum: -6, turn: 3 },
+        { id: "changement_maintenant_2012", headline: "'Le changement, c'est maintenant': ten years of rejection of the sitting president crystallize behind {party}", role: "any", party: "ens", weight: 3, appeal: 0.03, momentum: 7, turn: 4 },
+        { id: "bayrou_ralliement_2012", headline: "Bayrou announces he will vote Hollande, and the centre's blessing nudges wavering moderates toward {party}", role: "any", party: "ens", weight: 2, appeal: 0.02, momentum: 5 },
+        { id: "meeting_droite_2012", headline: "A giant Concorde rally and a hard pivot to the right rally the incumbent's {party} base in the final days", role: "any", party: "rn", weight: 2, appeal: 0.02, momentum: 5 },
+      ],
+    },
   },
 
   leaders: {
@@ -243,6 +294,11 @@ export const FRANCE: CountryBundle = {
     "2017": {
       ens: { partyId: "ens", name: "Emmanuel Macron", charisma: 74, energy: 80, competence: 70, machine: 52 },
       rn:  { partyId: "rn", name: "Marine Le Pen", charisma: 60, energy: 64, competence: 36, machine: 58 },
+    },
+    // 2012: ens = the Socialist challenger, rn = the incumbent of the right.
+    "2012": {
+      ens: { partyId: "ens", name: "François Hollande", charisma: 54, energy: 60, competence: 64, machine: 68 },
+      rn:  { partyId: "rn", name: "Nicolas Sarkozy", charisma: 66, energy: 74, competence: 66, machine: 74 },
     },
   },
 

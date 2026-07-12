@@ -35,12 +35,17 @@
     "uk-1951": { "suggested": "hard", "authored": "hard", "underdogWinRate": 0 },
     "ca-2025": { "suggested": "easy", "authored": "easy", "underdogWinRate": 1 },
     "ca-2021": { "suggested": "easy", "authored": "easy", "underdogWinRate": 0.85 },
+    "ca-2019": { "suggested": "hard", "authored": "hard", "underdogWinRate": 0.1 },
+    "ca-2015": { "suggested": "hard", "authored": "hard", "underdogWinRate": 0 },
     "de-2025": { "suggested": "hard", "authored": "hard", "underdogWinRate": 0 },
     "de-2021": { "suggested": "hard", "authored": "hard", "underdogWinRate": 0.1 },
+    "de-2017": { "suggested": "hard", "authored": "hard", "underdogWinRate": 0.1 },
     "fr-2027": { "suggested": "hard", "authored": "hard", "underdogWinRate": 0 },
     "fr-2022": { "suggested": "hard", "authored": "hard", "underdogWinRate": 0 },
     "fr-2017": { "suggested": "hard", "authored": "hard", "underdogWinRate": 0 },
+    "fr-2012": { "suggested": "hard", "authored": "hard", "underdogWinRate": 0 },
     "au-2025": { "suggested": "hard", "authored": "hard", "underdogWinRate": 0 },
-    "au-2022": { "suggested": "medium", "authored": "medium", "underdogWinRate": null }
+    "au-2022": { "suggested": "medium", "authored": "medium", "underdogWinRate": null },
+    "au-2019": { "suggested": "hard", "authored": "hard", "underdogWinRate": 0 }
   }
 }

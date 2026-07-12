@@ -135,6 +135,21 @@ export const SCENARIO_REGISTRY: ScenarioMeta[] = [
     description: "A pandemic snap election nobody asked for. Gravel on the trail, a fourth wave rising, and 338 seats in play.",
   },
   {
+    // NOTE: free:true is a temporary hold. packs.ts is owned by the orchestrator
+    // this wave; once these five land in the global pack, flip free:false and set
+    // packId "global" (matching the other country elections above/below).
+    scenarioId: "ca-2019", country: "CA", engine: "country", nativeId: "2019", year: 2019,
+    free: true, difficulty: "hard", flag: "🇨🇦",
+    label: "2019 · Trudeau v. Scheer",
+    description: "SNC-Lavalin, the blackface photos, and a Liberal government that loses the popular vote but keeps the keys. A minority, 338 seats.",
+  },
+  {
+    scenarioId: "ca-2015", country: "CA", engine: "country", nativeId: "2015", year: 2015,
+    free: true, difficulty: "hard", flag: "🇨🇦",
+    label: "2015 · Trudeau v. Harper",
+    description: "A decade of Harper, a 78-day marathon, and a third-place party that wakes up in a majority. Sunny ways over a tired throne.",
+  },
+  {
     scenarioId: "de-2025", country: "DE", engine: "country", nativeId: "2025", year: 2025,
     free: false, packId: "global", difficulty: "hard", flag: "🇩🇪",
     label: "2025 · Merz v. Scholz",
@@ -145,6 +160,12 @@ export const SCENARIO_REGISTRY: ScenarioMeta[] = [
     free: false, packId: "global", difficulty: "hard", flag: "🇩🇪",
     label: "2021 · Scholz v. Laschet",
     description: "Merkel departs, a flood reshapes the race, and six parties fight over a 735-seat Bundestag.",
+  },
+  {
+    scenarioId: "de-2017", country: "DE", engine: "country", nativeId: "2017", year: 2017,
+    free: true, difficulty: "hard", flag: "🇩🇪",
+    label: "2017 · Merkel v. Schulz",
+    description: "The Schulz train runs out of track and the AfD storms the Bundestag. Merkel's fourth term, a re-entering FDP, and 709 seats.",
   },
   {
     scenarioId: "fr-2027", country: "FR", engine: "country", nativeId: "2027", year: 2027,
@@ -165,6 +186,12 @@ export const SCENARIO_REGISTRY: ScenarioMeta[] = [
     description: "A 39-year-old insurgent, a movement a year old, and the debate meltdown that sealed a landslide.",
   },
   {
+    scenarioId: "fr-2012", country: "FR", engine: "country", nativeId: "2012", year: 2012,
+    free: true, difficulty: "hard", flag: "🇫🇷",
+    label: "2012 · Hollande v. Sarkozy",
+    description: "A crisis president nobody warmed to against the man who promised to be normal. A left-right runoff decided by a whisker.",
+  },
+  {
     scenarioId: "au-2025", country: "AU", engine: "country", nativeId: "2025", year: 2025,
     free: false, packId: "global", difficulty: "hard", flag: "🇦🇺",
     label: "2025 · Albanese v. Dutton",
@@ -175,6 +202,12 @@ export const SCENARIO_REGISTRY: ScenarioMeta[] = [
     free: false, packId: "global", difficulty: "medium", flag: "🇦🇺",
     label: "2022 · Albanese v. Morrison",
     description: "Nine years of Coalition rule, a teal wave on the harbourside, and a PM who doesn't hold a hose.",
+  },
+  {
+    scenarioId: "au-2019", country: "AU", engine: "country", nativeId: "2019", year: 2019,
+    free: true, difficulty: "hard", flag: "🇦🇺",
+    label: "2019 · Morrison v. Shorten",
+    description: "The unlosable election. A big-target Labor agenda, a wall of yellow ads, and a daggy-dad miracle. 151 seats under preferences.",
   },
 ];
 

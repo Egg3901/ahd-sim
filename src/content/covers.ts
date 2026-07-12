@@ -55,13 +55,18 @@ export const SCENARIO_COVERS: Record<string, string> = {
 
   "ca-2025": "images/covers/ca-2025.jpg",
   "ca-2021": "images/covers/ca-2021.jpg",
+  "ca-2019": "images/covers/ca-2019.jpg",
+  "ca-2015": "images/covers/ca-2015.jpg",
   "de-2025": "images/covers/de-2025.jpg",
   "de-2021": "images/covers/de-2021.jpg",
+  "de-2017": "images/covers/de-2017.jpg",
   "fr-2027": "images/covers/fr-2027.jpg",
   "fr-2022": "images/covers/fr-2022.jpg",
   "fr-2017": "images/covers/fr-2017.jpg",
+  "fr-2012": "images/covers/fr-2012.jpg",
   "au-2025": "images/covers/au-2025.jpg",
   "au-2022": "images/covers/au-2022.jpg",
+  "au-2019": "images/covers/au-2019.jpg",
 };
 
 /** Pack strip thumbnails — one representative image per pack. */
