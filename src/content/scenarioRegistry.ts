@@ -36,13 +36,13 @@ export interface ScenarioMeta {
 
 /** Landslide / known-unwinnable years — surface a "historical tide" warning. */
 export const TIDE_SCENARIO_IDS = new Set([
-  "us-1984", "us-1972", "us-1936",
+  "us-1984", "us-1972", "us-1964", "us-1936",
   "uk-1983", "uk-1997", "uk-2001", "uk-2024",
   "fr-2017",
 ]);
 
 /** Genuine coin-flip years where the baseline winner is not a pushover. */
-export const COIN_FLIP_SCENARIO_IDS = new Set(["uk-2017", "us-2000"]);
+export const COIN_FLIP_SCENARIO_IDS = new Set(["uk-2017", "us-2000", "us-1960", "us-1968"]);
 
 export function scenarioTags(meta: ScenarioMeta): Array<"tide" | "challenge" | "coin-flip"> {
   if (meta.tags) return meta.tags;
@@ -90,6 +90,11 @@ export const SCENARIO_REGISTRY: ScenarioMeta[] = [
   us(1988, "1988 · Dukakis v. Bush", "A 17-point summer lead, a tank ride, and the meanest ad war of its era.", false, "hard"),
   us(1984, "1984 · Mondale v. Reagan", "Morning in America. Fight the tide, or ride the biggest landslide of the age.", false, "hard"),
   us(1980, "1980 · Carter v. Reagan", "Hostages in Tehran, stagflation at home, and one debate to decide it all.", false, "hard"),
+  us(1976, "1976 · Carter v. Ford", "A pardon in the air, a peanut farmer against Washington, and a fragile Solid South.", false, "hard"),
+  us(1972, "1972 · McGovern v. Nixon", "A prairie liberal against a 520-EV landslide, and a break-in nobody is talking about yet.", false, "hard"),
+  us(1968, "1968 · Humphrey v. Nixon", "A party split three ways, a burning summer, and Wallace holding the Deep South.", false, "hard"),
+  us(1964, "1964 · Johnson v. Goldwater", "A martyred president's heir, a nuclear ad, and the birth of the Sun Belt right.", false, "hard"),
+  us(1960, "1960 · Kennedy v. Nixon", "Television changes everything, and a hundred thousand votes decide the century's closest race.", false, "easy"),
 
   // ── United Kingdom (general elections) ──
   uk(2024, "2024 · Starmer's landslide", "Fourteen years of Conservative rule end. Or do they? Reform surges on the right.", "hard"),

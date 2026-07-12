@@ -14,6 +14,7 @@ export interface ScenarioPack {
 export const US_PAID = [
   "us-2016", "us-2012", "us-2008", "us-2004", "us-2000",
   "us-1996", "us-1992", "us-1988", "us-1984", "us-1980",
+  "us-1976", "us-1972", "us-1968", "us-1964", "us-1960",
 ];
 export const UK_ALL = [
   "uk-2024", "uk-2019", "uk-2017", "uk-2015", "uk-2010", "uk-2005", "uk-2001",

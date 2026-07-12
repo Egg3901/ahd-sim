@@ -651,7 +651,7 @@ export const EVENTS: GameEvent[] = [
 // year's real beats (debates, COVID surge, SCOTUS vacancy, …), its stochastic
 // entries are year-agnostic campaign moments. We partition it accordingly and
 // add per-scenario historical decks + generic debates for the plausible mode.
-import { GENERIC_DEBATES, HIST_2020, HIST_2016, HIST_2024, HIST_2000, HIST_2012, HIST_2008, HIST_2004, HIST_1996, HIST_1992, HIST_1988, HIST_1984, HIST_1980 } from "./historicalEvents";
+import { GENERIC_DEBATES, HIST_2020, HIST_2016, HIST_2024, HIST_2000, HIST_2012, HIST_2008, HIST_2004, HIST_1996, HIST_1992, HIST_1988, HIST_1984, HIST_1980, HIST_1976, HIST_1972, HIST_1968, HIST_1964, HIST_1960 } from "./historicalEvents";
 import { ENDORSEMENT_EVENTS } from "./endorsements";
 
 // Year-agnostic random pool, drawn in both modes. Endorsement offers (see
@@ -677,8 +677,13 @@ export const HISTORICAL_EVENTS: Record<string, GameEvent[]> = {
   "1988": HIST_1988,
   "1984": HIST_1984,
   "1980": HIST_1980,
+  "1976": HIST_1976,
+  "1972": HIST_1972,
+  "1968": HIST_1968,
+  "1964": HIST_1964,
+  "1960": HIST_1960,
 };
 
 export const EVENTS_BY_ID: Record<string, GameEvent> = Object.fromEntries(
-  [...EVENTS, ...ENDORSEMENT_EVENTS, ...GENERIC_DEBATES, ...HIST_2020, ...HIST_2016, ...HIST_2024, ...HIST_2012, ...HIST_2008, ...HIST_2004, ...HIST_2000, ...HIST_1996, ...HIST_1992, ...HIST_1988, ...HIST_1984, ...HIST_1980].map((e) => [e.id, e]),
+  [...EVENTS, ...ENDORSEMENT_EVENTS, ...GENERIC_DEBATES, ...HIST_2020, ...HIST_2016, ...HIST_2024, ...HIST_2012, ...HIST_2008, ...HIST_2004, ...HIST_2000, ...HIST_1996, ...HIST_1992, ...HIST_1988, ...HIST_1984, ...HIST_1980, ...HIST_1976, ...HIST_1972, ...HIST_1968, ...HIST_1964, ...HIST_1960].map((e) => [e.id, e]),
 );
