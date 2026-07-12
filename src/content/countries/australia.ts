@@ -205,6 +205,50 @@ export const AUSTRALIA: CountryBundle = {
           headline: "The character question won't die. Focus groups say {party}'s leader is the issue", appeal: -0.03, momentum: -7 },
       ],
     },
+
+    "2019": {
+      id: "2019",
+      year: 2019,
+      label: "2019 · Morrison v. Shorten",
+      tagline: "May 2019. Every poll for three years said Labor. A big-target agenda on franking credits and negative gearing meets a daggy-dad prime minister and a wall of yellow ads. The unlosable election. Hold your nerve, or pull off the miracle.",
+      // Pre-redistribution chamber: 151 seats (NSW 47 / VIC 38 / WA 16).
+      majority: { total: 151, threshold: 76 },
+      goalText: "76 of 151 seats",
+      salience: { cost_of_living: 0.85, energy_climate: 0.7, housing: 0.55, medicare: 0.5, immigration: 0.35, trump_security: 0.25 },
+      regions: {
+        // AEC first-preference flavours; seats are the real 2019 state outcomes.
+        // Crossbench = independents (Steggall, Wilkie…) + KAP (QLD) + Centre
+        // Alliance (SA), all folded into `ind`.
+        NSW: { v: { lnp: 0.42, alp: 0.34, grn: 0.09, onp: 0.04, ind: 0.06, oth: 0.05 }, s: { alp: 24, lnp: 22, ind: 1 } },
+        VIC: { v: { lnp: 0.38, alp: 0.37, grn: 0.12, onp: 0.03, ind: 0.05, oth: 0.05 }, s: { alp: 21, lnp: 15, grn: 1, ind: 1 } },
+        QLD: { v: { lnp: 0.44, alp: 0.27, grn: 0.10, onp: 0.09, ind: 0.04, oth: 0.06 }, s: { lnp: 23, alp: 6, ind: 1 } },
+        WA:  { v: { lnp: 0.45, alp: 0.30, grn: 0.12, onp: 0.05, oth: 0.08 }, s: { lnp: 11, alp: 5 } },
+        SA:  { v: { lnp: 0.38, alp: 0.34, grn: 0.11, onp: 0.05, ind: 0.07, oth: 0.05 }, s: { alp: 5, lnp: 4, ind: 1 } },
+        TAS: { v: { alp: 0.35, lnp: 0.34, grn: 0.12, onp: 0.04, ind: 0.09, oth: 0.06 }, s: { alp: 2, lnp: 2, ind: 1 } },
+        ACT: { v: { alp: 0.44, lnp: 0.28, grn: 0.17, oth: 0.11 }, s: { alp: 3 } },
+        NT:  { v: { alp: 0.43, lnp: 0.38, grn: 0.08, oth: 0.11 }, s: { alp: 1, lnp: 1 } },
+      },
+      events: [
+        { id: "au19_franking_scare", turn: 0, party: "alp", role: "any", weight: 1,
+          headline: "The 'retiree tax': {party}'s franking-credits crackdown becomes a scare campaign in every RSL and bowls club in the country", appeal: -0.03, momentum: -8 },
+        { id: "au19_bob_brown_convoy", turn: 1, party: "alp", role: "any", weight: 1,
+          headline: "Bob Brown's anti-Adani convoy rolls through central Queensland and backfires, and the coal seats swing away from {party}", appeal: -0.03, momentum: -7 },
+        { id: "au19_bill_you_cant_afford", turn: 2, party: "alp", role: "any", weight: 1,
+          headline: "'The Bill Australia can't afford': the big-target agenda on negative gearing and dividends becomes a target-rich week for the attack ads on {party}", appeal: -0.025, momentum: -6 },
+        { id: "au19_shorten_unpopular", turn: 3, party: "alp", role: "any", weight: 1,
+          headline: "The preferred-PM gap won't close: focus groups keep saying {party}'s leader is the drag on the ticket", appeal: -0.02, momentum: -5 },
+        { id: "au19_daggy_dad", turn: 4, party: "lnp", role: "any", weight: 1,
+          headline: "Curry, caps and church: {party}'s 'quiet Australians' retail campaign quietly outworks the whole press gallery", appeal: 0.03, momentum: 8 },
+        { id: "au19_palmer_blitz", party: "lnp", role: "any", weight: 3,
+          headline: "Clive Palmer's $60m yellow ad blitz and a preference deal funnel the anti-Labor vote to {party}", appeal: 0.025, momentum: 7 },
+        { id: "au19_death_tax", party: "alp", role: "any", weight: 2,
+          headline: "A viral 'death tax' hoax spreads through the group chats, and {party} spends a week denying a policy it never had", appeal: -0.025, momentum: -6 },
+        { id: "au19_climate_youth", party: "alp", role: "any", weight: 2,
+          headline: "School strikers and inner-city climate marches lift {party} in the cities, even as the message sinks in the coal belt", appeal: 0.02, momentum: 5 },
+        { id: "au19_polls_miracle", role: "leader", weight: 2,
+          headline: "Every published poll still has {party}'s rival ahead: the mother of all expectations traps is set", appeal: 0.02, momentum: 5 },
+      ],
+    },
   },
 
   leaders: {
@@ -217,6 +261,11 @@ export const AUSTRALIA: CountryBundle = {
       alp: { partyId: "alp", name: "Anthony Albanese", charisma: 58, energy: 66, competence: 64, machine: 78 },
       lnp: { partyId: "lnp", name: "Scott Morrison", charisma: 48, energy: 70, competence: 58, machine: 80 },
       grn: { partyId: "grn", name: "Adam Bandt", charisma: 62, energy: 72, competence: 56, machine: 44 },
+    },
+    "2019": {
+      alp: { partyId: "alp", name: "Bill Shorten", charisma: 44, energy: 60, competence: 62, machine: 74 },
+      lnp: { partyId: "lnp", name: "Scott Morrison", charisma: 50, energy: 72, competence: 56, machine: 78 },
+      grn: { partyId: "grn", name: "Richard Di Natale", charisma: 54, energy: 60, competence: 58, machine: 44 },
     },
   },
 

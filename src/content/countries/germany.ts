@@ -158,6 +158,39 @@ export const GERMANY: CountryBundle = {
         { id: "union_schlussspurt", headline: "A red-red-green scare campaign rallies the {party} base in the final stretch", role: "any", party: "cdu", weight: 2, appeal: 0.03, momentum: 7 },
       ],
     },
+
+    "2017": {
+      id: "2017",
+      year: 2017,
+      label: "2017 · Merkel v. Schulz",
+      tagline: "Autumn 2017. The Schulz train has run out of track, the grand coalition drags on, and for the first time a party of the hard right is heading for the Bundestag. Merkel's fourth term is not the question. Who comes second, and who comes third, is.",
+      // The 19th Bundestag: 709 seats with overhang and leveling mandates.
+      majority: { total: 709, threshold: 355 },
+      goalText: "355 of 709 seats",
+      salience: { migration: 0.85, economy: 0.6, pensions: 0.6, ukraine_security: 0.4, energy_climate: 0.45, housing: 0.45 },
+      regions: {
+        NORTH: { v: { cdu: 0.345, spd: 0.27,  afd: 0.10,  fdp: 0.105, grn: 0.10,  lnk: 0.08  }, s: { cdu: 37, spd: 29, afd: 11, fdp: 11, grn: 11, lnk: 8 } },
+        NE:    { v: { cdu: 0.245, spd: 0.185, afd: 0.19,  fdp: 0.085, lnk: 0.185, grn: 0.11  }, s: { cdu: 22, spd: 16, afd: 17, lnk: 16, grn: 10, fdp: 8 } },
+        NRW:   { v: { cdu: 0.335, spd: 0.28,  afd: 0.095, fdp: 0.135, grn: 0.085, lnk: 0.075 }, s: { cdu: 47, spd: 39, fdp: 19, afd: 13, grn: 12, lnk: 10 } },
+        EAST:  { v: { cdu: 0.275, afd: 0.255, lnk: 0.185, spd: 0.145, fdp: 0.085, grn: 0.055 }, s: { cdu: 24, afd: 22, lnk: 16, spd: 12, fdp: 7, grn: 5 } },
+        WEST:  { v: { cdu: 0.345, spd: 0.255, afd: 0.115, fdp: 0.105, grn: 0.105, lnk: 0.075 }, s: { cdu: 33, spd: 25, afd: 11, fdp: 10, grn: 10, lnk: 7 } },
+        BW:    { v: { cdu: 0.36,  spd: 0.17,  grn: 0.145, fdp: 0.135, afd: 0.125, lnk: 0.065 }, s: { cdu: 31, spd: 15, afd: 11, fdp: 12, grn: 12, lnk: 5 } },
+        BAV:   { v: { cdu: 0.435, spd: 0.155, afd: 0.13,  grn: 0.11,  fdp: 0.105, lnk: 0.065 }, s: { cdu: 46, spd: 16, afd: 14, fdp: 11, grn: 11, lnk: 7 } },
+      },
+      // The real story beats of autumn 2017, in campaign order.
+      events: [
+        { id: "schulz_zug_entgleist", headline: "The Schulz train derails: the SPD candidate's spring surge fades into a summer of state-election defeats, and {party} can't find a second wind", role: "any", party: "spd", weight: 1, appeal: -0.03, momentum: -8, turn: 0 },
+        { id: "koeln_silvester_nachhall", headline: "'Merkel muss weg': the migration backlash after 2015 hardens into votes, and {party} owns the anger", role: "any", party: "afd", weight: 1, appeal: 0.03, momentum: 8, turn: 1 },
+        { id: "tv_duell_einziges", headline: "The one and only TV-Duell: a cautious, consensual night that changes almost nothing, and {party}'s challenger fails to land a blow", role: "any", party: "spd", weight: 1, appeal: -0.025, momentum: -6, turn: 2 },
+        { id: "fdp_comeback_lindner", headline: "Back from the dead: Lindner's slick, yellow-and-magenta relaunch puts {party} over the 5% line and then some", role: "any", party: "fdp", weight: 1, appeal: 0.03, momentum: 8, turn: 3 },
+        { id: "gauland_grenzen", headline: "'Wir werden sie jagen': a deliberately provocative closing pitch rallies {party}'s base and clears the way to third place", role: "any", party: "afd", weight: 1, appeal: 0.025, momentum: 7, turn: 4 },
+        { id: "linke_ostwahl", headline: "The eastern fight for the protest vote turns brutal, and {party} loses ground to the newcomers on its old home turf", role: "any", party: "lnk", weight: 1, appeal: -0.025, momentum: -6, turn: 5 },
+        // Unscheduled flavor — joins the weekly draw, fires at most once.
+        { id: "merkel_ruhe", headline: "'Sie kennen mich': the steady-hand incumbency pitch reassures the middle, and {party} coasts", role: "any", party: "cdu", weight: 2, appeal: 0.02, momentum: 5 },
+        { id: "groko_verdruss", headline: "Grand-coalition fatigue drains the life out of {party}'s base: why vote for the junior partner of the status quo?", role: "any", party: "spd", weight: 2, appeal: -0.03, momentum: -7 },
+        { id: "gruene_letzte_meile", headline: "A late realo-flügel push and a slick ground game hold {party} safely over the threshold", role: "any", party: "grn", weight: 2, appeal: 0.02, momentum: 5 },
+      ],
+    },
   },
 
   leaders: {
@@ -175,6 +208,14 @@ export const GERMANY: CountryBundle = {
       afd: { partyId: "afd", name: "Alice Weidel & Tino Chrupalla", charisma: 54, energy: 62, competence: 50, machine: 54 },
       lnk: { partyId: "lnk", name: "Janine Wissler & Dietmar Bartsch", charisma: 50, energy: 60, competence: 52, machine: 46 },
       fdp: { partyId: "fdp", name: "Christian Lindner", charisma: 66, energy: 70, competence: 60, machine: 72 },
+    },
+    "2017": {
+      cdu: { partyId: "cdu", name: "Angela Merkel", charisma: 52, energy: 58, competence: 82, machine: 84 },
+      spd: { partyId: "spd", name: "Martin Schulz", charisma: 54, energy: 62, competence: 60, machine: 66 },
+      afd: { partyId: "afd", name: "Alice Weidel & Alexander Gauland", charisma: 52, energy: 64, competence: 48, machine: 50 },
+      grn: { partyId: "grn", name: "Cem Özdemir & Katrin Göring-Eckardt", charisma: 56, energy: 62, competence: 58, machine: 54 },
+      lnk: { partyId: "lnk", name: "Sahra Wagenknecht & Dietmar Bartsch", charisma: 60, energy: 62, competence: 58, machine: 48 },
+      fdp: { partyId: "fdp", name: "Christian Lindner", charisma: 68, energy: 72, competence: 60, machine: 66 },
     },
   },
 
