@@ -115,12 +115,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   newGame: (opts) => {
     const difficulty = opts.difficulty ?? "normal";
-    const fresh = beginGame(createGame(opts));
     // Daily-challenge games are gated: the live scrubber is hidden mid-game so
     // it can't be used to scout the shared board. The daily seed is the string
     // "daily-<date>" before it is hashed into GameState.seed.
     const mode: ReplayMode =
       typeof opts.seed === "string" && opts.seed.startsWith("daily") ? "daily" : "casual";
+    // The Daily Challenge is the same race for everyone, scored and compared
+    // head to head, so its length can't be a player choice: always the
+    // standard 9-week campaign, no matter what a casual game's setup screen
+    // passed through.
+    const fresh = beginGame(createGame(mode === "daily" ? { ...opts, totalTurns: 9 } : opts));
     const replay = initUsReplayLog(fresh, mode);
     autosave(fresh);
     autosaveReplay(replay);

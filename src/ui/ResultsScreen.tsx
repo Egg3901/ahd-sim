@@ -354,6 +354,9 @@ function ScoreAndAchievements() {
 
   const [postState, setPostState] = useState<"idle" | "busy" | "done" | "error">("idle");
   const [postNote, setPostNote] = useState("");
+  // Only the Standard (9-week) campaign length is comparable across players,
+  // so Short/Long games are casual only and can't be posted to the leaderboard.
+  const standardLength = game.totalTurns === 9;
 
   // Persist achievements once per mount: server for accounts, local for guests.
   useEffect(() => {
@@ -430,7 +433,9 @@ function ScoreAndAchievements() {
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
-            {user ? (
+            {!standardLength ? (
+              <span className="muted small">Short and Long games are casual only and don't post to the leaderboard</span>
+            ) : user ? (
               <button className="primary" disabled={postState === "busy" || postState === "done" || serverDown} onClick={post}>
                 {postState === "done" ? "Posted ✓" : postState === "busy" ? "Posting…" : serverDown ? "Offline" : "Post to Leaderboard"}
               </button>

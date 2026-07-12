@@ -56,6 +56,16 @@ const DIFFICULTIES: {
   { id: "hard", name: "Hard", blurb: "The historical map, no help, a ruthless opponent. History is brutal.", Icon: Crosshair },
 ];
 
+// Campaign length: how many weekly turns the race runs before Election Day.
+// Standard (9 weeks) is the historically calibrated length used for scoring
+// and the Daily Challenge; Short and Long are casual variants for a quicker
+// or longer run.
+const CAMPAIGN_LENGTHS: { turns: number; name: string; blurb: string }[] = [
+  { turns: 5, name: "Short (5 weeks)", blurb: "A sprint to Election Day. Fewer events, faster games." },
+  { turns: 9, name: "Standard (9 weeks)", blurb: "The full historical calendar. Used for the leaderboard." },
+  { turns: 14, name: "Long (14 weeks)", blurb: "A drawn out race with room to build momentum slowly." },
+];
+
 // The seven battlegrounds offered for the "What If" prior flip, plus two fun ones.
 const WHAT_IF_STATES = ["", "TX", "FL", "OH", "PA", "MI", "WI", "GA", "AZ", "NC", "NY"];
 
@@ -76,6 +86,10 @@ export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onEx
   const ticket = pick === "dem" ? scenario.dem : scenario.rep;
   const [mate, setMate] = useState<string>(() => defaultRunningMate((initialParty === "rep" ? scenario.rep : scenario.dem).runningMates).id);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
+  // The Daily Challenge is a shared, scored race, so its length is pinned to
+  // Standard regardless of what's picked here (gameStore enforces this too).
+  const isDaily = typeof initialSeed === "string" && initialSeed.startsWith("daily");
+  const [totalTurns, setTotalTurns] = useState<number>(9);
   const [eventMode, setEventMode] = useState<"historical" | "plausible">("historical");
   const [staff, setStaff] = useState<string[]>([]);
   const [whatIfState, setWhatIfState] = useState<string>("");
@@ -129,6 +143,7 @@ export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onEx
     newGame({
       seed, scenario: scenarioId, playerCandidate: pick, difficulty, runningMate: mate, eventMode,
       staff, modifiers: Object.keys(modifiers ?? {}).length > 0 ? modifiers : undefined,
+      totalTurns: isDaily ? 9 : totalTurns,
     });
   };
 
@@ -328,6 +343,34 @@ export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onEx
                 </div>
               </div>
 
+              {!isDaily && (
+                <div className="field" style={{ textAlign: "left", margin: "0 0 10px" }}>
+                  <label>
+                    <CalendarDays size={13} style={{ verticalAlign: "-2px", marginRight: 5 }} />
+                    Campaign length: how many weeks until Election Day
+                  </label>
+                  <div className="su-optgrid su-optgrid-3">
+                    {CAMPAIGN_LENGTHS.map(({ turns, name, blurb }) => (
+                      <button
+                        key={turns}
+                        type="button"
+                        className={`su-opt${totalTurns === turns ? " sel" : ""}`}
+                        onClick={() => setTotalTurns(turns)}
+                      >
+                        <CalendarDays size={16} className="su-opt-icon" />
+                        <span className="su-opt-name">{name}</span>
+                        <span className="su-opt-blurb">{blurb}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {totalTurns !== 9 && (
+                    <p className="muted small" style={{ marginTop: 6 }}>
+                      Short and Long games are for fun and do not count toward the leaderboard. Play Standard for a scored run.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div className="field" style={{ textAlign: "left", margin: "0 0 10px" }}>
                 <label>
                   <FlaskConical size={13} style={{ verticalAlign: "-2px", marginRight: 5 }} />
@@ -380,6 +423,7 @@ export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onEx
                   <span className="su-summary-k">Rules</span>
                   <span className="su-summary-v">
                     {scenario.year} · {eventMode === "historical" ? "Historical" : "Plausible"} · {DIFFICULTIES.find((d) => d.id === difficulty)!.name}
+                    {!isDaily && totalTurns !== 9 && ` · ${CAMPAIGN_LENGTHS.find((c) => c.turns === totalTurns)!.name}`}
                     {whatIfState && ` · What-if ${whatIfState}`}{mirrorMatch && " · Mirror"}{pandemic && " · Pandemic"}
                   </span>
                 </div>

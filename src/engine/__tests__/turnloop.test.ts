@@ -50,6 +50,26 @@ describe("turn loop", () => {
     expect(["dem", "rep", "tie"]).toContain(end.result!.winner);
   });
 
+  it("runs a Short (5-week) campaign to a decided result", () => {
+    const end = playToEnd(createGame({ seed: "short-run", totalTurns: 5 }), () => []);
+    expect(end.phase).toBe("result");
+    expect(end.turn).toBe(5);
+    expect(end.result).toBeDefined();
+    const totalEv = end.result!.electoralVotes.dem + end.result!.electoralVotes.rep;
+    expect(totalEv).toBe(538);
+    expect(["dem", "rep", "tie"]).toContain(end.result!.winner);
+  });
+
+  it("runs a Long (14-week) campaign to a decided result", () => {
+    const end = playToEnd(createGame({ seed: "long-run", totalTurns: 14 }), () => []);
+    expect(end.phase).toBe("result");
+    expect(end.turn).toBe(14);
+    expect(end.result).toBeDefined();
+    const totalEv = end.result!.electoralVotes.dem + end.result!.electoralVotes.rep;
+    expect(totalEv).toBe(538);
+    expect(["dem", "rep", "tie"]).toContain(end.result!.winner);
+  });
+
   it("heavy Biden ad+rally investment in tossups improves his margin there", () => {
     const base = beginGame(createGame({ seed: "invest", playerCandidate: "dem" }));
     const targets = ["GA", "AZ", "NC"];
