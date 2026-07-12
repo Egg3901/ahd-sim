@@ -6,7 +6,8 @@ export interface ScenarioPack {
   id: string;
   name: string;
   description: string;
-  price: number; // USD cents
+  price: number; // USD cents — offline fallback only; the canonical price is the
+                 // platform catalog (GET /api/catalog -> /account/api/catalog).
   scenarios: string[];
 }
 

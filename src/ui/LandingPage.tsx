@@ -3,6 +3,7 @@ import { PAYWALL_ENABLED, SCENARIO_REGISTRY, type CountryCode, type ScenarioMeta
 import { PACKS } from "@content/packs";
 import { countryCover, scenarioCover } from "@content/covers";
 import { useAuthStore } from "@store/authStore";
+import { usePackPrices } from "@lib/usePackPrices";
 import { UserMenu } from "@ui/auth/UserMenu";
 import { DailyCard } from "@ui/DailyCard";
 import { Vote, Lock, Play, Trophy, KeyRound, ChevronLeft, ChevronRight, Check, X, ShoppingBag } from "lucide-react";
@@ -131,6 +132,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
   const openModal = useAuthStore((s) => s.openModal);
   const user = useAuthStore((s) => s.user);
   const buyPack = useAuthStore((s) => s.buyPack);
+  const packPrices = usePackPrices();
   const [country, setCountry] = useState<CountryCode | null>(null);
   const [buyBusy, setBuyBusy] = useState<string | null>(null);
   const [buyError, setBuyError] = useState<string | null>(null);
@@ -298,7 +300,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
                   <span className="scenario-match">{p.scenarios.length} scenarios</span>
                   <span className="muted small" style={{ fontSize: 11 }}>{p.description}</span>
                   <span className="pack-foot">
-                    <span className="pack-price">${(p.price / 100).toFixed(2)}</span>
+                    <span className="pack-price">${((packPrices[p.id] ?? p.price) / 100).toFixed(2)}</span>
                     {owned ? (
                       <span className="muted small">Owned</span>
                     ) : PAYWALL_ENABLED ? (

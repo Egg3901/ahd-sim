@@ -15,6 +15,7 @@ import { dailyRouter } from "./routes/daily.js";
 import { lakesideRouter } from "./routes/lakeside.js";
 import { requireAuth, type AuthedRequest } from "./auth.js";
 import { fetchPlatformPurchases, identityForUser } from "./entitlements.js";
+import { getCatalog } from "./catalog.js";
 import { PACKS_BY_ID } from "../src/content/packs.js";
 
 const PORT = Number(process.env.PORT ?? 3401);
@@ -29,6 +30,14 @@ app.use(express.json({ limit: "256kb" }));
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, service: "campaign-server" });
+});
+
+// Product catalog with platform prices (one source of truth on the platform;
+// bundled prices are the offline-safe fallback). Same-origin so the SPA reads
+// it regardless of which host it is mounted on.
+app.get("/api/catalog", async (_req, res) => {
+  res.set("Cache-Control", "public, max-age=300");
+  res.json({ products: await getCatalog() });
 });
 
 app.use("/api/auth", authRouter);

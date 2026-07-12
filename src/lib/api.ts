@@ -98,6 +98,10 @@ export const api = {
 
   activations: () => call<{ unlocked: Unlocked }>("/api/auth/activations"),
 
+  // Product catalog with platform prices (single source of truth on the
+  // platform; the server falls back to bundled prices if it is unreachable).
+  catalog: () => call<{ products: { id: string; name: string; priceCents: number; scenarios: string[] }[] }>("/api/catalog"),
+
   // ── Purchases + Lakeside ID ──
   // Commerce is owned by the Lakeside platform now. The Buy button links out to
   // the platform checkout (see lakesideCheckoutUrl); the account view lists the
