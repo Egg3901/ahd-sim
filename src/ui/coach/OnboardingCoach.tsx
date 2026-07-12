@@ -43,6 +43,8 @@ export interface OnboardingCoachProps {
   totalTurns?: number;
   mapSelector?: string;
   detailSelector?: (mobile: boolean) => Element | null;
+  /** Bypass the localStorage/turn-0 gate; used by "Replay tutorial". */
+  forceOpen?: boolean;
 }
 
 const sameRect = (a: Rect | null, b: Rect | null): boolean => {
@@ -99,6 +101,18 @@ function buildSteps(props: OnboardingCoachProps): CoachStep[] {
       target: () => document.querySelector('[data-coach="endweek"]'),
     },
     {
+      title: "Curveballs",
+      body: "Events and debates will pop up mid-campaign. They pause the loop and ask you to pick a response. There is rarely a clean win, just trade-offs.",
+      next: "Next",
+      target: () => document.querySelector('[data-coach="ticker"]'),
+    },
+    {
+      title: "Everything else lives up top",
+      body: "Settings, the Guide, and Timeline replay all sit in the top bar. Want to see this tour again? Open Settings and hit Replay tutorial.",
+      next: "Next",
+      target: () => document.querySelector('[data-coach="settings"]'),
+    },
+    {
       title: "That's the loop",
       body: "Watch the projection up top. Election Night decides everything. Good luck.",
       next: "Done",
@@ -121,6 +135,7 @@ export function OnboardingCoach(props: OnboardingCoachProps = {}) {
   const [eligible] = useState<boolean>(() => {
     if (typeof window === "undefined" || typeof document === "undefined") return false;
     if (typeof window.matchMedia !== "function") return false; // jsdom / non-browser
+    if (props.forceOpen) return true; // "Replay tutorial": skip the done-key and turn-0 gate.
     try {
       if (window.localStorage.getItem(doneKey)) return false;
     } catch {

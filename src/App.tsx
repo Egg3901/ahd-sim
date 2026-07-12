@@ -15,7 +15,7 @@ import { CandidateScreen } from "@ui/CandidateScreen";
 import { StatsScreen } from "@ui/StatsScreen";
 import { TimelineView } from "@ui/TimelineView";
 import { NewsTicker } from "@ui/NewsTicker";
-import { OnboardingCoach } from "@ui/coach/OnboardingCoach";
+import { OnboardingCoach, COACH_DONE_KEY } from "@ui/coach/OnboardingCoach";
 import { getScenario } from "@content/scenarios";
 import { money, turnLabel } from "@ui/format";
 import { lazy, Suspense } from "react";
@@ -112,6 +112,16 @@ function GameScreen() {
   const [candOpen, setCandOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [tourNonce, setTourNonce] = useState(0);
+  const replayTutorial = () => {
+    try {
+      window.localStorage.removeItem(COACH_DONE_KEY);
+    } catch {
+      /* private mode etc. */
+    }
+    setSettingsOpen(false);
+    setTourNonce((n) => n + 1);
+  };
   const [timelineOpen, setTimelineOpen] = useState(false);
   const replay = useGameStore((s) => s.replay);
 
@@ -203,7 +213,7 @@ function GameScreen() {
         )}
         <button className="ghost small" onClick={() => setCandOpen(true)}>Candidates</button>
         <button className="ghost small" onClick={() => setGuideOpen(true)}>Guide</button>
-        <button className="ghost small" onClick={() => setSettingsOpen(true)} aria-label="Settings"><Settings size={16} /></button>
+        <button className="ghost small" data-coach="settings" onClick={() => setSettingsOpen(true)} aria-label="Settings"><Settings size={16} /></button>
         <button onClick={undo} disabled={!canUndo}>↶ Undo</button>
         <button className="primary" data-coach="endweek" onClick={handleEndTurn} disabled={hasPendingEvent}>
           {hasPendingEvent ? "Resolve event first" : "End Week →"}
@@ -241,11 +251,12 @@ function GameScreen() {
       {guideOpen && <GuidePage onClose={() => setGuideOpen(false)} />}
       {candOpen && <CandidateScreen scenarioId={game.scenarioId} onClose={() => setCandOpen(false)} />}
       {statsOpen && <StatsScreen onClose={() => setStatsOpen(false)} />}
-      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
+      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} onReplayTutorial={replayTutorial} />}
       {timelineOpen && replay && <TimelineView log={replay} onClose={() => setTimelineOpen(false)} />}
 
-      {/* First-run guided tour; self-gating (localStorage, turn 0, US only). */}
-      <OnboardingCoach />
+      {/* First-run guided tour; self-gating (localStorage, turn 0, US only).
+          key={tourNonce} forces a remount so "Replay tutorial" restarts it from step 1. */}
+      <OnboardingCoach key={tourNonce} forceOpen={tourNonce > 0} />
     </div>
   );
 }

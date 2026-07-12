@@ -71,7 +71,7 @@ export function NewsTicker() {
 
   if (headlines.length === 0) return null;
   return (
-    <div className="ticker" role="status" aria-live="polite">
+    <div className="ticker" data-coach="ticker" role="status" aria-live="polite">
       <span className="ticker-tag"><span className="ticker-dot" /> LIVE</span>
       <span key={i} className="ticker-line">{headlines[i % headlines.length]}</span>
     </div>
