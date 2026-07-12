@@ -22,6 +22,7 @@ import { LandingPage, type LandingDestination } from "@ui/LandingPage";
 import { LegalPage } from "@ui/LegalPage";
 import { dailyAssignment, utcDateString } from "@lib/daily";
 import { SCENARIOS_BY_ID } from "@content/scenarioRegistry";
+import { registerSavedCustomScenarios } from "@persistence/local";
 
 // The UK and country shells carry their engines, content, and map geometry —
 // they load on demand so the main bundle stays lean (the US game is the
@@ -208,6 +209,8 @@ export function App() {
   const refreshSaves = useGameStore((s) => s.refreshSaves);
   const [view, setView] = useState<View>({ kind: "landing" });
   useEffect(() => { void refreshSaves(); }, [refreshSaves]);
+  // Re-register saved custom scenarios so a resumed custom race resolves.
+  useEffect(() => { void registerSavedCustomScenarios(); }, []);
 
   const go = (dest: LandingDestination) => {
     // The daily destination resolves locally (client and server share the
