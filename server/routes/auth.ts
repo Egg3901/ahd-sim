@@ -2,7 +2,8 @@ import { Router } from "express";
 import { randomUUID } from "node:crypto";
 import { getDb, type UserRow } from "../db.js";
 import { signToken, hashPassword, checkPassword, requireAuth, type AuthedRequest } from "../auth.js";
-import { redeemCode, unlockedForUserWithPlatform } from "../activation.js";
+import { unlockedForUserWithPlatform } from "../activation.js";
+import { identityForUser, redeemCodeOnPlatform } from "../entitlements.js";
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -63,9 +64,13 @@ authRouter.get("/me", requireAuth, async (req: AuthedRequest, res) => {
 authRouter.post("/activate", requireAuth, async (req: AuthedRequest, res) => {
   const { code } = req.body ?? {};
   if (typeof code !== "string" || !code.trim()) return res.status(400).json({ error: "Code required" });
-  const out = redeemCode(req.auth!.userId, code);
+  // Codes are redeemed on the Lakeside platform now (one ledger for codes and
+  // Stripe purchases). The grant flows back through platform entitlements.
+  const identity = identityForUser(req.auth!.userId);
+  if (!identity) return res.status(400).json({ error: "Sign in with your Lakeside account to redeem a code" });
+  const out = await redeemCodeOnPlatform(identity, code);
   if (!out.ok) return res.status(400).json({ error: out.error });
-  res.json({ scenarioId: out.scenarioId, packId: out.packId, packName: out.packName, unlocked: await unlockedForUserWithPlatform(req.auth!.userId) });
+  res.json({ packId: out.productId, packName: out.name, unlocked: await unlockedForUserWithPlatform(req.auth!.userId) });
 });
 
 authRouter.get("/activations", requireAuth, async (req: AuthedRequest, res) => {

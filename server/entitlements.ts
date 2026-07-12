@@ -17,6 +17,49 @@ function entitlementsUrl(): string {
   return process.env.LAKESIDE_ENTITLEMENTS_URL || "https://lakesidegames.net/account/api/entitlements";
 }
 
+function redeemUrl(): string {
+  return process.env.LAKESIDE_REDEEM_URL || "https://lakesidegames.net/account/api/redeem-code";
+}
+
+export interface RedeemResult {
+  ok: boolean;
+  error?: string;
+  productId?: string;
+  name?: string;
+}
+
+/**
+ * Redeem an activation code on the Lakeside platform for an identity. The
+ * platform owns the code table and records the $0 unlock in the one ledger, so
+ * the grant then flows back through fetchPlatformPurchases like any purchase.
+ * Fails soft with a friendly error when the platform is unreachable.
+ */
+export async function redeemCodeOnPlatform(identity: Identity, code: string): Promise<RedeemResult> {
+  const token = process.env.INTERNAL_TOKEN;
+  if (!token) return { ok: false, error: "Code redemption is temporarily unavailable" };
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(redeemUrl(), {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ ahdUserId: identity.ahdUserId ?? "", email: identity.email ?? "", code }),
+      signal: controller.signal,
+    });
+    const body = (await res.json().catch(() => ({}))) as RedeemResult;
+    if (res.ok && body.ok) {
+      clearEntitlementsCache(); // surface the new grant immediately, not after the ~30s cache
+      return body;
+    }
+    return { ok: false, error: body.error || "Could not redeem that code" };
+  } catch {
+    return { ok: false, error: "Code redemption is temporarily unavailable" };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export interface PlatformPurchase {
   game: string;
   productId: string;
