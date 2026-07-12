@@ -104,6 +104,21 @@ export const SCENARIO_REGISTRY: ScenarioMeta[] = [
   uk(1987, "1987 · Thatcher's third", "The Iron Lady seeks a third term against a divided opposition.", "hard"),
   uk(1983, "1983 · The Falklands election", "Thatcher rampant, Labour's longest suicide note, the Alliance splitting the left.", "hard"),
   uk(1979, "1979 · Winter of Discontent", "Callaghan limps to the polls; Thatcher offers a revolution.", "hard"),
+  {
+    scenarioId: "uk-1974feb", country: "UK", engine: "uk", nativeId: "1974feb", year: 1974,
+    free: false, packId: "uk-elections", difficulty: "easy", flag: "🇬🇧",
+    label: "1974 (Feb) · Who governs Britain?",
+    description: "The miners' strike and the three-day week. Heath asks who governs, and the answer is a hung parliament.",
+  },
+  {
+    scenarioId: "uk-1974oct", country: "UK", engine: "uk", nativeId: "1974oct", year: 1974,
+    free: false, packId: "uk-elections", difficulty: "medium", flag: "🇬🇧",
+    label: "1974 (Oct) · Wilson's slim majority",
+    description: "Eight months of minority rule, then back to the country for a working majority of three.",
+  },
+  uk(1970, "1970 · Heath's upset", "Wilson is cruising, the polls are wrong, and Heath wins the election nobody expected.", "medium"),
+  uk(1966, "1966 · Wilson's landslide", "A majority of four becomes a mandate of ninety-eight. The white heat year.", "hard"),
+  uk(1964, "1964 · Wilson v. Douglas-Home", "Thirteen years of Tory rule against the Profumo hangover. The narrowest of wins.", "easy"),
   uk(1951, "1951 · Churchill's comeback", "Attlee's exhausted majority against Churchill's last campaign.", "hard"),
 
   // ── New countries ──

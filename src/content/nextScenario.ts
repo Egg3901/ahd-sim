@@ -20,6 +20,11 @@ export const US_NEXT_SCENARIO: Record<string, NextScenarioHint> = {
 /** UK general elections in chronological order (wraps at the end). */
 const UK_CHAIN: { id: string; blurb: string }[] = [
   { id: "1951", blurb: "Continue the timeline: Churchill's last roar" },
+  { id: "1964", blurb: "Continue the timeline: thirteen wasted years" },
+  { id: "1966", blurb: "Continue the timeline: the white heat mandate" },
+  { id: "1970", blurb: "Continue the timeline: the poll that lied" },
+  { id: "1974feb", blurb: "Continue the timeline: who governs Britain?" },
+  { id: "1974oct", blurb: "Continue the timeline: back for a majority" },
   { id: "1979", blurb: "Continue the timeline: the Winter of Discontent" },
   { id: "1983", blurb: "Continue the timeline: the Falklands landslide" },
   { id: "1987", blurb: "Continue the timeline: boom South, bust North" },
