@@ -91,6 +91,26 @@ function autosaveReplay(log: ReplayLog | null) {
     .catch(() => {});
 }
 
+// Bring a loaded replay log back in step with the game it belongs to. Two
+// cases:
+//   - No log at all (an old save from before the replay log existed, or a
+//     save/import path that does not carry one). Start a brand new log seeded
+//     from the game's current turn, so the Timeline and post-game WhyReport
+//     have something to show from this point forward instead of crashing on
+//     a null log. We default to "casual" mode here: GameState does not carry
+//     a "this was a daily challenge" flag, and a reseeded log for an old save
+//     is the rare case, so showing the (otherwise-gated) scrubber is a safe
+//     degrade rather than a real leak.
+//   - A log whose last snapshot is ahead of the loaded game's turn (should not
+//     normally happen, but can if a save and its log fall out of sync).
+//     Truncate it back so the timeline never shows a turn the loaded game
+//     has not reached yet.
+function resumeReplayLog(game: GameState, log: ReplayLog | null): ReplayLog {
+  if (!log) return initUsReplayLog(game, "casual");
+  const aheadOfGame = log.snapshots.some((s) => s.turn > game.turn);
+  return aheadOfGame ? truncateToTurn(log, game.turn) : log;
+}
+
 // Applies the queued player actions to a throwaway clone so the UI can preview
 // the resulting map without committing the turn.
 function projectWithQueue(game: GameState): Projection {
@@ -296,7 +316,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const record = await localProvider.load(id);
     if (!record) return;
     const replayRec = await localProvider.loadReplay(id).catch(() => null);
-    set({ game: record.state, history: [], replay: replayRec?.log ?? null, lastEventResult: null });
+    const replay = resumeReplayLog(record.state, replayRec?.log ?? null);
+    autosaveReplay(replay);
+    set({ game: record.state, history: [], replay, lastEventResult: null });
   },
 
   deleteSave: async (id) => {
@@ -305,6 +327,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   exportSave: () => {
+    // Decision: export the raw GameState only, not the replay log. The log is
+    // cheap to persist but re-deriving it during play (recordUsWeek runs off
+    // GameState.timeline anyway) is not something export/import needs to
+    // preserve exactly, and skipping it keeps the exported JSON exactly what
+    // it already was for every existing save file (no new version field to
+    // carry, nothing to migrate). Import regenerates a fresh log from the
+    // imported turn instead (see importSave / resumeReplayLog), which is the
+    // simpler correct option and degrades gracefully (Timeline still renders,
+    // just starting from the import point).
     const game = get().game;
     if (!game) return null;
     return JSON.stringify(game, null, 2);
@@ -314,9 +345,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     try {
       const state = JSON.parse(json) as GameState;
       if (!state.states || !state.candidates) throw new Error("Invalid save");
-      // Imported saves carry the game but not the replay log (which lives in a
-      // separate table); the timeline resumes recording from here.
-      set({ game: state, history: [], replay: null, lastEventResult: null });
+      // Exported saves are just the raw GameState JSON (see exportSave), so an
+      // imported save never carries a replay log. Regenerating a fresh log
+      // from the current turn is the simpler-and-correct option here (see
+      // exportSave for why we did not also serialize the log): the Timeline
+      // and WhyReport still render, just starting from the import point
+      // rather than crashing or showing stale history.
+      const replay = resumeReplayLog(state, null);
+      set({ game: state, history: [], replay, lastEventResult: null });
     } catch (e) {
       console.error("Import failed", e);
       throw e;
