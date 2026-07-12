@@ -5,6 +5,7 @@ import { packForScenario, PACKS } from "@content/packs";
 import { usePackPrices } from "@lib/usePackPrices";
 import { isValidActivationCode, normalizeActivationCode } from "@lib/activationCode";
 import { X, KeyRound } from "lucide-react";
+import { Spinner } from "@ui/Skeleton";
 
 export function ActivationModal() {
   const activate = useAuthStore((s) => s.activate);
@@ -80,7 +81,7 @@ export function ActivationModal() {
               {error && <p className="muted small" style={{ color: "var(--rose)" }}>{error}</p>}
               {success && <p className="muted small" style={{ color: "var(--green)" }}>{success}</p>}
               <button className="primary" type="submit" disabled={busy || !formatOk || !normalized} style={{ width: "100%", marginTop: 8 }}>
-                {busy ? "Redeeming…" : "Redeem"}
+                {busy ? <Spinner label="Redeeming…" /> : "Redeem"}
               </button>
             </form>
           )}

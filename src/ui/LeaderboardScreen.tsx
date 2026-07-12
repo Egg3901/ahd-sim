@@ -10,6 +10,7 @@ import { SCENARIO_REGISTRY, SCENARIOS_BY_ID } from "@content/scenarioRegistry";
 import { dailyAssignment, utcDateString } from "@lib/daily";
 import { useAuthStore } from "@store/authStore";
 import { ChevronLeft, Trophy, CalendarDays } from "lucide-react";
+import { SkeletonRows } from "./Skeleton";
 
 const DIFFS = ["all", "easy", "normal", "hard"] as const;
 
@@ -33,7 +34,7 @@ function DailyView() {
       <div className="card" style={{ width: "100%", textAlign: "left" }}>
         <h3 style={{ marginTop: 0 }}>🏆 Daily Champions {champions ? <span className="muted small" style={{ fontWeight: 500 }}>· {champions.totalDays} day{champions.totalDays === 1 ? "" : "s"} played</span> : null}</h3>
         {error && <p className="muted small" style={{ color: "var(--rose)" }}>{error}. Is the campaign server running?</p>}
-        {!error && champions === null && <p className="muted small">Loading…</p>}
+        {!error && champions === null && <SkeletonRows rows={5} cols={6} />}
         {champions && champions.entries.length === 0 && (
           <p className="muted small">No daily results yet. Play today's challenge and post your score to start the board.</p>
         )}
@@ -70,7 +71,7 @@ function DailyView() {
 
       <div className="card" style={{ width: "100%", textAlign: "left", marginTop: 12 }}>
         <h3 style={{ marginTop: 0 }}>Today · {meta?.flag} {meta?.label ?? assignment.scenarioId}</h3>
-        {today === null && <p className="muted small">Loading today's board…</p>}
+        {today === null && <SkeletonRows rows={3} cols={4} />}
         {today && today.entries.length === 0 && <p className="muted small">No entries yet today. Be the first to post.</p>}
         {today && today.entries.length > 0 && (
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
@@ -167,7 +168,7 @@ export function LeaderboardScreen({ onBack }: { onBack: () => void }) {
 
         <div className="card" style={{ width: "100%", textAlign: "left" }}>
           {error && <p className="muted small" style={{ color: "var(--rose)" }}>{error}. Is the campaign server running?</p>}
-          {!error && entries === null && <p className="muted small">Loading…</p>}
+          {!error && entries === null && <SkeletonRows rows={5} cols={6} />}
           {entries !== null && entries.length === 0 && (
             <p className="muted small">No scores yet for {meta?.label ?? scenarioId}. Be the first to finish a campaign and post one.</p>
           )}

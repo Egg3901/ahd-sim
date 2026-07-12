@@ -31,10 +31,14 @@ const CountryApp = lazy(() => import("@ui/country/CountryApp").then((m) => ({ de
 const LeaderboardScreen = lazy(() => import("@ui/LeaderboardScreen").then((m) => ({ default: m.LeaderboardScreen })));
 
 const LazyFallback = () => (
-  <div className="app screen center"><div className="setup"><p className="sub">Loading…</p></div></div>
+  <div className="app screen center"><div className="setup"><p className="sub"><Spinner /></p></div></div>
 );
 import { AuthModals } from "@ui/auth/AuthModals";
-import { Vote, X } from "lucide-react";
+import { SettingsModal } from "@ui/SettingsModal";
+import { Spinner } from "@ui/Skeleton";
+import { armAudio, sfx } from "@lib/sfx";
+import { useHotkeys } from "@lib/hotkeys";
+import { Vote, X, Settings } from "lucide-react";
 import { BRAND } from "./brand";
 
 // True when the viewport is in the single-column mobile layout. Re-renders on
@@ -105,6 +109,7 @@ function GameScreen() {
   const [guideOpen, setGuideOpen] = useState(false);
   const [candOpen, setCandOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const isMobile = useIsMobile();
   const selectedStateId = useGameStore((s) => s.selectedStateId);
@@ -118,16 +123,57 @@ function GameScreen() {
   const year = getScenario(game.scenarioId).year;
   const hasPendingEvent = game.pendingEvents.some((p) => p.forCandidate === player);
 
+  // Plays a poll-tick cue when a fresh event modal opens for the player.
+  const prevHasPendingEvent = useRef(hasPendingEvent);
+  useEffect(() => {
+    if (hasPendingEvent && !prevHasPendingEvent.current) sfx.eventPopup();
+    prevHasPendingEvent.current = hasPendingEvent;
+  }, [hasPendingEvent]);
+
+  // Tracks the player's live electoral-vote count so a turn's outcome can
+  // play a small up/down tick.
+  const prevEv = useRef(live ? live.ev[player] : null);
+  useEffect(() => {
+    if (!live) return;
+    prevEv.current = live.ev[player];
+  }, [live, player]);
+
+  const anyModalOpen = recapOpen || guideOpen || candOpen || statsOpen || settingsOpen || debateOpen || hasPendingEvent;
+
   const handleEndTurn = () => {
     if (hasPendingEvent) return;
     if (game.queuedActions.length === 0) {
       const ok = window.confirm("You have no actions queued this week. Unspent slots win nothing. End the week anyway?");
       if (!ok) return;
     }
+    const before = prevEv.current;
     endTurn();
+    sfx.turnAdvance();
     const g = useGameStore.getState().game;
     if (g && g.phase !== "result" && g.lastRecap.length > 0) setRecapOpen(true);
+    const after = useGameStore.getState().liveProjection();
+    if (before !== null && after) {
+      const delta = after.ev[player] - before;
+      if (delta > 0) sfx.pollUp();
+      else if (delta < 0) sfx.pollDown();
+    }
   };
+
+  const closeTopModal = () => {
+    if (settingsOpen) return setSettingsOpen(false);
+    if (statsOpen) return setStatsOpen(false);
+    if (candOpen) return setCandOpen(false);
+    if (guideOpen) return setGuideOpen(false);
+    if (recapOpen) return setRecapOpen(false);
+    if (isMobile && selectedStateId) return selectState(null);
+  };
+
+  useHotkeys({
+    onEndTurn: !anyModalOpen ? handleEndTurn : undefined,
+    onEscape: anyModalOpen ? closeTopModal : undefined,
+    onPickAction: !anyModalOpen ? (i) => window.dispatchEvent(new CustomEvent("hotkey-pick-action", { detail: i })) : undefined,
+    onHelp: () => setSettingsOpen((v) => !v),
+  });
 
   return (
     <div className="app screen" key="game">
@@ -148,6 +194,7 @@ function GameScreen() {
         <button className="ghost small" onClick={() => setStatsOpen(true)}>Stats</button>
         <button className="ghost small" onClick={() => setCandOpen(true)}>Candidates</button>
         <button className="ghost small" onClick={() => setGuideOpen(true)}>Guide</button>
+        <button className="ghost small" onClick={() => setSettingsOpen(true)} aria-label="Settings"><Settings size={16} /></button>
         <button onClick={undo} disabled={!canUndo}>↶ Undo</button>
         <button className="primary" data-coach="endweek" onClick={handleEndTurn} disabled={hasPendingEvent}>
           {hasPendingEvent ? "Resolve event first" : "End Week →"}
@@ -185,6 +232,7 @@ function GameScreen() {
       {guideOpen && <GuidePage onClose={() => setGuideOpen(false)} />}
       {candOpen && <CandidateScreen scenarioId={game.scenarioId} onClose={() => setCandOpen(false)} />}
       {statsOpen && <StatsScreen onClose={() => setStatsOpen(false)} />}
+      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
 
       {/* First-run guided tour; self-gating (localStorage, turn 0, US only). */}
       <OnboardingCoach />
@@ -208,6 +256,15 @@ export function App() {
   const refreshSaves = useGameStore((s) => s.refreshSaves);
   const [view, setView] = useState<View>({ kind: "landing" });
   useEffect(() => { void refreshSaves(); }, [refreshSaves]);
+
+  // Browsers block audio until a real user gesture; arm the synth on the
+  // first pointer press or key press anywhere in the app, then stop listening.
+  useEffect(() => {
+    const arm = () => { armAudio(); window.removeEventListener("pointerdown", arm); window.removeEventListener("keydown", arm); };
+    window.addEventListener("pointerdown", arm, { once: true });
+    window.addEventListener("keydown", arm, { once: true });
+    return () => { window.removeEventListener("pointerdown", arm); window.removeEventListener("keydown", arm); };
+  }, []);
 
   const go = (dest: LandingDestination) => {
     // The daily destination resolves locally (client and server share the

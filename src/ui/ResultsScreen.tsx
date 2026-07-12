@@ -9,6 +9,7 @@ import type { Projection } from "@engine/index";
 import { computeScoreFromFacts, usScoreFacts } from "@engine/scoring";
 import { checkAchievements, recordLocalAchievements } from "@engine/achievements";
 import { api } from "@lib/api";
+import { sfx } from "@lib/sfx";
 import { EvBar } from "./EvBar";
 import { StatsScreen } from "./StatsScreen";
 import { pct, votes } from "./format";
@@ -66,6 +67,14 @@ export function ResultsScreen() {
 
   const winnerName = result.winner === "tie" ? "No one: 269-269" : cands[result.winner].name;
   const playerWon = result.winner === game.playerCandidate;
+
+  // The win/lose sting plays once the state-by-state calls have all landed.
+  useEffect(() => {
+    if (!done) return;
+    if (result.winner === "tie") return;
+    if (playerWon) sfx.win(); else sfx.lose();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [done]);
   const winnerColor =
     result.winner === "tie" ? "var(--gold)" : cands[result.winner].color;
 
