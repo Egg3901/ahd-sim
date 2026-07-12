@@ -12,10 +12,14 @@ import {
   type Difficulty,
 } from "@engine/ukGame";
 import type { PartyId } from "@engine/system";
+import type { ReplayLog, ReplayMode } from "@lib/replay";
+import { truncateToTurn } from "@lib/replay";
+import { initUkReplayLog, recordUkWeek } from "./ukReplay";
 
 interface UkStore {
   game: UkGameState | null;
   history: UkGameState[]; // undo ring
+  replay: ReplayLog | null; // compact per-turn timeline/replay log
   selectedRegionId: string | null;
   lastEventResult: { title: string; text: string } | null;
 
@@ -65,16 +69,19 @@ function loadAutosave(): UkGameState | null {
 export const useUkStore = create<UkStore>((set, get) => ({
   game: null,
   history: [],
+  replay: null,
   selectedRegionId: null,
   lastEventResult: null,
 
   newGame: (election, party, seed, difficulty) => {
     const p = UK_PLAYABLE.includes(party) ? party : "lab";
     const game = createUkGame({ election, playerParty: p, seed: seed ?? `uk-${Date.now()}`, difficulty });
+    const mode: ReplayMode = typeof seed === "string" && seed.startsWith("daily") ? "daily" : "casual";
     autosave(game);
     set({
       game,
       history: [],
+      replay: initUkReplayLog(game, mode),
       selectedRegionId: null,
       lastEventResult: null,
     });
@@ -82,7 +89,7 @@ export const useUkStore = create<UkStore>((set, get) => ({
 
   reset: () => {
     try { localStorage.removeItem(AUTOSAVE_KEY); } catch { /* */ }
-    set({ game: null, history: [], selectedRegionId: null, lastEventResult: null });
+    set({ game: null, history: [], replay: null, selectedRegionId: null, lastEventResult: null });
   },
 
   selectRegion: (id) => set({ selectedRegionId: id }),
@@ -124,9 +131,12 @@ export const useUkStore = create<UkStore>((set, get) => ({
     const { game, history } = get();
     if (!game || game.pendingEvent) return;
     const next = ukAdvanceTurn(game);
+    const priorLog = get().replay;
+    const replay = priorLog ? recordUkWeek(priorLog, game, next) : priorLog;
     autosave(next);
     set({
       game: next,
+      replay,
       history: [...history, game].slice(-MAX_HISTORY),
       selectedRegionId: null,
       lastEventResult: null,
@@ -137,8 +147,10 @@ export const useUkStore = create<UkStore>((set, get) => ({
     const { history } = get();
     if (history.length === 0) return;
     const prev = history[history.length - 1];
+    const priorLog = get().replay;
+    const replay = priorLog ? truncateToTurn(priorLog, prev.turn) : priorLog;
     autosave(prev);
-    set({ game: prev, history: history.slice(0, -1) });
+    set({ game: prev, replay, history: history.slice(0, -1) });
   },
 
   liveProjection: () => {

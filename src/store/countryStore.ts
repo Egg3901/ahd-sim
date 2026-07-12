@@ -14,11 +14,15 @@ import {
 } from "@engine/countryGame";
 import { COUNTRIES } from "@content/countries";
 import type { PartyId } from "@engine/system";
+import type { ReplayLog, ReplayMode } from "@lib/replay";
+import { truncateToTurn } from "@lib/replay";
+import { initCountryReplayLog, recordCountryWeek } from "./countryReplay";
 
 interface CountryStore {
   country: CountryBundle | null;
   game: CountryGameState | null;
   history: CountryGameState[];
+  replay: ReplayLog | null; // compact per-turn timeline/replay log
   selectedRegionId: string | null;
   lastEventResult: { title: string; text: string } | null;
 
@@ -68,6 +72,7 @@ export const useCountryStore = create<CountryStore>((set, get) => ({
   country: null,
   game: null,
   history: [],
+  replay: null,
   selectedRegionId: null,
   lastEventResult: null,
 
@@ -77,11 +82,13 @@ export const useCountryStore = create<CountryStore>((set, get) => ({
     const playable = playablePartiesIn(country, election);
     const p = playable.includes(party) ? party : playable[0];
     const game = createCountryGame(country, { election, playerParty: p, seed: seed ?? `${countryId}-${Date.now()}`, difficulty });
+    const mode: ReplayMode = typeof seed === "string" && seed.startsWith("daily") ? "daily" : "casual";
     autosave(countryId, game);
     set({
       country,
       game,
       history: [],
+      replay: initCountryReplayLog(game, country, mode),
       selectedRegionId: null,
       lastEventResult: null,
     });
@@ -92,7 +99,7 @@ export const useCountryStore = create<CountryStore>((set, get) => ({
     if (country) {
       try { localStorage.removeItem(autosaveKey(country.id)); } catch { /* */ }
     }
-    set({ country: null, game: null, history: [], selectedRegionId: null, lastEventResult: null });
+    set({ country: null, game: null, history: [], replay: null, selectedRegionId: null, lastEventResult: null });
   },
 
   selectRegion: (id) => set({ selectedRegionId: id }),
@@ -134,9 +141,12 @@ export const useCountryStore = create<CountryStore>((set, get) => ({
     const { game, country, history } = get();
     if (!game || !country || game.pendingEvent) return;
     const next = countryAdvanceTurn(game, country);
+    const priorLog = get().replay;
+    const replay = priorLog ? recordCountryWeek(priorLog, game, next, country) : priorLog;
     autosave(country.id, next);
     set({
       game: next,
+      replay,
       history: [...history, game].slice(-MAX_HISTORY),
       selectedRegionId: null,
       lastEventResult: null,
@@ -147,8 +157,10 @@ export const useCountryStore = create<CountryStore>((set, get) => ({
     const { history, country } = get();
     if (history.length === 0) return;
     const prev = history[history.length - 1];
+    const priorLog = get().replay;
+    const replay = priorLog ? truncateToTurn(priorLog, prev.turn) : priorLog;
     if (country) autosave(country.id, prev);
-    set({ game: prev, history: history.slice(0, -1) });
+    set({ game: prev, replay, history: history.slice(0, -1) });
   },
 
   liveProjection: () => {

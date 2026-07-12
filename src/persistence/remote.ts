@@ -1,4 +1,4 @@
-import type { SaveMeta, SaveRecord, SyncProvider } from "./types";
+import type { ReplayRecord, SaveMeta, SaveRecord, SyncProvider } from "./types";
 
 // STUB ONLY (Section 10). Defines the thin REST shape a future cloud-save
 // backend would implement (PUT/GET/LIST/DELETE saves by id). Not wired up — the
@@ -35,6 +35,21 @@ export class RemoteSyncProvider implements SyncProvider {
   }
 
   async remove(id: string): Promise<void> {
+    void id;
+    throw new Error("RemoteSyncProvider is a stub: cloud saves are not enabled in the MVP.");
+  }
+
+  async saveReplay(record: ReplayRecord): Promise<void> {
+    void record;
+    throw new Error("RemoteSyncProvider is a stub: cloud saves are not enabled in the MVP.");
+  }
+
+  async loadReplay(id: string): Promise<ReplayRecord | null> {
+    void id;
+    throw new Error("RemoteSyncProvider is a stub: cloud saves are not enabled in the MVP.");
+  }
+
+  async removeReplay(id: string): Promise<void> {
     void id;
     throw new Error("RemoteSyncProvider is a stub: cloud saves are not enabled in the MVP.");
   }
