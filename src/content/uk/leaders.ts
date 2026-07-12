@@ -66,6 +66,31 @@ export const UK_LEADERS: Record<string, Partial<Record<PartyId, UkLeader>>> = {
     snp: { partyId: "snp", name: "Alex Salmond", charisma: 74, energy: 72, competence: 74, machine: 58 },
     pc:  { partyId: "pc", name: "Ieuan Wyn Jones", charisma: 52, energy: 56, competence: 60, machine: 36 },
   },
+  "1970": {
+    con: { partyId: "con", name: "Edward Heath",   charisma: 46, energy: 62, competence: 72, machine: 70 },
+    lab: { partyId: "lab", name: "Harold Wilson",  charisma: 72, energy: 70, competence: 74, machine: 76 },
+    ld:  { partyId: "ld",  name: "Jeremy Thorpe",  charisma: 74, energy: 74, competence: 58, machine: 34 },
+  },
+  "1966": {
+    lab: { partyId: "lab", name: "Harold Wilson",  charisma: 74, energy: 74, competence: 74, machine: 76 },
+    con: { partyId: "con", name: "Edward Heath",   charisma: 44, energy: 60, competence: 70, machine: 68 },
+    ld:  { partyId: "ld",  name: "Jo Grimond",     charisma: 70, energy: 66, competence: 64, machine: 32 },
+  },
+  "1964": {
+    lab: { partyId: "lab", name: "Harold Wilson",         charisma: 74, energy: 76, competence: 72, machine: 72 },
+    con: { partyId: "con", name: "Alec Douglas-Home",     charisma: 40, energy: 48, competence: 60, machine: 70 },
+    ld:  { partyId: "ld",  name: "Jo Grimond",            charisma: 70, energy: 66, competence: 64, machine: 30 },
+  },
+  "1974feb": {
+    con: { partyId: "con", name: "Edward Heath",   charisma: 44, energy: 58, competence: 70, machine: 68 },
+    lab: { partyId: "lab", name: "Harold Wilson",  charisma: 70, energy: 66, competence: 72, machine: 74 },
+    ld:  { partyId: "ld",  name: "Jeremy Thorpe",  charisma: 76, energy: 78, competence: 58, machine: 38 },
+  },
+  "1974oct": {
+    lab: { partyId: "lab", name: "Harold Wilson",  charisma: 70, energy: 64, competence: 72, machine: 74 },
+    con: { partyId: "con", name: "Edward Heath",   charisma: 44, energy: 56, competence: 70, machine: 66 },
+    ld:  { partyId: "ld",  name: "Jeremy Thorpe",  charisma: 74, energy: 74, competence: 56, machine: 36 },
+  },
   "1997": {
     lab: { partyId: "lab", name: "Tony Blair", charisma: 82, energy: 80, competence: 74, machine: 82 },
     con: { partyId: "con", name: "John Major", charisma: 48, energy: 58, competence: 64, machine: 70 },

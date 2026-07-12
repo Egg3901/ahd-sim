@@ -153,6 +153,60 @@ export const UK_ELECTION_EVENTS: Record<string, UkEvent[]> = {
     { id: "1979_crisis_what_crisis", headline: "'Crisis? What crisis?' The headline he never actually said, quoted daily", role: "any", weight: 2, party: "lab", appeal: -0.02, momentum: -5 },
   ],
 
+  // ── 1974 (October): one more heave for a majority ─────────────────────────
+  "1974oct": [
+    { id: "1974oct_working_majority", headline: "'Give us a working majority': Wilson asks the country to finish February's job", role: "any", weight: 3, party: "lab", turn: 0, appeal: 0.03, momentum: 7 },
+    { id: "1974oct_social_contract", headline: "The Social Contract holds the line with the unions, and the pickets stay home", role: "any", weight: 3, party: "lab", turn: 1, appeal: 0.03, momentum: 7 },
+    { id: "1974oct_heath_heave", headline: "Heath pleads for a government of national unity; the Tory faithful shift in their seats", role: "any", weight: 3, party: "con", turn: 2, appeal: -0.025, momentum: -6 },
+    { id: "1974oct_inflation_bites", headline: "Inflation towards twenty per cent: the price of everything leads every bulletin", role: "any", weight: 3, party: "lab", turn: 4, appeal: -0.03, momentum: -6 },
+    { id: "1974oct_thorpe_fades", headline: "The February Liberal surge settles back to earth as the squeeze returns", role: "any", weight: 2, party: "ld", appeal: -0.03, momentum: -6 },
+    { id: "1974oct_scotland_oil", headline: "'It's Scotland's oil': the SNP rides the North Sea into a clutch of new seats", role: "any", weight: 2, party: "snp", appeal: 0.035, momentum: 8 },
+    { id: "1974oct_wilson_steady", headline: "Wilson runs a low, steady, front-porch campaign, and it is enough", role: "any", weight: 2, party: "lab", appeal: 0.02, momentum: 5 },
+  ],
+
+  // ── 1974 (February): who governs Britain? ─────────────────────────────────
+  "1974feb": [
+    { id: "1974feb_who_governs", headline: "'Who governs Britain?' Heath calls the election on the miners and the three-day week", role: "any", weight: 3, party: "con", turn: 0, appeal: 0.025, momentum: 6 },
+    { id: "1974feb_three_day_week", headline: "The three-day week: factories dark, televisions off at 10:30, and no clear villain", role: "any", weight: 3, party: "con", turn: 1, appeal: -0.03, momentum: -7 },
+    { id: "1974feb_powell_defects", headline: "Enoch Powell refuses to stand and tells his followers to vote Labour over Europe", role: "any", weight: 3, party: "con", turn: 2, appeal: -0.03, momentum: -7 },
+    { id: "1974feb_liberal_surge", headline: "Thorpe's Liberals surge towards a fifth of the vote; the two-party lock rattles", role: "any", weight: 3, party: "ld", turn: 3, appeal: 0.04, momentum: 10 },
+    { id: "1974feb_pay_board", headline: "The Pay Board reports the miners were underpaid all along; Heath's case wobbles", role: "any", weight: 3, party: "con", turn: 4, appeal: -0.025, momentum: -6 },
+    { id: "1974feb_wilson_calm", headline: "Wilson offers calm and a deal with the unions after the confrontation", role: "any", weight: 2, party: "lab", appeal: 0.025, momentum: 6 },
+    { id: "1974feb_hung_maths", headline: "The arithmetic points to no overall winner; the pundits reach for the word 'hung'", role: "any", weight: 2, party: "ld", appeal: 0.02, momentum: 5 },
+  ],
+
+  // ── 1970: the poll that lied ──────────────────────────────────────────────
+  "1970": [
+    { id: "1970_wilson_cruising", headline: "Wilson campaigns like a man who has already won; the polls agree", role: "any", weight: 3, party: "lab", turn: 0, appeal: 0.025, momentum: 6 },
+    { id: "1970_selsdon_man", headline: "'Selsdon Man': Labour paints Heath's free-market turn as a throwback to the 1930s", role: "any", weight: 3, party: "con", turn: 1, appeal: -0.025, momentum: -6 },
+    { id: "1970_world_cup_out", headline: "England crash out in Leon; a flat national mood settles over the long weekend", role: "any", weight: 3, party: "lab", turn: 3, appeal: -0.025, momentum: -6 },
+    { id: "1970_trade_figures", headline: "A shock set of trade figures lands three days out; the recovery story cracks", role: "any", weight: 3, party: "lab", turn: 4, appeal: -0.035, momentum: -9 },
+    { id: "1970_heath_steady", headline: "Heath grinds on, unglamorous and unmoved, promising to cut prices 'at a stroke'", role: "any", weight: 2, party: "con", appeal: 0.03, momentum: 7 },
+    { id: "1970_powell_shadow", headline: "Powell's shadow hangs over the Tory right and the marginals both", role: "any", weight: 2, party: "con", appeal: 0.02, momentum: 4 },
+    { id: "1970_wilson_pipe", headline: "The pipe, the mac, the walkabouts: Wilson's easy style briefly looks like complacency", role: "any", weight: 2, party: "lab", appeal: -0.02, momentum: -5 },
+  ],
+
+  // ── 1966: the mandate ─────────────────────────────────────────────────────
+  "1966": [
+    { id: "1966_white_heat", headline: "'You know Labour government works': Wilson asks for the majority to finish the job", role: "any", weight: 3, party: "lab", turn: 0, appeal: 0.035, momentum: 8 },
+    { id: "1966_heath_untested", headline: "Heath, new and untested, struggles to dent Wilson's easy command of the airwaves", role: "any", weight: 3, party: "con", turn: 1, appeal: -0.025, momentum: -6 },
+    { id: "1966_pound_pressure", headline: "Sterling under pressure again: the Tories warn the good times are borrowed", role: "any", weight: 3, party: "con", turn: 3, appeal: 0.025, momentum: 5 },
+    { id: "1966_good_mood", headline: "A confident, rising-living-standards mood carries the government's canvassers", role: "any", weight: 3, party: "lab", turn: 4, appeal: 0.03, momentum: 6 },
+    { id: "1966_grimond_liberals", headline: "Grimond's Liberals press hard in the West Country and the Celtic fringe", role: "any", weight: 2, party: "ld", appeal: 0.025, momentum: 6 },
+    { id: "1966_wilson_walkabout", headline: "Wilson works the crowds; the small-majority underdog now looks the obvious PM", role: "any", weight: 2, party: "lab", appeal: 0.02, momentum: 5 },
+  ],
+
+  // ── 1964: thirteen wasted years ───────────────────────────────────────────
+  "1964": [
+    { id: "1964_thirteen_years", headline: "'Thirteen wasted years': Wilson hangs every stale Tory habit around Douglas-Home's neck", role: "any", weight: 3, party: "lab", turn: 0, appeal: 0.03, momentum: 7 },
+    { id: "1964_profumo_hangover", headline: "The Profumo hangover lingers; a whiff of scandal and drift clings to the government", role: "any", weight: 3, party: "con", turn: 1, appeal: -0.03, momentum: -7 },
+    { id: "1964_grouse_moor", headline: "The grouse-moor image sticks: Douglas-Home admits he does his sums with matchsticks", role: "any", weight: 3, party: "con", turn: 2, appeal: -0.025, momentum: -6 },
+    { id: "1964_white_heat", headline: "Wilson's 'white heat of technology' pitches Labour as the modern, classless future", role: "any", weight: 3, party: "lab", turn: 4, appeal: 0.03, momentum: 7 },
+    { id: "1964_home_steadies", headline: "Douglas-Home steadies the Tory campaign on defence and the deterrent", role: "any", weight: 2, party: "con", appeal: 0.025, momentum: 5 },
+    { id: "1964_grimond_liberals", headline: "Grimond's Liberals revive, siphoning soft Tory votes in the shires", role: "any", weight: 2, party: "ld", appeal: 0.025, momentum: 6 },
+    { id: "1964_smethwick", headline: "The Smethwick race campaign casts an ugly shadow over the Midlands result", role: "any", weight: 2, party: "con", appeal: -0.02, momentum: -4 },
+  ],
+
   // ── 1951: one more heave ──────────────────────────────────────────────────
   "1951": [
     { id: "1951_one_more_heave", headline: "Churchill, 76, pitches one more heave: 'set the people free'", role: "any", weight: 3, party: "con", turn: 0, appeal: 0.03, momentum: 7 },

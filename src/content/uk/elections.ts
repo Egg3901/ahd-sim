@@ -40,6 +40,11 @@ export interface UkElectionData {
 // English total using 2024 regional weights.
 export const UK_BOUNDARY_POOLS: Record<string, Record<string, number>> = {
   "1951": { NE: 25, NW: 68, YH: 50, EM: 44, WM: 53, EE: 57, LON: 70, SE: 85, SW: 54, SCO: 71, WAL: 36, NI: 12 },
+  "1964": { NE: 25, NW: 69, YH: 51, EM: 44, WM: 54, EE: 57, LON: 71, SE: 86, SW: 54, SCO: 71, WAL: 36, NI: 12 },
+  "1966": { NE: 25, NW: 69, YH: 51, EM: 44, WM: 54, EE: 57, LON: 71, SE: 86, SW: 54, SCO: 71, WAL: 36, NI: 12 },
+  "1970": { NE: 25, NW: 69, YH: 51, EM: 44, WM: 54, EE: 57, LON: 71, SE: 86, SW: 54, SCO: 71, WAL: 36, NI: 12 },
+  "1974feb": { NE: 26, NW: 69, YH: 51, EM: 45, WM: 54, EE: 58, LON: 71, SE: 87, SW: 55, SCO: 71, WAL: 36, NI: 12 },
+  "1974oct": { NE: 26, NW: 69, YH: 51, EM: 45, WM: 54, EE: 58, LON: 71, SE: 87, SW: 55, SCO: 71, WAL: 36, NI: 12 },
   "1979": { NE: 26, NW: 69, YH: 51, EM: 45, WM: 54, EE: 58, LON: 71, SE: 87, SW: 55, SCO: 71, WAL: 36, NI: 12 },
   "1983": { NE: 26, NW: 70, YH: 52, EM: 45, WM: 55, EE: 59, LON: 72, SE: 88, SW: 56, SCO: 72, WAL: 38, NI: 17 },
   "1987": { NE: 26, NW: 70, YH: 52, EM: 45, WM: 55, EE: 59, LON: 72, SE: 88, SW: 56, SCO: 72, WAL: 38, NI: 17 },
@@ -56,6 +61,11 @@ export const UK_BOUNDARY_POOLS: Record<string, Record<string, number>> = {
 
 export const UK_ELECTION_MAJORITY: Record<string, UkMajority> = {
   "1951": { total: 625, threshold: 313 },
+  "1964": { total: 630, threshold: 316 },
+  "1966": { total: 630, threshold: 316 },
+  "1970": { total: 630, threshold: 316 },
+  "1974feb": { total: 635, threshold: 318 },
+  "1974oct": { total: 635, threshold: 318 },
   "1979": { total: 635, threshold: 318 },
   "1983": { total: 650, threshold: 326 },
   "1987": { total: 650, threshold: 326 },
@@ -305,6 +315,103 @@ const RESULT_2005: Record<string, RegionResult> = {
   NI:  { v: { dup: 0.34, sf: 0.24, uup: 0.18, sdlp: 0.18, apni: 0.04, oth: 0.02 }, s: fy("2005", "NI", "dup", { uup: 1, sdlp: 3, sf: 5 }) },
 };
 
+// ── 1964: thirteen wasted years, Wilson's white heat, a knife-edge win ─────
+// Labour 317, Con 304 (incl. 12 Ulster Unionists who took the Tory whip),
+// Lib 9. A Labour majority of four. In-game the Ulster Unionists sit as their
+// own party (uup), so Con reads 292 GB seats; Labour is still largest and
+// clears the 316 bar for a bare majority.
+const RESULT_1964: Record<string, RegionResult> = {
+  NE:  { v: { lab: 0.55, con: 0.38, ld: 0.07 }, s: fy("1964", "NE", "lab", { con: 5 }) },
+  NW:  { v: { lab: 0.48, con: 0.42, ld: 0.10 }, s: fy("1964", "NW", "lab", { con: 26, ld: 1 }) },
+  YH:  { v: { lab: 0.50, con: 0.40, ld: 0.10 }, s: fy("1964", "YH", "lab", { con: 19 }) },
+  EM:  { v: { con: 0.47, lab: 0.44, ld: 0.09 }, s: fy("1964", "EM", "con", { lab: 20 }) },
+  WM:  { v: { lab: 0.47, con: 0.44, ld: 0.09 }, s: fy("1964", "WM", "lab", { con: 24 }) },
+  EE:  { v: { con: 0.50, lab: 0.39, ld: 0.11 }, s: fy("1964", "EE", "con", { lab: 17 }) },
+  LON: { v: { lab: 0.49, con: 0.43, ld: 0.08 }, s: fy("1964", "LON", "lab", { con: 27 }) },
+  SE:  { v: { con: 0.52, lab: 0.36, ld: 0.12 }, s: fy("1964", "SE", "con", { lab: 19, ld: 1 }) },
+  SW:  { v: { con: 0.48, lab: 0.39, ld: 0.13 }, s: fy("1964", "SW", "con", { lab: 22, ld: 1 }) },
+  SCO: { v: { lab: 0.49, con: 0.37, ld: 0.09, snp: 0.05 }, s: fy("1964", "SCO", "lab", { con: 24, ld: 4 }) },
+  WAL: { v: { lab: 0.58, con: 0.29, ld: 0.07, pc: 0.06 }, s: fy("1964", "WAL", "lab", { con: 6, ld: 2 }) },
+  NI:  { v: { uup: 0.63, oth: 0.37 }, s: fy("1964", "NI", "uup", {}) },
+};
+
+// ── 1966: Wilson goes to the country for a real majority, and gets a landslide ─
+// Labour 364, Con 253 (incl. 11 Ulster Unionists), Lib 12, Republican Labour 1.
+// A Labour majority of 98.
+const RESULT_1966: Record<string, RegionResult> = {
+  NE:  { v: { lab: 0.58, con: 0.35, ld: 0.07 }, s: fy("1966", "NE", "lab", { con: 4 }) },
+  NW:  { v: { lab: 0.50, con: 0.40, ld: 0.10 }, s: fy("1966", "NW", "lab", { con: 22, ld: 1 }) },
+  YH:  { v: { lab: 0.53, con: 0.38, ld: 0.09 }, s: fy("1966", "YH", "lab", { con: 16 }) },
+  EM:  { v: { lab: 0.49, con: 0.42, ld: 0.09 }, s: fy("1966", "EM", "lab", { con: 20 }) },
+  WM:  { v: { lab: 0.50, con: 0.41, ld: 0.09 }, s: fy("1966", "WM", "lab", { con: 19 }) },
+  EE:  { v: { con: 0.47, lab: 0.43, ld: 0.10 }, s: fy("1966", "EE", "con", { lab: 21, ld: 1 }) },
+  LON: { v: { lab: 0.52, con: 0.40, ld: 0.08 }, s: fy("1966", "LON", "lab", { con: 22, ld: 1 }) },
+  SE:  { v: { con: 0.48, lab: 0.40, ld: 0.12 }, s: fy("1966", "SE", "con", { lab: 33, ld: 2 }) },
+  SW:  { v: { con: 0.46, lab: 0.41, ld: 0.13 }, s: fy("1966", "SW", "con", { lab: 23, ld: 1 }) },
+  SCO: { v: { lab: 0.50, con: 0.35, ld: 0.10, snp: 0.05 }, s: fy("1966", "SCO", "lab", { con: 20, ld: 5 }) },
+  WAL: { v: { lab: 0.61, con: 0.28, ld: 0.05, pc: 0.06 }, s: fy("1966", "WAL", "lab", { con: 3, ld: 1 }) },
+  NI:  { v: { uup: 0.60, oth: 0.40 }, s: fy("1966", "NI", "uup", { oth: 1 }) },
+};
+
+// ── 1970: the shock at the polls, Heath's upset over Wilson ────────────────
+// Con 330 (incl. Ulster Unionists), Lab 288, Lib 6, SNP 1, others. A Conservative
+// majority of 30 that almost every poll missed. Devaluation and a late bad set
+// of trade figures broke Labour's lead.
+const RESULT_1970: Record<string, RegionResult> = {
+  NE:  { v: { lab: 0.55, con: 0.38, ld: 0.07 }, s: fy("1970", "NE", "lab", { con: 6 }) },
+  NW:  { v: { lab: 0.47, con: 0.45, ld: 0.08 }, s: fy("1970", "NW", "lab", { con: 28 }) },
+  YH:  { v: { lab: 0.49, con: 0.43, ld: 0.08 }, s: fy("1970", "YH", "lab", { con: 20 }) },
+  EM:  { v: { con: 0.48, lab: 0.44, ld: 0.08 }, s: fy("1970", "EM", "con", { lab: 18 }) },
+  WM:  { v: { con: 0.47, lab: 0.47, ld: 0.06 }, s: fy("1970", "WM", "con", { lab: 26 }) },
+  EE:  { v: { con: 0.52, lab: 0.40, ld: 0.08 }, s: fy("1970", "EE", "con", { lab: 13 }) },
+  LON: { v: { lab: 0.49, con: 0.46, ld: 0.05 }, s: fy("1970", "LON", "lab", { con: 31 }) },
+  SE:  { v: { con: 0.53, lab: 0.38, ld: 0.09 }, s: fy("1970", "SE", "con", { lab: 24 }) },
+  SW:  { v: { con: 0.51, lab: 0.38, ld: 0.11 }, s: fy("1970", "SW", "con", { lab: 5, ld: 1 }) },
+  SCO: { v: { lab: 0.45, con: 0.38, ld: 0.06, snp: 0.11 }, s: fy("1970", "SCO", "lab", { con: 23, ld: 3, snp: 1 }) },
+  WAL: { v: { lab: 0.52, con: 0.28, ld: 0.10, pc: 0.10 }, s: fy("1970", "WAL", "lab", { con: 7, ld: 2 }) },
+  NI:  { v: { uup: 0.55, oth: 0.45 }, s: fy("1970", "NI", "uup", { oth: 4 }) },
+};
+
+// ── 1974 (February): the three-day week, "who governs?", and a hung parliament ─
+// Con 297, Lab 301, Lib 14, SNP 7, Plaid 2, and the Ulster Unionists broken from
+// the Tory whip. No majority. Heath tried and failed to deal with Thorpe's
+// Liberals; Wilson formed a Labour minority government. In-game Labour is largest
+// but short of 318, and no compatible partner bridges the gap, so the engine
+// returns a Labour minority (its honest reading of a hung parliament).
+const RESULT_1974feb: Record<string, RegionResult> = {
+  NE:  { v: { lab: 0.50, con: 0.35, ld: 0.15 }, s: fy("1974feb", "NE", "lab", { con: 7 }) },
+  NW:  { v: { lab: 0.43, con: 0.40, ld: 0.17 }, s: fy("1974feb", "NW", "lab", { con: 28, ld: 1 }) },
+  YH:  { v: { lab: 0.45, con: 0.38, ld: 0.17 }, s: fy("1974feb", "YH", "lab", { con: 22 }) },
+  EM:  { v: { con: 0.42, lab: 0.40, ld: 0.18 }, s: fy("1974feb", "EM", "con", { lab: 21 }) },
+  WM:  { v: { lab: 0.44, con: 0.42, ld: 0.14 }, s: fy("1974feb", "WM", "lab", { con: 26 }) },
+  EE:  { v: { con: 0.45, lab: 0.33, ld: 0.22 }, s: fy("1974feb", "EE", "con", { lab: 17, ld: 1 }) },
+  LON: { v: { lab: 0.43, con: 0.40, ld: 0.16, oth: 0.01 }, s: fy("1974feb", "LON", "lab", { con: 30, ld: 1, oth: 1 }) },
+  SE:  { v: { con: 0.48, lab: 0.30, ld: 0.22 }, s: fy("1974feb", "SE", "con", { lab: 26, ld: 3 }) },
+  SW:  { v: { con: 0.46, lab: 0.30, ld: 0.23, oth: 0.01 }, s: fy("1974feb", "SW", "con", { lab: 18, ld: 3, oth: 1 }) },
+  SCO: { v: { lab: 0.37, con: 0.33, ld: 0.08, snp: 0.22 }, s: fy("1974feb", "SCO", "lab", { con: 21, ld: 3, snp: 7 }) },
+  WAL: { v: { lab: 0.47, con: 0.26, ld: 0.16, pc: 0.11 }, s: fy("1974feb", "WAL", "lab", { con: 8, ld: 2, pc: 2 }) },
+  NI:  { v: { uup: 0.55, sdlp: 0.24, oth: 0.21 }, s: fy("1974feb", "NI", "uup", { sdlp: 1 }) },
+};
+
+// ── 1974 (October): Wilson goes back for a working majority, and scrapes one ─
+// Lab 319, Con 277, Lib 13, SNP 11, Plaid 3. A Labour overall majority of three,
+// gone within a couple of years of by-elections. In-game Labour clears the 318
+// bar by one for a bare majority.
+const RESULT_1974oct: Record<string, RegionResult> = {
+  NE:  { v: { lab: 0.52, con: 0.33, ld: 0.15 }, s: fy("1974oct", "NE", "lab", { con: 7 }) },
+  NW:  { v: { lab: 0.44, con: 0.39, ld: 0.17 }, s: fy("1974oct", "NW", "lab", { con: 27, ld: 1 }) },
+  YH:  { v: { lab: 0.46, con: 0.37, ld: 0.17 }, s: fy("1974oct", "YH", "lab", { con: 21 }) },
+  EM:  { v: { con: 0.43, lab: 0.44, ld: 0.13 }, s: fy("1974oct", "EM", "con", { lab: 22 }) },
+  WM:  { v: { lab: 0.45, con: 0.42, ld: 0.13 }, s: fy("1974oct", "WM", "lab", { con: 25 }) },
+  EE:  { v: { con: 0.44, lab: 0.34, ld: 0.22 }, s: fy("1974oct", "EE", "con", { lab: 19, ld: 1 }) },
+  LON: { v: { lab: 0.45, con: 0.38, ld: 0.16 }, s: fy("1974oct", "LON", "lab", { con: 28, ld: 1 }) },
+  SE:  { v: { con: 0.46, lab: 0.32, ld: 0.22 }, s: fy("1974oct", "SE", "con", { lab: 30, ld: 2 }) },
+  SW:  { v: { con: 0.44, lab: 0.33, ld: 0.23 }, s: fy("1974oct", "SW", "con", { lab: 23, ld: 3 }) },
+  SCO: { v: { lab: 0.36, con: 0.25, ld: 0.08, snp: 0.30 }, s: fy("1974oct", "SCO", "lab", { con: 16, ld: 3, snp: 11 }) },
+  WAL: { v: { lab: 0.49, con: 0.24, ld: 0.15, pc: 0.11 }, s: fy("1974oct", "WAL", "lab", { con: 8, ld: 2, pc: 3 }) },
+  NI:  { v: { uup: 0.52, sdlp: 0.22, oth: 0.26 }, s: fy("1974oct", "NI", "uup", { sdlp: 1, oth: 1 }) },
+};
+
 export const UK_ELECTIONS: Record<string, UkElectionData> = {
   "1951": {
     id: "1951", year: 1951,
@@ -413,6 +520,51 @@ export const UK_ELECTIONS: Record<string, UkElectionData> = {
     majority: { total: 650, threshold: 326 },
     goalText: "326 of 650 seats",
     regions: RESULT_1983,
+  },
+  "1970": {
+    id: "1970", year: 1970,
+    label: "1970 · Heath v. Wilson",
+    tagline: "June 1970. Wilson is cruising, the polls call it for Labour, and then a bad set of trade figures and a heatwave weekend turn the whole thing over. Heath's upset nobody saw coming.",
+    salience: { economy: 0.9, cost_of_living: 0.78, taxation: 0.6, europe: 0.55, housing: 0.55, nhs: 0.6, immigration: 0.5, crime: 0.4, defence: 0.42, scottish_independence: 0.18, climate: 0.0 },
+    majority: { total: 630, threshold: 316 },
+    goalText: "316 of 630 seats",
+    regions: RESULT_1970,
+  },
+  "1966": {
+    id: "1966", year: 1966,
+    label: "1966 · Wilson v. Heath",
+    tagline: "March 1966. A majority of four is no way to govern. Wilson goes back to the country to turn it into a mandate, and the white heat of technology carries Labour to a landslide.",
+    salience: { economy: 0.88, cost_of_living: 0.7, housing: 0.72, nhs: 0.65, taxation: 0.55, defence: 0.5, europe: 0.42, immigration: 0.5, crime: 0.35, scottish_independence: 0.12, climate: 0.0 },
+    majority: { total: 630, threshold: 316 },
+    goalText: "316 of 630 seats",
+    regions: RESULT_1966,
+  },
+  "1964": {
+    id: "1964", year: 1964,
+    label: "1964 · Wilson v. Douglas-Home",
+    tagline: "October 1964. Thirteen years of Conservative rule, a grouse-moor aristocrat against a Yorkshire technocrat, and the Profumo affair still hanging in the air. The narrowest of Labour wins.",
+    salience: { economy: 0.86, cost_of_living: 0.72, housing: 0.7, nhs: 0.66, taxation: 0.56, defence: 0.55, europe: 0.35, immigration: 0.55, crime: 0.38, scottish_independence: 0.12, climate: 0.0 },
+    majority: { total: 630, threshold: 316 },
+    goalText: "316 of 630 seats",
+    regions: RESULT_1964,
+  },
+  "1974feb": {
+    id: "1974feb", year: 1974,
+    label: "1974 (Feb) · Heath v. Wilson",
+    tagline: "February 1974. The miners are out, the lights go off three days a week, and Heath asks the country a straight question: who governs Britain? The answer is nobody, cleanly. A hung parliament.",
+    salience: { economy: 0.94, cost_of_living: 0.9, europe: 0.6, taxation: 0.58, housing: 0.55, nhs: 0.6, defence: 0.42, immigration: 0.45, crime: 0.4, scottish_independence: 0.35, climate: 0.05 },
+    majority: { total: 635, threshold: 318 },
+    goalText: "318 of 635 seats (or the best hand in a hung parliament)",
+    regions: RESULT_1974feb,
+  },
+  "1974oct": {
+    id: "1974oct", year: 1974,
+    label: "1974 (Oct) · Wilson v. Heath",
+    tagline: "October 1974. Eight months of minority government, and Wilson goes back for the working majority he needs. He gets one of three, and it will melt away seat by seat.",
+    salience: { economy: 0.93, cost_of_living: 0.9, europe: 0.55, taxation: 0.58, housing: 0.55, nhs: 0.62, defence: 0.42, immigration: 0.45, crime: 0.4, scottish_independence: 0.42, climate: 0.05 },
+    majority: { total: 635, threshold: 318 },
+    goalText: "318 of 635 seats",
+    regions: RESULT_1974oct,
   },
   "1979": {
     id: "1979", year: 1979,

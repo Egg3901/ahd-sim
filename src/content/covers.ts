@@ -46,6 +46,11 @@ export const SCENARIO_COVERS: Record<string, string> = {
   "uk-1987": "images/covers/uk-1987.jpg",
   "uk-1983": "images/covers/uk-1983.jpg",
   "uk-1979": "images/covers/uk-1979.jpg",
+  "uk-1974oct": "images/covers/uk-1974oct.jpg",
+  "uk-1974feb": "images/covers/uk-1974feb.jpg",
+  "uk-1970": "images/covers/uk-1970.jpg",
+  "uk-1966": "images/covers/uk-1966.jpg",
+  "uk-1964": "images/covers/uk-1964.jpg",
   "uk-1951": "images/covers/uk-1951.jpg",
 
   "ca-2025": "images/covers/ca-2025.jpg",

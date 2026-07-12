@@ -13,6 +13,14 @@ import {
 // baseline: the right largest party and the right kind of government.
 const EXPECTED: Record<string, { largest: string; gov: string }> = {
   "1951": { largest: "con", gov: "majority" },
+  "1964": { largest: "lab", gov: "majority" },
+  "1966": { largest: "lab", gov: "majority" },
+  "1970": { largest: "con", gov: "majority" },
+  // February 1974: no majority. Labour is largest but short of 318, and Con is an
+  // incompatible partner, so the engine returns a Labour minority — its honest
+  // reading of a hung parliament (exactly what happened: a Wilson minority).
+  "1974feb": { largest: "lab", gov: "minority" },
+  "1974oct": { largest: "lab", gov: "majority" },
   "2024": { largest: "lab", gov: "majority" },
   "2019": { largest: "con", gov: "majority" },
   "2017": { largest: "con", gov: "confidence_supply" },
@@ -30,7 +38,7 @@ const EXPECTED: Record<string, { largest: string; gov: string }> = {
 describe("UK elections roster", () => {
   it("covers the expected modern elections", () => {
     expect(UK_ELECTION_IDS.sort()).toEqual(
-      ["1951", "1979", "1983", "1987", "1992", "1997", "2001", "2005", "2010", "2015", "2017", "2019", "2024"],
+      ["1951", "1964", "1966", "1970", "1974feb", "1974oct", "1979", "1983", "1987", "1992", "1997", "2001", "2005", "2010", "2015", "2017", "2019", "2024"],
     );
   });
 
