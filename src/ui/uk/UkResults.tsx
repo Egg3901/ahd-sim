@@ -13,6 +13,8 @@ import { ElectionNightShell } from "../electionNight/ElectionNightShell";
 import { MultipartySeatPanel } from "../electionNight/MultipartySeatPanel";
 import { ukReveal } from "../electionNight/adapters";
 import { DailyResultPanel } from "../DailyResultPanel";
+import { WhyReport } from "../WhyReport";
+import { TimelineView } from "../TimelineView";
 import { dailyAssignment, utcDateString } from "@lib/daily";
 import { REGION_PATHS, UK_VIEWBOX } from "@content/uk/regionPaths";
 import { Lock } from "lucide-react";
@@ -45,6 +47,8 @@ export function UkResults() {
   const game = useUkStore((s) => s.game)!;
   const reset = useUkStore((s) => s.reset);
   const newGame = useUkStore((s) => s.newGame);
+  const replay = useUkStore((s) => s.replay);
+  const [timelineOpen, setTimelineOpen] = useState(false);
   const r = game.result!;
   const order = sortBySeats(r.seats);
   const maj = majorityForUk(game);
@@ -226,6 +230,14 @@ export function UkResults() {
               </div>
             </div>
 
+            <WhyReport log={replay} won={inGov} />
+
+            {replay && (
+              <button className="ghost" style={{ width: "100%", padding: 10 }} onClick={() => setTimelineOpen(true)}>
+                View campaign timeline
+              </button>
+            )}
+
             {r.postMortem.length > 0 && (
               <div className="card">
                 <h3>Biggest swings you caused</h3>
@@ -271,6 +283,7 @@ export function UkResults() {
           ))}
         </div>
       </ElectionNightShell>
+      {timelineOpen && replay && <TimelineView log={replay} onClose={() => setTimelineOpen(false)} />}
     </div>
   );
 }

@@ -13,6 +13,7 @@ import { EvBar } from "@ui/EvBar";
 import { GuidePage } from "@ui/GuidePage";
 import { CandidateScreen } from "@ui/CandidateScreen";
 import { StatsScreen } from "@ui/StatsScreen";
+import { TimelineView } from "@ui/TimelineView";
 import { NewsTicker } from "@ui/NewsTicker";
 import { OnboardingCoach } from "@ui/coach/OnboardingCoach";
 import { getScenario } from "@content/scenarios";
@@ -105,6 +106,8 @@ function GameScreen() {
   const [guideOpen, setGuideOpen] = useState(false);
   const [candOpen, setCandOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [timelineOpen, setTimelineOpen] = useState(false);
+  const replay = useGameStore((s) => s.replay);
 
   const isMobile = useIsMobile();
   const selectedStateId = useGameStore((s) => s.selectedStateId);
@@ -146,6 +149,11 @@ function GameScreen() {
         <div className="stat"><span className="v">{res.nationalMomentum.toFixed(0)}</span><span className="l">Momentum</span></div>
         <SaveControls />
         <button className="ghost small" onClick={() => setStatsOpen(true)}>Stats</button>
+        {/* Read-only replay. Hidden mid-game on the daily so it can't be used to
+            scout the shared board; always available once a game is over. */}
+        {replay && replay.mode !== "daily" && (
+          <button className="ghost small" onClick={() => setTimelineOpen(true)}>Timeline</button>
+        )}
         <button className="ghost small" onClick={() => setCandOpen(true)}>Candidates</button>
         <button className="ghost small" onClick={() => setGuideOpen(true)}>Guide</button>
         <button onClick={undo} disabled={!canUndo}>↶ Undo</button>
@@ -185,6 +193,7 @@ function GameScreen() {
       {guideOpen && <GuidePage onClose={() => setGuideOpen(false)} />}
       {candOpen && <CandidateScreen scenarioId={game.scenarioId} onClose={() => setCandOpen(false)} />}
       {statsOpen && <StatsScreen onClose={() => setStatsOpen(false)} />}
+      {timelineOpen && replay && <TimelineView log={replay} onClose={() => setTimelineOpen(false)} />}
 
       {/* First-run guided tour; self-gating (localStorage, turn 0, US only). */}
       <OnboardingCoach />

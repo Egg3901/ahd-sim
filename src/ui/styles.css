@@ -852,3 +852,17 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ── Timeline replay + post-game report ─────────────────────────────── */
+.tl-list { list-style: none; padding: 0; margin: 6px 0 0; display: flex; flex-direction: column; gap: 4px; }
+.tl-list li { font-size: 13px; line-height: 1.4; display: flex; justify-content: space-between; gap: 8px; }
+.tl-list .up { color: var(--green); font-weight: 600; }
+.tl-list .down { color: var(--rose); font-weight: 600; }
+.report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin: 6px 0 12px; }
+.report-cell { background: var(--navy-600, rgba(255,255,255,0.03)); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+.report-cell .rv { font-size: 20px; font-weight: 800; }
+.report-cell .rl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.report-row { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 3px 0; border-bottom: 1px solid var(--border); }
+.report-row:last-child { border-bottom: none; }
+.report-row .up { color: var(--green); font-weight: 600; }
+.report-row .down { color: var(--rose); font-weight: 600; }

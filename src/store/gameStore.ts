@@ -20,6 +20,9 @@ import { EVENTS_BY_ID } from "@content/events";
 import { STAFF_BY_ID, staffEffects } from "@content/staff";
 import { localProvider } from "@persistence/local";
 import type { SaveMeta, SaveRecord } from "@persistence/types";
+import type { ReplayLog, ReplayMode } from "@lib/replay";
+import { truncateToTurn } from "@lib/replay";
+import { initUsReplayLog, recordUsWeek } from "./usReplay";
 
 const AUTOSAVE_ID = "autosave";
 const UNDO_DEPTH = 12;
@@ -34,6 +37,7 @@ interface EventResult {
 interface GameStore {
   game: GameState | null;
   history: GameState[]; // snapshot ring buffer (undo)
+  replay: ReplayLog | null; // compact per-turn timeline/replay log
   difficulty: Difficulty;
   selectedStateId: string | null;
   lastEventResult: EventResult | null;
@@ -78,6 +82,15 @@ function autosave(game: GameState) {
   void localProvider.save(record).catch(() => {});
 }
 
+// Persist the replay log next to the autosave so a resumed game (or a results
+// screen reached after reload) still has its full timeline. Fire-and-forget.
+function autosaveReplay(log: ReplayLog | null) {
+  if (!log) return;
+  void localProvider
+    .saveReplay({ id: AUTOSAVE_ID, updatedAt: Date.now(), log })
+    .catch(() => {});
+}
+
 // Applies the queued player actions to a throwaway clone so the UI can preview
 // the resulting map without committing the turn.
 function projectWithQueue(game: GameState): Projection {
@@ -93,6 +106,7 @@ function projectWithQueue(game: GameState): Projection {
 export const useGameStore = create<GameStore>((set, get) => ({
   game: null,
   history: [],
+  replay: null,
   difficulty: "normal",
   selectedStateId: null,
   lastEventResult: null,
@@ -102,10 +116,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
   newGame: (opts) => {
     const difficulty = opts.difficulty ?? "normal";
     const fresh = beginGame(createGame(opts));
+    // Daily-challenge games are gated: the live scrubber is hidden mid-game so
+    // it can't be used to scout the shared board. The daily seed is the string
+    // "daily-<date>" before it is hashed into GameState.seed.
+    const mode: ReplayMode =
+      typeof opts.seed === "string" && opts.seed.startsWith("daily") ? "daily" : "casual";
+    const replay = initUsReplayLog(fresh, mode);
     autosave(fresh);
+    autosaveReplay(replay);
     set({
       game: fresh,
       history: [],
+      replay,
       difficulty,
       selectedStateId: null,
       lastEventResult: null,
@@ -211,15 +233,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }
     }
 
+    // Record the completed week into the compact replay log.
+    const priorLog = get().replay;
+    const replay = priorLog ? recordUsWeek(priorLog, game, next) : priorLog;
+
     autosave(next);
-    set({ game: next, history, lastEventResult: null, lastDebate: null });
+    autosaveReplay(replay);
+    set({ game: next, history, replay, lastEventResult: null, lastDebate: null });
   },
 
   undo: () => {
     const history = [...get().history];
     const prev = history.pop();
     if (!prev) return;
-    set({ game: prev, history });
+    // Keep the replay log in step with the rewind so the timeline never shows a
+    // week that has been undone.
+    const priorLog = get().replay;
+    const replay = priorLog ? truncateToTurn(priorLog, prev.turn) : priorLog;
+    autosaveReplay(replay);
+    set({ game: prev, history, replay });
   },
 
   previewProjection: () => {
@@ -251,13 +283,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
       playerCandidate: game.playerCandidate,
       state: game,
     });
+    const log = get().replay;
+    if (log) await localProvider.saveReplay({ id, updatedAt: Date.now(), log }).catch(() => {});
     await get().refreshSaves();
   },
 
   loadGame: async (id) => {
     const record = await localProvider.load(id);
     if (!record) return;
-    set({ game: record.state, history: [], lastEventResult: null });
+    const replayRec = await localProvider.loadReplay(id).catch(() => null);
+    set({ game: record.state, history: [], replay: replayRec?.log ?? null, lastEventResult: null });
   },
 
   deleteSave: async (id) => {
@@ -275,7 +310,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     try {
       const state = JSON.parse(json) as GameState;
       if (!state.states || !state.candidates) throw new Error("Invalid save");
-      set({ game: state, history: [], lastEventResult: null });
+      // Imported saves carry the game but not the replay log (which lives in a
+      // separate table); the timeline resumes recording from here.
+      set({ game: state, history: [], replay: null, lastEventResult: null });
     } catch (e) {
       console.error("Import failed", e);
       throw e;

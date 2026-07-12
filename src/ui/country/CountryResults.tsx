@@ -13,6 +13,8 @@ import { ElectionNightShell } from "../electionNight/ElectionNightShell";
 import { MultipartySeatPanel } from "../electionNight/MultipartySeatPanel";
 import { countryReveal } from "../electionNight/adapters";
 import { DailyResultPanel } from "../DailyResultPanel";
+import { WhyReport } from "../WhyReport";
+import { TimelineView } from "../TimelineView";
 import { dailyAssignment, utcDateString } from "@lib/daily";
 
 function defaultGovText(g: Government, name: (p: string) => string): string {
@@ -30,6 +32,8 @@ export function CountryResults({ onExit }: { onExit: () => void }) {
   const game = useCountryStore((s) => s.game)!;
   const reset = useCountryStore((s) => s.reset);
   const newGame = useCountryStore((s) => s.newGame);
+  const replay = useCountryStore((s) => s.replay);
+  const [timelineOpen, setTimelineOpen] = useState(false);
   const user = useAuthStore((s) => s.user);
   const serverDown = useAuthStore((s) => s.serverDown);
   const openModal = useAuthStore((s) => s.openModal);
@@ -242,6 +246,14 @@ export function CountryResults({ onExit }: { onExit: () => void }) {
               </div>
             </div>
 
+            <WhyReport log={replay} won={inGov} />
+
+            {replay && (
+              <button className="ghost" style={{ width: "100%", padding: 10 }} onClick={() => setTimelineOpen(true)}>
+                View campaign timeline
+              </button>
+            )}
+
             {r.postMortem.length > 0 && (
               <div className="card">
                 <h3>Biggest swings you caused</h3>
@@ -288,6 +300,7 @@ export function CountryResults({ onExit }: { onExit: () => void }) {
           ))}
         </div>
       </ElectionNightShell>
+      {timelineOpen && replay && <TimelineView log={replay} onClose={() => setTimelineOpen(false)} />}
     </div>
   );
 }

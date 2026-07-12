@@ -11,6 +11,8 @@ import { checkAchievements, recordLocalAchievements } from "@engine/achievements
 import { api } from "@lib/api";
 import { EvBar } from "./EvBar";
 import { StatsScreen } from "./StatsScreen";
+import { WhyReport } from "./WhyReport";
+import { TimelineView } from "./TimelineView";
 import { pct, votes } from "./format";
 import { Trophy, Lock } from "lucide-react";
 import { ElectionNight, hasSeenReveal, revealSupported } from "./electionNight/ElectionNight";
@@ -44,6 +46,8 @@ export function ResultsScreen() {
   const [revealed, setRevealed] = useState(calls.length);
   const [mapMode, setMapMode] = useState<"geo" | "square">("geo");
   const [statsOpen, setStatsOpen] = useState(false);
+  const [timelineOpen, setTimelineOpen] = useState(false);
+  const replay = useGameStore((s) => s.replay);
   const done = revealed >= calls.length;
 
   useEffect(() => {
@@ -185,6 +189,7 @@ export function ResultsScreen() {
             done ? (
               <>
                 <ScoreAndAchievements />
+                <WhyReport log={replay} won={playerWon} />
                 <div className="card">
                   <h3>Post-Mortem: What Moved the Needle</h3>
                   <p className="muted small">Your biggest self-caused swings across the campaign.</p>
@@ -205,6 +210,11 @@ export function ResultsScreen() {
                   <button className="ghost" style={{ flex: "0 0 auto", padding: "12px 18px" }} onClick={() => setStatsOpen(true)}>
                     📊 Race Stats
                   </button>
+                  {replay && (
+                    <button className="ghost" style={{ flex: "0 0 auto", padding: "12px 18px" }} onClick={() => setTimelineOpen(true)}>
+                      Timeline
+                    </button>
+                  )}
                   <button
                     className="primary"
                     style={{ flex: 1, padding: 12 }}
@@ -288,6 +298,7 @@ export function ResultsScreen() {
         </ElectionNightShell>
       </div>
       {statsOpen && <StatsScreen onClose={() => setStatsOpen(false)} />}
+      {timelineOpen && replay && <TimelineView log={replay} onClose={() => setTimelineOpen(false)} />}
     </div>
   );
 }
