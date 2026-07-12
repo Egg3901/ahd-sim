@@ -745,6 +745,323 @@ const SAL_1988: Partial<Record<IssueId, number>> = { economy: 0.70, law_and_orde
 const SAL_1984: Partial<Record<IssueId, number>> = { economy: 0.90, taxes: 0.65, law_and_order: 0.50, abortion: 0.45, healthcare: 0.40, race_policing: 0.35, trade: 0.35, immigration: 0.25, climate: 0.20, covid_response: 0 };
 const SAL_1980: Partial<Record<IssueId, number>> = { economy: 0.95, taxes: 0.70, law_and_order: 0.65, healthcare: 0.40, abortion: 0.35, race_policing: 0.35, trade: 0.30, immigration: 0.25, climate: 0.20, covid_response: 0 };
 
+// ─────────────────────────────────────────────────────────────────────────
+// 1960s and 70s pack. Period VP rosters, tickets, priors, and apportionment.
+// ─────────────────────────────────────────────────────────────────────────
+const VPS_1976_DEM: RunningMate[] = [
+  { id: "mondale76", name: "Walter Mondale", ticket: "dem", historical: true,
+    blurb: "Labor's friend from Minnesota: a liberal workhorse who firms up the union North.",
+    traitBonuses: { policyKnowledge: 6, debatePrep: 5 }, favorability: { noncollege_white: 0.06, seniors: 0.05 } },
+  { id: "church76", name: "Frank Church", ticket: "dem",
+    blurb: "Idaho's liberal lion: Western reach and Senate stature on foreign policy.",
+    traitBonuses: { debatingSkill: 5, intelligence: 5 }, favorability: { college_white: 0.05, seniors: 0.03 } },
+  { id: "glenn76", name: "John Glenn", ticket: "dem",
+    blurb: "The astronaut-senator: Ohio, and a name every household already trusts.",
+    traitBonuses: { intelligence: 5, debatePrep: 4 }, favorability: { seniors: 0.06, noncollege_white: 0.04 } },
+  { id: "jackson76", name: "Henry 'Scoop' Jackson", ticket: "dem",
+    blurb: "Cold War Democrat: defense credibility and blue-collar Washington muscle.",
+    traitBonuses: { policyKnowledge: 6, debatePrep: 4 }, favorability: { noncollege_white: 0.06, seniors: 0.04 } },
+];
+
+const VPS_1976_REP: RunningMate[] = [
+  { id: "dole76", name: "Bob Dole", ticket: "rep", historical: true,
+    blurb: "The Kansas hatchet man: a sharp-tongued attack dog who locks down the farm belt.",
+    traitBonuses: { debatePrep: 5, energy: 4 }, favorability: { noncollege_white: 0.06, seniors: 0.04 } },
+  { id: "reagan76", name: "Ronald Reagan", ticket: "rep",
+    blurb: "The primary rival: unite the party and electrify the conservative base.",
+    traitBonuses: { charisma: 8, debatingSkill: 5 }, favorability: { noncollege_white: 0.06, seniors: 0.04 } },
+  { id: "baker76", name: "Howard Baker", ticket: "rep",
+    blurb: "Tennessee's Great Conciliator: a Watergate star with border-South reach.",
+    traitBonuses: { policyKnowledge: 5, debatePrep: 5 }, favorability: { seniors: 0.05, suburban_women: 0.03 } },
+  { id: "connally76", name: "John Connally", ticket: "rep",
+    blurb: "The Texas heavyweight: a Democrat-turned-Republican who plays for the Sun Belt.",
+    traitBonuses: { charisma: 5, fundraisingProwess: 6 }, favorability: { noncollege_white: 0.05, seniors: 0.03 }, cashBonus: 8_000_000 },
+];
+
+const VPS_1972_DEM: RunningMate[] = [
+  { id: "shriver72", name: "Sargent Shriver", ticket: "dem", historical: true,
+    blurb: "The Peace Corps founder: a late-substitute Kennedy in-law with a sunny disposition.",
+    traitBonuses: { charisma: 6, energy: 4 }, favorability: { college_white: 0.05, youth: 0.05 } },
+  { id: "eagleton72", name: "Thomas Eagleton", ticket: "dem",
+    blurb: "The original pick: a Missouri Catholic for the border states, before the medical story broke.",
+    traitBonuses: { debatePrep: 4, energy: 4 }, favorability: { noncollege_white: 0.05, seniors: 0.03 } },
+  { id: "tedkennedy72", name: "Ted Kennedy", ticket: "dem",
+    blurb: "The last brother: the ticket that never was, and the only name that could unite the party.",
+    traitBonuses: { charisma: 8, fundraisingProwess: 6 }, favorability: { noncollege_white: 0.06, black: 0.04 }, cashBonus: 10_000_000 },
+  { id: "humphrey72", name: "Hubert Humphrey", ticket: "dem",
+    blurb: "The Happy Warrior: a primary rival whose old coalition McGovern desperately needs.",
+    traitBonuses: { charisma: 6, debatePrep: 5 }, favorability: { noncollege_white: 0.07, seniors: 0.04 } },
+];
+
+const VPS_1972_REP: RunningMate[] = [
+  { id: "agnew72", name: "Spiro Agnew", ticket: "rep", historical: true,
+    blurb: "The incumbent attack dog: red meat for the base and the nattering nabobs of negativism.",
+    traitBonuses: { debatingSkill: 5, energy: 4 }, favorability: { noncollege_white: 0.06, seniors: 0.04 } },
+  { id: "connally72", name: "John Connally", ticket: "rep",
+    blurb: "The Democrats for Nixon chairman: a Texas power broker who raids the other coalition.",
+    traitBonuses: { charisma: 5, fundraisingProwess: 6 }, favorability: { noncollege_white: 0.05, seniors: 0.03 }, cashBonus: 8_000_000 },
+  { id: "rockefeller72", name: "Nelson Rockefeller", ticket: "rep",
+    blurb: "The Eastern establishment: a moderate reach for the suburbs and the big states.",
+    traitBonuses: { policyKnowledge: 6, fundraisingProwess: 6 }, favorability: { suburban_women: 0.05, college_white: 0.04 } },
+  { id: "reagan72", name: "Ronald Reagan", ticket: "rep",
+    blurb: "California's governor: the future of the movement, waiting in the wings.",
+    traitBonuses: { charisma: 8, debatingSkill: 5 }, favorability: { noncollege_white: 0.05, seniors: 0.04 } },
+];
+
+const VPS_1968_DEM: RunningMate[] = [
+  { id: "muskie68", name: "Edmund Muskie", ticket: "dem", historical: true,
+    blurb: "The calm from Maine: a steady, plain-spoken senator who reassures a fractured party.",
+    traitBonuses: { debatePrep: 5, policyKnowledge: 5 }, favorability: { noncollege_white: 0.05, seniors: 0.04 } },
+  { id: "tedkennedy68", name: "Ted Kennedy", ticket: "dem",
+    blurb: "The surviving brother: the one name that could heal the wound of a terrible summer.",
+    traitBonuses: { charisma: 8, energy: 5 }, favorability: { noncollege_white: 0.06, youth: 0.05 } },
+  { id: "harris68", name: "Fred Harris", ticket: "dem",
+    blurb: "Oklahoma's populist: a young prairie liberal who reaches the New Deal heartland.",
+    traitBonuses: { energy: 6, charisma: 4 }, favorability: { noncollege_white: 0.06, youth: 0.03 } },
+  { id: "shriver68", name: "Sargent Shriver", ticket: "dem",
+    blurb: "The War on Poverty's architect: a Kennedy in-law with idealist appeal.",
+    traitBonuses: { charisma: 5, policyKnowledge: 5 }, favorability: { college_white: 0.05, black: 0.04 } },
+];
+
+const VPS_1968_REP: RunningMate[] = [
+  { id: "agnew68", name: "Spiro Agnew", ticket: "rep", historical: true,
+    blurb: "The law-and-order governor: a blunt Marylander pitched at the backlash vote.",
+    traitBonuses: { debatingSkill: 4, energy: 4 }, favorability: { noncollege_white: 0.06, seniors: 0.03 } },
+  { id: "rockefeller68", name: "Nelson Rockefeller", ticket: "rep",
+    blurb: "The Eastern moderate: the dream ticket for the suburbs and the big industrial states.",
+    traitBonuses: { policyKnowledge: 6, fundraisingProwess: 6 }, favorability: { suburban_women: 0.05, college_white: 0.05 } },
+  { id: "reagan68", name: "Ronald Reagan", ticket: "rep",
+    blurb: "The conservative insurgent: California charisma and the movement's rising hope.",
+    traitBonuses: { charisma: 8, debatingSkill: 5 }, favorability: { noncollege_white: 0.05, seniors: 0.04 } },
+  { id: "romney68", name: "George Romney", ticket: "rep",
+    blurb: "Michigan's earnest governor: a manufacturing moderate for the industrial Midwest.",
+    traitBonuses: { energy: 5, policyKnowledge: 4 }, favorability: { noncollege_white: 0.05, suburban_women: 0.03 } },
+];
+
+const VPS_1964_DEM: RunningMate[] = [
+  { id: "humphrey64", name: "Hubert Humphrey", ticket: "dem", historical: true,
+    blurb: "The Happy Warrior: the liberal conscience of the party and its bridge to labor and civil rights.",
+    traitBonuses: { charisma: 6, debatePrep: 5 }, favorability: { noncollege_white: 0.06, black: 0.05 } },
+  { id: "mccarthy64", name: "Eugene McCarthy", ticket: "dem",
+    blurb: "Minnesota's poet-senator: a cerebral liberal with college-town appeal.",
+    traitBonuses: { intelligence: 6, policyKnowledge: 5 }, favorability: { college_white: 0.06, youth: 0.04 } },
+  { id: "rfk64", name: "Robert Kennedy", ticket: "dem",
+    blurb: "The Attorney General: the martyred president's brother and keeper of the flame.",
+    traitBonuses: { charisma: 7, energy: 6 }, favorability: { black: 0.07, youth: 0.05 } },
+  { id: "shriver64", name: "Sargent Shriver", ticket: "dem",
+    blurb: "The Peace Corps founder: idealism and a Kennedy connection for a grieving country.",
+    traitBonuses: { charisma: 5, policyKnowledge: 5 }, favorability: { college_white: 0.05, black: 0.04 } },
+];
+
+const VPS_1964_REP: RunningMate[] = [
+  { id: "miller64", name: "William Miller", ticket: "rep", historical: true,
+    blurb: "The New York congressman: a partisan brawler chosen because, in Goldwater's words, he drives Johnson nuts.",
+    traitBonuses: { debatingSkill: 5, energy: 4 }, favorability: { noncollege_white: 0.05, seniors: 0.03 } },
+  { id: "rockefeller64", name: "Nelson Rockefeller", ticket: "rep",
+    blurb: "The vanquished moderate: the Eastern establishment Goldwater ran against, and the suburbs' last hope.",
+    traitBonuses: { policyKnowledge: 6, fundraisingProwess: 6 }, favorability: { suburban_women: 0.06, college_white: 0.05 } },
+  { id: "romney64", name: "George Romney", ticket: "rep",
+    blurb: "Michigan's moderate governor: a reluctant reach for the industrial Midwest.",
+    traitBonuses: { energy: 5, policyKnowledge: 4 }, favorability: { suburban_women: 0.04, noncollege_white: 0.04 } },
+  { id: "nixon64", name: "Richard Nixon", ticket: "rep",
+    blurb: "The loyal soldier: the 1960 nominee, campaigning hard to keep the party whole.",
+    traitBonuses: { debatePrep: 6, policyKnowledge: 5 }, favorability: { noncollege_white: 0.05, seniors: 0.04 } },
+];
+
+const VPS_1960_DEM: RunningMate[] = [
+  { id: "lbj60", name: "Lyndon Johnson", ticket: "dem", historical: true,
+    blurb: "The Master of the Senate: a Texas titan who holds the Solid South on the ticket.",
+    traitBonuses: { policyKnowledge: 7, debatePrep: 5 }, favorability: { noncollege_white: 0.07, seniors: 0.04 } },
+  { id: "symington60", name: "Stuart Symington", ticket: "dem",
+    blurb: "Missouri's air-power senator: a safe border-state hand with defense credibility.",
+    traitBonuses: { policyKnowledge: 5, debatePrep: 4 }, favorability: { noncollege_white: 0.05, seniors: 0.04 } },
+  { id: "stevenson60", name: "Adlai Stevenson", ticket: "dem",
+    blurb: "The two-time nominee: an eloquent liberal beloved by the party's intellectuals.",
+    traitBonuses: { intelligence: 7, debatingSkill: 5 }, favorability: { college_white: 0.06, suburban_women: 0.03 } },
+  { id: "humphrey60", name: "Hubert Humphrey", ticket: "dem",
+    blurb: "The primary rival: labor's champion and a bridge to the liberal North.",
+    traitBonuses: { charisma: 6, energy: 5 }, favorability: { noncollege_white: 0.06, black: 0.04 } },
+];
+
+const VPS_1960_REP: RunningMate[] = [
+  { id: "lodge60", name: "Henry Cabot Lodge", ticket: "rep", historical: true,
+    blurb: "The UN ambassador: Boston Brahmin polish and Cold War gravitas for the suburbs.",
+    traitBonuses: { policyKnowledge: 6, debatePrep: 5 }, favorability: { suburban_women: 0.05, college_white: 0.04 } },
+  { id: "rockefeller60", name: "Nelson Rockefeller", ticket: "rep",
+    blurb: "New York's new governor: an Eastern moderate who firms up the big industrial states.",
+    traitBonuses: { policyKnowledge: 6, fundraisingProwess: 6 }, favorability: { suburban_women: 0.05, college_white: 0.05 } },
+  { id: "goldwater60", name: "Barry Goldwater", ticket: "rep",
+    blurb: "Arizona's conscience of a conservative: red meat for the Sun Belt right.",
+    traitBonuses: { charisma: 5, debatingSkill: 5 }, favorability: { noncollege_white: 0.06, seniors: 0.03 } },
+  { id: "morton60", name: "Thruston Morton", ticket: "rep",
+    blurb: "Kentucky's party chairman: a border-South organizer to guard the upper South.",
+    traitBonuses: { energy: 4, debatePrep: 4 }, favorability: { noncollege_white: 0.05, seniors: 0.03 } },
+];
+
+// 1960-census apportionment (used 1964 and 1968). Full state map; ME (4) and
+// NE (5) keep the engine's district units, which match this cycle.
+const EV_1960C: Record<string, number> = {
+  AL: 10, AK: 3, AZ: 5, AR: 6, CA: 40, CO: 6, CT: 8, DE: 3, DC: 3, FL: 14, GA: 12,
+  HI: 4, ID: 4, IL: 26, IN: 13, IA: 9, KS: 7, KY: 9, LA: 10, MD: 10, MA: 14, MI: 21,
+  MN: 10, MS: 7, MO: 12, MT: 4, NV: 3, NH: 4, NJ: 17, NM: 4, NY: 43, NC: 13, ND: 4,
+  OH: 26, OK: 8, OR: 6, PA: 29, RI: 4, SC: 8, SD: 4, TN: 11, TX: 25, UT: 4, VT: 3,
+  VA: 12, WA: 9, WV: 7, WI: 12, WY: 3,
+};
+
+// 1950-census apportionment (used 1960). Real 1960 totalled 537 with no votes for
+// DC and with Maine at 5 / Nebraska at 6. The engine forces a 538-EV map with a
+// fixed DC (3) and district-modelled ME (4) / NE (5), so this map hands DC its
+// three modern votes and leaves ME/NE at the engine's counts. Those distortions
+// net out to keep the map at 538; see evNote.
+const EV_1950C: Record<string, number> = {
+  AL: 11, AK: 3, AZ: 4, AR: 8, CA: 32, CO: 6, CT: 8, DE: 3, DC: 3, FL: 10, GA: 12,
+  HI: 3, ID: 4, IL: 27, IN: 13, IA: 10, KS: 8, KY: 10, LA: 10, MD: 9, MA: 16, MI: 20,
+  MN: 11, MS: 8, MO: 13, MT: 4, NV: 3, NH: 4, NJ: 16, NM: 4, NY: 45, NC: 14, ND: 4,
+  OH: 25, OK: 8, OR: 6, PA: 32, RI: 4, SC: 8, SD: 4, TN: 11, TX: 24, UT: 4, VT: 3,
+  VA: 12, WA: 9, WV: 8, WI: 12, WY: 3,
+};
+
+// Two-party Democratic share by state. Third parties are absorbed by the
+// two-party normalization, except 1968, where Wallace's five-state sweep is
+// folded toward the Republican column so the engine's two-way map still returns
+// a Nixon win (see evNote); his 46 real electoral votes have no third slot.
+const PRIORS_1960: Record<string, number> = {
+  AL: 0.567, AK: 0.492, AZ: 0.443, AR: 0.505, CA: 0.499, CO: 0.449, CT: 0.535, DE: 0.508, DC: 0.800,
+  FL: 0.485, GA: 0.627, HI: 0.503, ID: 0.461, IL: 0.503, IN: 0.449, IA: 0.435, KS: 0.391, KY: 0.461,
+  LA: 0.570, MD: 0.539, MA: 0.603, MI: 0.509, MN: 0.506, MS: 0.470, MO: 0.503, MT: 0.489, NV: 0.512,
+  NH: 0.466, NJ: 0.503, NM: 0.503, NY: 0.528, NC: 0.522, ND: 0.443, OH: 0.467, OK: 0.410, OR: 0.474,
+  PA: 0.511, RI: 0.636, SC: 0.514, SD: 0.418, TN: 0.457, TX: 0.509, UT: 0.455, VT: 0.413, VA: 0.470,
+  WA: 0.485, WV: 0.528, WI: 0.482, WY: 0.450,
+  "ME-1": 0.430, "ME-2": 0.430, "ME-AL": 0.430, "NE-1": 0.377, "NE-2": 0.377, "NE-3": 0.377, "NE-AL": 0.377,
+};
+
+const PRIORS_1964: Record<string, number> = {
+  AL: 0.300, AK: 0.660, AZ: 0.495, AR: 0.560, CA: 0.593, CO: 0.615, CT: 0.680, DE: 0.611, DC: 0.860,
+  FL: 0.512, GA: 0.457, HI: 0.790, ID: 0.508, IL: 0.596, IN: 0.560, IA: 0.620, KS: 0.545, KY: 0.640,
+  LA: 0.432, MD: 0.657, MA: 0.763, MI: 0.668, MN: 0.640, MS: 0.130, MO: 0.640, MT: 0.590, NV: 0.588,
+  NH: 0.637, NJ: 0.660, NM: 0.590, NY: 0.685, NC: 0.564, ND: 0.580, OH: 0.626, OK: 0.559, OR: 0.638,
+  PA: 0.648, RI: 0.809, SC: 0.411, SD: 0.552, TN: 0.556, TX: 0.633, UT: 0.549, VT: 0.660, VA: 0.539,
+  WA: 0.620, WV: 0.680, WI: 0.622, WY: 0.567,
+  "ME-1": 0.688, "ME-2": 0.688, "ME-AL": 0.688, "NE-1": 0.526, "NE-2": 0.526, "NE-3": 0.526, "NE-AL": 0.526,
+};
+
+const PRIORS_1968: Record<string, number> = {
+  AL: 0.200, AK: 0.464, AZ: 0.400, AR: 0.360, CA: 0.481, CO: 0.435, CT: 0.545, DE: 0.480, DC: 0.855,
+  FL: 0.410, GA: 0.330, HI: 0.611, ID: 0.362, IL: 0.492, IN: 0.417, IA: 0.470, KS: 0.407, KY: 0.435,
+  LA: 0.300, MD: 0.548, MA: 0.646, MI: 0.560, MN: 0.573, MS: 0.180, MO: 0.494, MT: 0.463, NV: 0.478,
+  NH: 0.464, NJ: 0.491, NM: 0.483, NY: 0.560, NC: 0.415, ND: 0.412, OH: 0.499, OK: 0.372, OR: 0.495,
+  PA: 0.532, RI: 0.655, SC: 0.360, SD: 0.440, TN: 0.410, TX: 0.512, UT: 0.415, VT: 0.470, VA: 0.442,
+  WA: 0.550, WV: 0.591, WI: 0.495, WY: 0.406,
+  "ME-1": 0.560, "ME-2": 0.560, "ME-AL": 0.560, "NE-1": 0.380, "NE-2": 0.380, "NE-3": 0.380, "NE-AL": 0.380,
+};
+
+const PRIORS_1972: Record<string, number> = {
+  AL: 0.262, AK: 0.348, AZ: 0.313, AR: 0.312, CA: 0.415, CO: 0.352, CT: 0.407, DE: 0.401, DC: 0.782,
+  FL: 0.281, GA: 0.253, HI: 0.379, ID: 0.267, IL: 0.410, IN: 0.335, IA: 0.406, KS: 0.302, KY: 0.352,
+  LA: 0.281, MD: 0.376, MA: 0.546, MI: 0.421, MN: 0.469, MS: 0.201, MO: 0.379, MT: 0.379, NV: 0.363,
+  NH: 0.343, NJ: 0.383, NM: 0.361, NY: 0.417, NC: 0.288, ND: 0.361, OH: 0.386, OK: 0.243, OR: 0.425,
+  PA: 0.394, RI: 0.469, SC: 0.283, SD: 0.454, TN: 0.298, TX: 0.334, UT: 0.264, VT: 0.363, VA: 0.306,
+  WA: 0.387, WV: 0.363, WI: 0.435, WY: 0.309,
+  "ME-1": 0.386, "ME-2": 0.386, "ME-AL": 0.386, "NE-1": 0.298, "NE-2": 0.298, "NE-3": 0.298, "NE-AL": 0.298,
+};
+
+const PRIORS_1976: Record<string, number> = {
+  AL: 0.571, AK: 0.377, AZ: 0.407, AR: 0.660, CA: 0.484, CO: 0.438, CT: 0.487, DE: 0.531, DC: 0.842,
+  FL: 0.522, GA: 0.670, HI: 0.512, ID: 0.402, IL: 0.492, IN: 0.460, IA: 0.492, KS: 0.446, KY: 0.531,
+  LA: 0.522, MD: 0.529, MA: 0.579, MI: 0.470, MN: 0.552, MS: 0.502, MO: 0.514, MT: 0.462, NV: 0.478,
+  NH: 0.443, NJ: 0.490, NM: 0.484, NY: 0.517, NC: 0.556, ND: 0.462, OH: 0.507, OK: 0.457, OR: 0.484,
+  PA: 0.508, RI: 0.564, SC: 0.564, SD: 0.489, TN: 0.560, TX: 0.512, UT: 0.351, VT: 0.446, VA: 0.492,
+  WA: 0.475, WV: 0.581, WI: 0.500, WY: 0.409,
+  "ME-1": 0.483, "ME-2": 0.483, "ME-AL": 0.483, "NE-1": 0.388, "NE-2": 0.388, "NE-3": 0.388, "NE-AL": 0.388,
+};
+
+const CARTER_1976: ScenarioTicket = {
+  name: "Jimmy Carter", shortName: "Carter", party: "Democratic", color: DEM_BLUE,
+  traits: { charisma: 60, energy: 70, debatePrep: 70, intelligence: 82, policyKnowledge: 80, debatingSkill: 62, fundraisingProwess: 58 },
+  issuePositions: { economy: -0.2, covid_response: 0, healthcare: -0.35, immigration: -0.15, race_policing: -0.3, climate: -0.3, taxes: -0.25, law_and_order: -0.05, abortion: -0.2, trade: -0.1 },
+  baseFavorability: { black: 0.34, noncollege_white: 0.08, seniors: 0.05 },
+  runningMates: VPS_1976_DEM,
+};
+
+const FORD_1976: ScenarioTicket = {
+  name: "Gerald Ford", shortName: "Ford", party: "Republican", color: GOP_RED,
+  traits: { charisma: 52, energy: 58, debatePrep: 58, intelligence: 64, policyKnowledge: 68, debatingSkill: 54, fundraisingProwess: 66 },
+  issuePositions: { economy: 0.35, covid_response: 0, healthcare: 0.3, immigration: 0.15, race_policing: 0.35, climate: 0.3, taxes: 0.45, law_and_order: 0.5, abortion: 0.35, trade: 0.25 },
+  baseFavorability: { noncollege_white: 0.10, seniors: 0.10, suburban_women: 0.05 },
+  runningMates: VPS_1976_REP,
+};
+
+const MCGOVERN_1972: ScenarioTicket = {
+  name: "George McGovern", shortName: "McGovern", party: "Democratic", color: DEM_BLUE,
+  traits: { charisma: 50, energy: 66, debatePrep: 68, intelligence: 78, policyKnowledge: 76, debatingSkill: 58, fundraisingProwess: 60 },
+  issuePositions: { economy: -0.45, covid_response: 0, healthcare: -0.5, immigration: -0.3, race_policing: -0.45, climate: -0.35, taxes: -0.55, law_and_order: -0.4, abortion: -0.4, trade: -0.2 },
+  baseFavorability: { youth: 0.16, college_white: 0.12, black: 0.28 },
+  runningMates: VPS_1972_DEM,
+};
+
+const NIXON_1972: ScenarioTicket = {
+  name: "Richard Nixon", shortName: "Nixon", party: "Republican", color: GOP_RED,
+  traits: { charisma: 55, energy: 64, debatePrep: 74, intelligence: 76, policyKnowledge: 82, debatingSkill: 66, fundraisingProwess: 78 },
+  issuePositions: { economy: 0.3, covid_response: 0, healthcare: 0.25, immigration: 0.2, race_policing: 0.5, climate: 0.25, taxes: 0.4, law_and_order: 0.7, abortion: 0.3, trade: 0.2 },
+  baseFavorability: { noncollege_white: 0.20, seniors: 0.12, suburban_women: 0.08 },
+  runningMates: VPS_1972_REP,
+};
+
+const HUMPHREY_1968: ScenarioTicket = {
+  name: "Hubert Humphrey", shortName: "Humphrey", party: "Democratic", color: DEM_BLUE,
+  traits: { charisma: 62, energy: 72, debatePrep: 70, intelligence: 74, policyKnowledge: 80, debatingSkill: 64, fundraisingProwess: 58 },
+  issuePositions: { economy: -0.3, covid_response: 0, healthcare: -0.4, immigration: -0.2, race_policing: -0.35, climate: -0.2, taxes: -0.35, law_and_order: -0.15, abortion: -0.2, trade: -0.2 },
+  baseFavorability: { black: 0.30, noncollege_white: 0.10, seniors: 0.05 },
+  runningMates: VPS_1968_DEM,
+};
+
+const NIXON_1968: ScenarioTicket = {
+  name: "Richard Nixon", shortName: "Nixon", party: "Republican", color: GOP_RED,
+  traits: { charisma: 54, energy: 64, debatePrep: 72, intelligence: 76, policyKnowledge: 80, debatingSkill: 66, fundraisingProwess: 74 },
+  issuePositions: { economy: 0.3, covid_response: 0, healthcare: 0.25, immigration: 0.2, race_policing: 0.5, climate: 0.25, taxes: 0.45, law_and_order: 0.65, abortion: 0.3, trade: 0.2 },
+  baseFavorability: { noncollege_white: 0.14, seniors: 0.10, suburban_women: 0.05 },
+  runningMates: VPS_1968_REP,
+};
+
+const JOHNSON_1964: ScenarioTicket = {
+  name: "Lyndon Johnson", shortName: "Johnson", party: "Democratic", color: DEM_BLUE,
+  traits: { charisma: 64, energy: 78, debatePrep: 66, intelligence: 78, policyKnowledge: 86, debatingSkill: 62, fundraisingProwess: 76 },
+  issuePositions: { economy: -0.3, covid_response: 0, healthcare: -0.45, immigration: -0.25, race_policing: -0.4, climate: -0.2, taxes: -0.3, law_and_order: -0.1, abortion: -0.15, trade: -0.15 },
+  baseFavorability: { black: 0.40, noncollege_white: 0.12, seniors: 0.06, college_white: 0.08 },
+  runningMates: VPS_1964_DEM,
+};
+
+const GOLDWATER_1964: ScenarioTicket = {
+  name: "Barry Goldwater", shortName: "Goldwater", party: "Republican", color: GOP_RED,
+  traits: { charisma: 54, energy: 60, debatePrep: 52, intelligence: 62, policyKnowledge: 60, debatingSkill: 62, fundraisingProwess: 58 },
+  issuePositions: { economy: 0.6, covid_response: 0, healthcare: 0.5, immigration: 0.2, race_policing: 0.6, climate: 0.3, taxes: 0.75, law_and_order: 0.7, abortion: 0.4, trade: 0.2 },
+  baseFavorability: { noncollege_white: 0.10, seniors: 0.04 },
+  runningMates: VPS_1964_REP,
+};
+
+const KENNEDY_1960: ScenarioTicket = {
+  name: "John F. Kennedy", shortName: "Kennedy", party: "Democratic", color: DEM_BLUE,
+  traits: { charisma: 86, energy: 78, debatePrep: 74, intelligence: 80, policyKnowledge: 78, debatingSkill: 78, fundraisingProwess: 74 },
+  issuePositions: { economy: -0.2, covid_response: 0, healthcare: -0.35, immigration: -0.15, race_policing: -0.3, climate: -0.15, taxes: -0.2, law_and_order: -0.05, abortion: -0.1, trade: -0.1 },
+  baseFavorability: { black: 0.24, noncollege_white: 0.10, college_white: 0.06 },
+  runningMates: VPS_1960_DEM,
+};
+
+const NIXON_1960: ScenarioTicket = {
+  name: "Richard Nixon", shortName: "Nixon", party: "Republican", color: GOP_RED,
+  traits: { charisma: 56, energy: 70, debatePrep: 66, intelligence: 76, policyKnowledge: 80, debatingSkill: 64, fundraisingProwess: 68 },
+  issuePositions: { economy: 0.3, covid_response: 0, healthcare: 0.25, immigration: 0.15, race_policing: 0.4, climate: 0.25, taxes: 0.45, law_and_order: 0.55, abortion: 0.3, trade: 0.2 },
+  baseFavorability: { noncollege_white: 0.10, seniors: 0.08, suburban_women: 0.05 },
+  runningMates: VPS_1960_REP,
+};
+
+// Period issue salience. Climate and immigration barely register; covid is zero.
+const SAL_1976: Partial<Record<IssueId, number>> = { economy: 0.90, law_and_order: 0.55, taxes: 0.55, healthcare: 0.45, race_policing: 0.45, abortion: 0.35, trade: 0.35, immigration: 0.20, climate: 0.15, covid_response: 0 };
+const SAL_1972: Partial<Record<IssueId, number>> = { economy: 0.70, law_and_order: 0.80, taxes: 0.50, race_policing: 0.60, healthcare: 0.40, abortion: 0.35, trade: 0.35, immigration: 0.20, climate: 0.15, covid_response: 0 };
+const SAL_1968: Partial<Record<IssueId, number>> = { law_and_order: 0.85, economy: 0.65, race_policing: 0.65, taxes: 0.45, healthcare: 0.40, trade: 0.30, abortion: 0.25, immigration: 0.20, climate: 0.10, covid_response: 0 };
+const SAL_1964: Partial<Record<IssueId, number>> = { economy: 0.70, race_policing: 0.65, law_and_order: 0.55, taxes: 0.50, healthcare: 0.50, trade: 0.30, abortion: 0.20, immigration: 0.20, climate: 0.10, covid_response: 0 };
+const SAL_1960: Partial<Record<IssueId, number>> = { economy: 0.75, law_and_order: 0.50, taxes: 0.50, healthcare: 0.45, race_policing: 0.45, trade: 0.35, abortion: 0.20, immigration: 0.20, climate: 0.10, covid_response: 0 };
+
 export const SCENARIOS: Record<string, Scenario> = {
   "2024": {
     id: "2024", year: 2024, label: "2024 · Harris v. Trump",
@@ -806,10 +1123,35 @@ export const SCENARIOS: Record<string, Scenario> = {
     tagline: "Fall, 1980. Double-digit inflation, hostages in Tehran, and one question at the podium: are you better off than you were four years ago?",
     dem: CARTER, rep: REAGAN_1980, statePriors: PRIORS_1980, evOverrides: EV_1980, evNote: "1970-census apportionment", issueSalience: SAL_1980
   },
+  "1976": {
+    id: "1976", year: 1976, label: "1976 · Carter v. Ford",
+    tagline: "Fall, 1976. A pardon still hangs in the air, the country wants a clean start, and a peanut farmer runs against Washington itself. Hold the Solid South, or watch the map slip away.",
+    dem: CARTER_1976, rep: FORD_1976, statePriors: PRIORS_1976, evOverrides: EV_1980, evNote: "1970-census apportionment", issueSalience: SAL_1976,
+  },
+  "1972": {
+    id: "1972", year: 1972, label: "1972 · McGovern v. Nixon",
+    tagline: "Fall, 1972. A prairie liberal against a landslide in the making. The war, the counterculture, and a break-in nobody is talking about yet. Fight the tide, or ride it to 520.",
+    dem: MCGOVERN_1972, rep: NIXON_1972, statePriors: PRIORS_1972, evOverrides: EV_1980, evNote: "1970-census apportionment", issueSalience: SAL_1972,
+  },
+  "1968": {
+    id: "1968", year: 1968, label: "1968 · Humphrey v. Nixon",
+    tagline: "Fall, 1968. A party split three ways, a burning summer behind it, and a law-and-order pitch aimed at the middle. Wallace holds the Deep South, and the road to 270 runs through the wreckage.",
+    dem: HUMPHREY_1968, rep: NIXON_1968, statePriors: PRIORS_1968, evOverrides: EV_1960C, evNote: "1960-census apportionment. Wallace's five-state sweep is folded into the two-party map, so the model returns a Nixon win without a third slot.", issueSalience: SAL_1968,
+  },
+  "1964": {
+    id: "1964", year: 1964, label: "1964 · Johnson v. Goldwater",
+    tagline: "Fall, 1964. A martyred president's heir, a landslide already forming, and a nuclear ad that only aired once. Ride the tide, or find out how deep the Sun Belt runs.",
+    dem: JOHNSON_1964, rep: GOLDWATER_1964, statePriors: PRIORS_1964, evOverrides: EV_1960C, evNote: "1960-census apportionment", issueSalience: SAL_1964,
+  },
+  "1960": {
+    id: "1960", year: 1960, label: "1960 · Kennedy v. Nixon",
+    tagline: "Fall, 1960. Television changes everything, the Cold War is at the podium, and a hundred thousand votes decide it all. Win the debate, and win the century's closest race.",
+    dem: KENNEDY_1960, rep: NIXON_1960, statePriors: PRIORS_1960, evOverrides: EV_1950C, evNote: "1950-census apportionment. The real map totalled 537 with no votes for DC; the engine's fixed 538-EV map grants DC three votes and models Maine and Nebraska as districts, distortions that net out.", issueSalience: SAL_1960,
+  },
 };
 
 // Display order for the picker (newest first feels current; keep 2020 prominent).
-export const SCENARIO_IDS = ["2024", "2020", "2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984", "1980"] as const;
+export const SCENARIO_IDS = ["2024", "2020", "2016", "2012", "2008", "2004", "2000", "1996", "1992", "1988", "1984", "1980", "1976", "1972", "1968", "1964", "1960"] as const;
 
 export function getScenario(id?: string): Scenario {
   return (id && SCENARIOS[id]) || SCENARIOS["2020"];

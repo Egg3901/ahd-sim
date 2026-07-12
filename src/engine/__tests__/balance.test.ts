@@ -55,15 +55,19 @@ describe("leans are sticky: the AI can't flip deep-safe states", () => {
   // two-party share stays safely Republican despite Perot).
   const DEEP_DEM = ["DC"];
   const DEEP_REP = ["WY", "ID", "OK", "UT"];
+  // The 1964 Johnson landslide swept the Mountain/Plains states that are deep-red
+  // in every other year, so they are not safe-Republican in that one scenario.
+  const NO_DEEP_REP = new Set(["1964"]);
   for (const scenario of SCENARIO_IDS) {
     it(`${scenario}: deep states stay put vs a passive player (hard AI)`, () => {
+      const deepRep = NO_DEEP_REP.has(scenario) ? [] : DEEP_REP;
       let g = beginGame(createGame({ scenario, playerCandidate: "dem", seed: `safe-${scenario}` }));
       const worst: Record<string, number> = {};
       let guard = 0;
       while (g.phase !== "result" && guard++ < 12) {
         g = advanceTurn(g, [], `safe-${scenario}`, { difficulty: DIFFICULTY.hard, autoResolvePlayerEvents: true });
         for (const c of projectElection(g).contests) {
-          const side = DEEP_DEM.includes(c.stateId) ? "dem" : DEEP_REP.includes(c.stateId) ? "rep" : null;
+          const side = DEEP_DEM.includes(c.stateId) ? "dem" : deepRep.includes(c.stateId) ? "rep" : null;
           if (!side) continue;
           const lead = side === "dem" ? c.demShare - 0.5 : 0.5 - c.demShare;
           worst[c.stateId] = Math.min(worst[c.stateId] ?? 1, lead);
