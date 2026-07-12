@@ -24,6 +24,8 @@ interface UkStore {
   lastEventResult: { title: string; text: string } | null;
 
   newGame: (election: string, party: PartyId, seed?: string, difficulty?: Difficulty) => void;
+  // Start a prebuilt (Campaign Editor) game. Always casual: never posts a score.
+  startCustom: (game: UkGameState) => void;
   reset: () => void;
   selectRegion: (id: string | null) => void;
 
@@ -82,6 +84,17 @@ export const useUkStore = create<UkStore>((set, get) => ({
       game,
       history: [],
       replay: initUkReplayLog(game, mode),
+      selectedRegionId: null,
+      lastEventResult: null,
+    });
+  },
+
+  startCustom: (game) => {
+    autosave(game);
+    set({
+      game,
+      history: [],
+      replay: initUkReplayLog(game, "casual"),
       selectedRegionId: null,
       lastEventResult: null,
     });

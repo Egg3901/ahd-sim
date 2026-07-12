@@ -318,6 +318,8 @@ export interface CountryGameState {
   difficulty?: Difficulty;
   lastRecap: CountryRecapItem[];
   pendingEvent?: CountryPendingEvent | null;
+  // Player-authored (Campaign Editor) game: casual only, never posts a score.
+  custom?: boolean;
   result?: CountryResult;
 }
 
