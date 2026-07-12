@@ -18,6 +18,8 @@ import {
   newCustomId,
   buildUkCustomGame,
   buildCountryCustomGame,
+  baseScenarioId,
+  baseScenarioIdForCustom,
   TRAIT_KEYS,
   MP_TRAIT_KEYS,
   type CustomEngine,
@@ -25,9 +27,11 @@ import {
   type CustomTicketInput,
   type CustomPartyInput,
 } from "@content/customScenario";
+import { packForScenario } from "@content/packs";
+import { useAuthStore } from "@store/authStore";
 import type { EditorLaunchTarget } from "@ui/SetupScreen";
 import { customScenarioStore } from "@persistence/local";
-import { X, Dices, Trash2, Play, Download, Upload, Save } from "lucide-react";
+import { X, Dices, Trash2, Play, Download, Upload, Save, Lock } from "lucide-react";
 
 const MP_TRAIT_LABELS: Record<string, string> = {
   charisma: "Charisma",
@@ -203,15 +207,29 @@ function PartyRow({
 function MultipartyForm({
   draft,
   setDraft,
+  canPlay,
+  onUnlock,
 }: {
   draft: CustomScenario;
   setDraft: (cs: CustomScenario) => void;
+  canPlay: (scenarioId: string) => boolean;
+  onUnlock: (scenarioId: string) => void;
 }) {
   const mp = draft.mp;
   if (!mp) return null;
   const isCountry = draft.engine === "country";
 
   const elections = isCountry ? countryElectionOptions(mp.countryId ?? "") : ukElectionOptions();
+
+  // Entitlement of the base election a player builds on. A custom race inherits
+  // the pack the underlying real election needs; free bases stay open to all.
+  const lockFor = (electionId: string) => {
+    const id = baseScenarioId(draft.engine, mp.countryId, electionId);
+    if (!id || canPlay(id)) return null;
+    const pack = packForScenario(id);
+    return pack ? { scenarioId: id, packName: pack.name } : null;
+  };
+  const currentLock = lockFor(mp.baseElection);
 
   const setCountry = (countryId: string) => {
     const opts = countryElectionOptions(countryId);
@@ -263,12 +281,23 @@ function MultipartyForm({
           <div>
             <span className="muted small">Base election</span>
             <select value={mp.baseElection} onChange={(e) => setElection(e.target.value)} style={{ width: "100%" }}>
-              {elections.map((o) => (
-                <option key={o.id} value={o.id}>{o.label}</option>
-              ))}
+              {elections.map((o) => {
+                const lock = lockFor(o.id);
+                return (
+                  <option key={o.id} value={o.id}>
+                    {o.label}{lock ? ` · Locked (${lock.packName})` : ""}
+                  </option>
+                );
+              })}
             </select>
           </div>
         </div>
+        {currentLock && (
+          <div className="ed-errors" style={{ marginTop: 8 }}>
+            <Lock size={12} style={{ verticalAlign: "-1px" }} /> This election needs the {currentLock.packName} pack. Get it from the Lakeside store, then come back and play.{" "}
+            <button className="ghost small" onClick={() => onUnlock(currentLock.scenarioId)}>Unlock</button>
+          </div>
+        )}
         <div style={{ marginTop: 8 }}>
           <span className="muted small">Tagline</span>
           <input type="text" value={draft.tagline} maxLength={200} onChange={(e) => setDraft({ ...draft, tagline: e.target.value })} />
@@ -290,6 +319,9 @@ export function EditorScreen({ onClose, onLaunch }: { onClose: () => void; onLau
   const newGame = useGameStore((s) => s.newGame);
   const startUk = useUkStore((s) => s.startCustom);
   const startCountry = useCountryStore((s) => s.startCustom);
+  const canPlay = useAuthStore((s) => s.canPlay);
+  const user = useAuthStore((s) => s.user);
+  const openModal = useAuthStore((s) => s.openModal);
   const [draft, setDraft] = useState<CustomScenario>(() => makeDefaultCustomScenario());
   const [saved, setSaved] = useState<CustomScenario[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
@@ -318,8 +350,27 @@ export function EditorScreen({ onClose, onLaunch }: { onClose: () => void; onLau
     return value;
   };
 
+  // A custom race inherits the entitlement of the real base election it reuses.
+  // US customs (generic map) and free bases return null; paid bases return the
+  // pack the player still needs. Checked at launch so an imported JSON built on
+  // a paid base cannot bypass the gate.
+  const baseLock = (cs: CustomScenario): { scenarioId: string; packName: string } | null => {
+    const id = baseScenarioIdForCustom(cs);
+    if (!id || canPlay(id)) return null;
+    const pack = packForScenario(id);
+    return pack ? { scenarioId: id, packName: pack.name } : null;
+  };
+
+  const unlock = (scenarioId: string) => openModal(user ? "activate" : "login", scenarioId);
+
   const play = (cs: CustomScenario) => {
-    // Custom scenarios are free: start the game directly, no entitlement gate.
+    // Free path stays open (US customs, free bases). A paid base needs its pack.
+    const lock = baseLock(cs);
+    if (lock) {
+      setErrors([`This campaign is built on a locked election. Needs the ${lock.packName} pack. Get it from the Lakeside store, then redeem your code here.`]);
+      unlock(lock.scenarioId);
+      return;
+    }
     if (cs.engine === "uk") {
       startUk(buildUkCustomGame(cs));
       onLaunch?.({ kind: "uk" });
@@ -417,18 +468,28 @@ export function EditorScreen({ onClose, onLaunch }: { onClose: () => void; onLau
           <div className="field" style={{ textAlign: "left" }}>
             <label>Your saved campaigns</label>
             <div className="scenario-grid" style={{ gridTemplateColumns: "1fr" }}>
-              {saved.map((cs) => (
+              {saved.map((cs) => {
+                const lock = baseLock(cs);
+                return (
                 <div key={cs.id} className="scenario-card" style={{ textAlign: "left", alignItems: "stretch", cursor: "default" }}>
                   <span className="scenario-year" style={{ fontSize: 14 }}>{cs.year} · {cs.label}</span>
                   <span className="scenario-match">{subtitle(cs)}</span>
+                  {lock && (
+                    <span className="muted small" style={{ marginTop: 4 }}>
+                      <Lock size={11} style={{ verticalAlign: "-1px" }} /> Locked. Needs the {lock.packName} pack.
+                    </span>
+                  )}
                   <div className="row" style={{ gap: 6, marginTop: 8, flexWrap: "wrap" }}>
-                    <button className="primary small" onClick={() => play(cs)}><Play size={13} /> Play</button>
+                    <button className="primary small" onClick={() => play(cs)}>
+                      {lock ? <><Lock size={13} /> Unlock</> : <><Play size={13} /> Play</>}
+                    </button>
                     <button className="ghost small" onClick={() => edit(cs)}>Edit</button>
                     <button className="ghost small" onClick={() => exportOne(cs)}><Download size={13} /> Export</button>
                     <button className="ghost small" onClick={() => remove(cs.id)}><Trash2 size={13} /> Delete</button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -491,7 +552,7 @@ export function EditorScreen({ onClose, onLaunch }: { onClose: () => void; onLau
         <TicketForm side="rep" ticket={draft.rep} onChange={(t) => setDraft({ ...draft, rep: t })} />
         </>
         ) : (
-          <MultipartyForm draft={draft} setDraft={setDraft} />
+          <MultipartyForm draft={draft} setDraft={setDraft} canPlay={canPlay} onUnlock={unlock} />
         )}
 
         {errors.length > 0 && (

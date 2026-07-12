@@ -275,6 +275,27 @@ export function isCustomScenarioId(id: string | undefined): boolean {
   return !!id && id.startsWith("custom-");
 }
 
+// The registry scenarioId of the base election a custom scenario builds on, or
+// null when the base is free-to-everyone. US customs run on the generic map
+// (always free), so they return null. UK and country customs inherit the
+// entitlement of the real election they reuse: a custom built on "uk-1997"
+// needs the same pack "uk-1997" needs. Shared by the editor picker (locks) and
+// the launch gate so an imported JSON cannot bypass the paywall.
+export function baseScenarioId(
+  engine: CustomEngine,
+  countryId: string | undefined,
+  baseElection: string | undefined,
+): string | null {
+  if (engine === "us" || !baseElection) return null;
+  if (engine === "uk") return `uk-${baseElection}`;
+  if (!countryId) return null;
+  return `${countryId.toLowerCase()}-${baseElection}`;
+}
+
+export function baseScenarioIdForCustom(cs: CustomScenario): string | null {
+  return baseScenarioId(cs.engine, cs.mp?.countryId, cs.mp?.baseElection);
+}
+
 function validateTicket(raw: unknown, side: "dem" | "rep", errors: string[]): CustomTicketInput | null {
   const where = side === "dem" ? "your candidate" : "the opponent";
   if (!isObject(raw)) {
