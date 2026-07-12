@@ -22,7 +22,8 @@ export const UK_ALL = [
   "uk-1974oct", "uk-1974feb", "uk-1970", "uk-1966", "uk-1964", "uk-1951",
 ];
 export const GLOBAL_ALL = [
-  "ca-2025", "ca-2021", "de-2025", "de-2021", "fr-2027", "fr-2022", "fr-2017", "au-2025", "au-2022",
+  "ca-2025", "ca-2021", "ca-2019", "ca-2015", "de-2025", "de-2021", "de-2017",
+  "fr-2027", "fr-2022", "fr-2017", "fr-2012", "au-2025", "au-2022", "au-2019",
 ];
 
 export const ALL_PAID = [...US_PAID, ...UK_ALL, ...GLOBAL_ALL];
@@ -31,28 +32,28 @@ export const PACKS: ScenarioPack[] = [
   {
     id: "us-historical",
     name: "US Historical Elections",
-    description: "Ten races from 1980 to 2016: the Reagan Revolution, the tank ride, the war room, the Florida recount, the crash of 2008, the Rust Belt upset. Each comes with its real campaign events.",
+    description: "Fifteen races from 1960 to 2016: the Kennedy debates, the Daisy ad, Watergate, the Reagan Revolution, the Florida recount, the Rust Belt upset. Each comes with its real campaign events.",
     price: 499,
     scenarios: US_PAID,
   },
   {
     id: "uk-elections",
     name: "UK General Elections",
-    description: "Thirteen elections, from Churchill's 1951 comeback to Starmer's 2024 landslide. Multiparty first past the post: coalitions, hung parliaments, real story beats.",
+    description: "Eighteen elections, from Churchill's 1951 comeback through the Wilson and Heath years to Starmer's 2024 landslide. Multiparty first past the post: coalitions, hung parliaments, real story beats.",
     price: 799,
     scenarios: UK_ALL,
   },
   {
     id: "global",
     name: "Global Elections Pack",
-    description: "Nine elections in four countries: Canada 2021 and 2025, Germany 2021 and 2025, France 2017 to 2027, Australia 2022 and 2025. Four different electoral systems, real maps and parties.",
+    description: "Fourteen elections in four countries: Canada 2015 to 2025, Germany 2017 to 2025, France 2012 to 2027, Australia 2019 to 2025. Four different electoral systems, real maps and parties.",
     price: 599,
     scenarios: GLOBAL_ALL,
   },
   {
     id: "complete",
     name: "Complete Collection",
-    description: "Every scenario in the game: US races back to 1980, every UK election since 1951, and the full global roster.",
+    description: "Every scenario in the game: US races back to 1960, every UK election since 1951, and the full global roster.",
     price: 999,
     scenarios: ALL_PAID,
   },
