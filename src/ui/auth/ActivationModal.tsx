@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuthStore } from "@store/authStore";
 import { SCENARIOS_BY_ID } from "@content/scenarioRegistry";
 import { packForScenario, PACKS } from "@content/packs";
+import { usePackPrices } from "@lib/usePackPrices";
 import { isValidActivationCode, normalizeActivationCode } from "@lib/activationCode";
 import { X, KeyRound } from "lucide-react";
 
@@ -11,6 +12,7 @@ export function ActivationModal() {
   const openModal = useAuthStore((s) => s.openModal);
   const closeModal = useAuthStore((s) => s.closeModal);
   const paywallScenarioId = useAuthStore((s) => s.paywallScenarioId);
+  const packPrices = usePackPrices();
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -50,7 +52,7 @@ export function ActivationModal() {
             <p className="prompt">
               <strong>{scenario.flag} {scenario.label}</strong> is part of{" "}
               <strong>{pack?.name ?? "a scenario pack"}</strong>
-              {pack && <> (${(pack.price / 100).toFixed(2)})</>}. A pack code unlocks every scenario in it.
+              {pack && <> (${((packPrices[pack.id] ?? pack.price) / 100).toFixed(2)})</>}. A pack code unlocks every scenario in it.
             </p>
           )}
           {!user ? (
@@ -87,7 +89,7 @@ export function ActivationModal() {
             {PACKS.map((p) => (
               <div className="kv" key={p.id}>
                 <span className="k">{p.name} · {p.scenarios.length} scenarios</span>
-                <span>${(p.price / 100).toFixed(2)}</span>
+                <span>${((packPrices[p.id] ?? p.price) / 100).toFixed(2)}</span>
               </div>
             ))}
           </div>
