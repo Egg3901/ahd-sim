@@ -88,9 +88,9 @@ describe("platform entitlements consumer", () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network down"));
     const unlocked = await activation.unlockedForUserWithPlatform(user.id);
     expect(unlocked.packIds).toEqual([]);
-    // Free scenarios still resolve (paywall is off), proving the game never
-    // blocks play on the platform being reachable.
-    expect(await activation.canAccessScenarioWithPlatform(user.id, "us-2016")).toBe(true);
+    // Fail soft: when the platform is unreachable the paid scenario stays
+    // locked rather than throwing, so play never crashes on a platform outage.
+    expect(await activation.canAccessScenarioWithPlatform(user.id, "us-2016")).toBe(false);
   });
 });
 

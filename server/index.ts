@@ -9,12 +9,10 @@ import { existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getDb } from "./db.js";
-import { ensureSeedCodes, generateCodes } from "./activation.js";
 import { authRouter } from "./routes/auth.js";
 import { leaderboardRouter, achievementsRouter } from "./routes/leaderboard.js";
 import { dailyRouter } from "./routes/daily.js";
 import { lakesideRouter } from "./routes/lakeside.js";
-import { secretEquals } from "./lakeside.js";
 import { requireAuth, type AuthedRequest } from "./auth.js";
 import { fetchPlatformPurchases, identityForUser } from "./entitlements.js";
 import { PACKS_BY_ID } from "../src/content/packs.js";
@@ -50,7 +48,7 @@ app.get("/api/my-entitlements", requireAuth, async (req: AuthedRequest, res) => 
       packId: p.productId,
       packName: p.name ?? PACKS_BY_ID[p.productId]?.name ?? p.productId,
       scenarioId: null,
-      provider: "stripe" as const,
+      provider: p.amountCents > 0 ? ("stripe" as const) : ("code" as const),
       amountCents: p.amountCents,
       currency: p.currency,
       status: p.status === "refunded" ? "refunded" : "paid",
@@ -59,15 +57,9 @@ app.get("/api/my-entitlements", requireAuth, async (req: AuthedRequest, res) => 
   });
 });
 
-// Ops backdoor for minting more codes (never exposed in the client).
-app.post("/api/admin/codes", (req, res) => {
-  const { secret, packId, scenarioId, count } = req.body ?? {};
-  if (!secretEquals(secret, process.env.ADMIN_SECRET)) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-  const n = Math.min(1000, Math.max(1, Number(count) || 10));
-  res.json({ codes: generateCodes(scenarioId ?? null, packId ?? null, n) });
-});
+// Activation codes are minted and stored on the Lakeside platform now (one
+// ledger for codes and Stripe purchases), so this game no longer seeds or mints
+// them locally. Redemption is proxied to the platform in POST /auth/activate.
 
 // Static SPA (when a build exists): assets first, then the index fallback for
 // client-side routes. API routes above always win.
@@ -80,7 +72,6 @@ if (existsSync(DIST)) {
 }
 
 getDb();
-ensureSeedCodes();
 
 app.listen(PORT, () => {
   console.log(`[campaign-server] listening on :${PORT}`);
