@@ -230,7 +230,9 @@ export function CountryResults({ onExit }: { onExit: () => void }) {
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  {user ? (
+                  {game.custom ? (
+                    <span className="muted small">Custom campaigns are casual only and don't post to the leaderboard</span>
+                  ) : user ? (
                     <button className="primary" disabled={postState === "busy" || postState === "done" || serverDown} onClick={postScore}>
                       {postState === "done" ? "Posted ✓" : postState === "busy" ? "Posting…" : serverDown ? "Offline" : "Post to Leaderboard"}
                     </button>

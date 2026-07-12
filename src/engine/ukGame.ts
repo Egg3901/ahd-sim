@@ -118,6 +118,8 @@ export interface UkGameState {
   lastRecap: UkRecapItem[];
   // Player-choice event waiting on a decision (blocks End Week).
   pendingEvent?: UkPendingEvent | null;
+  // Player-authored (Campaign Editor) game: casual only, never posts a score.
+  custom?: boolean;
   result?: UkResult;
 }
 

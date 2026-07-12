@@ -342,6 +342,11 @@ export function App() {
             initialSeed={view.kind === "us" ? view.initialSeed : undefined}
             initialParty={view.kind === "us" ? view.initialParty : undefined}
             onExit={home}
+            onLaunch={(target) =>
+              target.kind === "uk"
+                ? setView({ kind: "uk" })
+                : setView({ kind: "country", countryId: target.countryId })
+            }
           />
         </div>,
       );

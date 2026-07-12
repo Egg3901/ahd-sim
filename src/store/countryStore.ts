@@ -27,6 +27,8 @@ interface CountryStore {
   lastEventResult: { title: string; text: string } | null;
 
   newGame: (countryId: string, election: string, party: PartyId, seed?: string, difficulty?: Difficulty) => void;
+  // Start a prebuilt (Campaign Editor) game with its cloned bundle. Casual only.
+  startCustom: (country: CountryBundle, game: CountryGameState) => void;
   reset: () => void;
   selectRegion: (id: string | null) => void;
 
@@ -89,6 +91,18 @@ export const useCountryStore = create<CountryStore>((set, get) => ({
       game,
       history: [],
       replay: initCountryReplayLog(game, country, mode),
+      selectedRegionId: null,
+      lastEventResult: null,
+    });
+  },
+
+  startCustom: (country, game) => {
+    autosave(country.id, game);
+    set({
+      country,
+      game,
+      history: [],
+      replay: initCountryReplayLog(game, country, "casual"),
       selectedRegionId: null,
       lastEventResult: null,
     });

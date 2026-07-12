@@ -77,11 +77,15 @@ const CAMPAIGN_LENGTHS: { turns: number; name: string; blurb: string }[] = [
 // The seven battlegrounds offered for the "What If" prior flip, plus two fun ones.
 const WHAT_IF_STATES = ["", "TX", "FL", "OH", "PA", "MI", "WI", "GA", "AZ", "NC", "NY"];
 
-export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onExit }: {
+export type EditorLaunchTarget = { kind: "uk" } | { kind: "country"; countryId: string };
+
+export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onExit, onLaunch }: {
   initialScenarioId?: string;
   initialSeed?: string;    // prefill only — the player can still edit/reroll
   initialParty?: string;   // "dem" | "rep" (Daily Challenge routing)
   onExit?: () => void;
+  // Editor launched a UK/country custom game: App switches to that engine's shell.
+  onLaunch?: (target: EditorLaunchTarget) => void;
 }) {
   const newGame = useGameStore((s) => s.newGame);
   const canPlay = useAuthStore((s) => s.canPlay);
@@ -473,7 +477,7 @@ export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onEx
         </div>
       </div>
       <Suspense fallback={<SetupModalFallback />}>
-        {editorOpen && <EditorScreen onClose={() => setEditorOpen(false)} />}
+        {editorOpen && <EditorScreen onClose={() => setEditorOpen(false)} onLaunch={onLaunch} />}
         {guideOpen && <GuidePage onClose={() => setGuideOpen(false)} />}
         {candOpen && <CandidateScreen scenarioId={scenarioId} onClose={() => setCandOpen(false)} />}
       </Suspense>
