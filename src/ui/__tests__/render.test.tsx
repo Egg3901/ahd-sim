@@ -14,7 +14,7 @@ import { PAYWALL_ENABLED } from "@content/scenarioRegistry";
 
 const reset = () => useGameStore.setState({ game: null, history: [], lastEventResult: null });
 
-function mount(): { html: () => string; container: HTMLElement; cleanup: () => void } {
+function mount(): { html: () => string; container: HTMLElement; cleanup: () => void; flush: () => Promise<void> } {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container);
@@ -23,6 +23,17 @@ function mount(): { html: () => string; container: HTMLElement; cleanup: () => v
     html: () => container.innerHTML,
     container,
     cleanup: () => { act(() => root.unmount()); container.remove(); },
+    // Some screens/modals are lazy() — let their dynamic import + suspense
+    // resolve before asserting on rendered output.
+    flush: async () => {
+      // Dynamic import() + Suspense resolution can take a few extra
+      // microtask/macrotask turns in the test environment (first load of a
+      // lazy chunk is slower than a cached one), so poll a bit longer than a
+      // single tick before giving up.
+      for (let i = 0; i < 20; i++) {
+        await act(async () => { await new Promise((r) => setTimeout(r, 20)); });
+      }
+    },
   };
 }
 
@@ -52,12 +63,13 @@ describe("App renders without crashing", () => {
 
   it(PAYWALL_ENABLED
       ? "locked scenarios open the auth/paywall modal instead of a game"
-      : "paywall off: pack scenarios go straight to the setup wizard", () => {
+      : "paywall off: pack scenarios go straight to the setup wizard", async () => {
     const m = mount();
     // Country-first browsing: open the United States, then a pack scenario.
     // Behavior past the card depends on the master paywall switch.
     clickButton(m.container, "United States");
     clickButton(m.container, "Clinton v. Trump");
+    await m.flush(); // AuthModals is lazy-loaded
     const html = m.html();
     if (PAYWALL_ENABLED) {
       expect(html).toContain("Log In"); // signed-out click routes to login
@@ -83,13 +95,14 @@ describe("App renders without crashing", () => {
     m.cleanup();
   });
 
-  it("renders the results screen at the end of the campaign", () => {
+  it("renders the results screen at the end of the campaign", async () => {
     act(() => { useGameStore.getState().newGame({ seed: "render-end", playerCandidate: "dem" }); });
     let guard = 0;
     while (useGameStore.getState().game!.phase !== "result" && guard++ < 40) {
       act(() => { useGameStore.getState().endTurn(); }); // auto-resolves events with defaults
     }
     const m = mount();
+    await m.flush(); // ResultsScreen is lazy-loaded
     const html = m.html();
     expect(html).toMatch(/PROJECTED WINNER|CONTINGENT ELECTION/);
     expect(html).toContain("Post-Mortem");

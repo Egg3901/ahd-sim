@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useGameStore, type Difficulty } from "@store/gameStore";
 import { useAuthStore } from "@store/authStore";
 import { SCENARIOS, SCENARIO_IDS } from "@content/scenarios";
@@ -6,11 +6,19 @@ import { PAYWALL_ENABLED } from "@content/scenarioRegistry";
 import { usNativeCover } from "@content/covers";
 import { defaultRunningMate } from "@content/runningMates";
 import { STAFF_POOL, MAX_STAFF, STAFF_BY_ID } from "@content/staff";
-import { GuidePage } from "@ui/GuidePage";
-import { EditorScreen } from "@ui/EditorScreen";
-import { CandidateScreen } from "@ui/CandidateScreen";
 import { mateBonusChips } from "@ui/labels";
 import { Avatar } from "@ui/Avatar";
+import { Spinner } from "@ui/Skeleton";
+
+// These only ever mount after a user opens the guide / candidate bios /
+// scenario editor from the setup screen — never on first paint — so they
+// load on demand and stay off the critical setup chunk.
+const GuidePage = lazy(() => import("@ui/GuidePage").then((m) => ({ default: m.GuidePage })));
+const EditorScreen = lazy(() => import("@ui/EditorScreen").then((m) => ({ default: m.EditorScreen })));
+const CandidateScreen = lazy(() => import("@ui/CandidateScreen").then((m) => ({ default: m.CandidateScreen })));
+const SetupModalFallback = () => (
+  <div className="overlay"><div className="modal"><p className="sub"><Spinner /></p></div></div>
+);
 import type { CandidateId, GameState } from "@engine/index";
 import { BRAND } from "../brand";
 import { TideBanner } from "@ui/TideBanner";
@@ -464,9 +472,11 @@ export function SetupScreen({ initialScenarioId, initialSeed, initialParty, onEx
           <button className="su-link" onClick={() => setEditorOpen(true)}>Create custom</button>
         </div>
       </div>
-      {editorOpen && <EditorScreen onClose={() => setEditorOpen(false)} />}
-      {guideOpen && <GuidePage onClose={() => setGuideOpen(false)} />}
-      {candOpen && <CandidateScreen scenarioId={scenarioId} onClose={() => setCandOpen(false)} />}
+      <Suspense fallback={<SetupModalFallback />}>
+        {editorOpen && <EditorScreen onClose={() => setEditorOpen(false)} />}
+        {guideOpen && <GuidePage onClose={() => setGuideOpen(false)} />}
+        {candOpen && <CandidateScreen scenarioId={scenarioId} onClose={() => setCandOpen(false)} />}
+      </Suspense>
     </div>
   );
 }

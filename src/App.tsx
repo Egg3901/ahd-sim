@@ -1,19 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useGameStore } from "@store/gameStore";
 import { SetupScreen } from "@ui/SetupScreen";
-import { ResultsScreen } from "@ui/ResultsScreen";
 import { USMap } from "@ui/USMap";
 import { StatePanel } from "@ui/StatePanel";
 import { IntelPanel } from "@ui/IntelPanel";
 import { ActionPanel } from "@ui/ActionPanel";
-import { EventModal } from "@ui/EventModal";
-import { DebateScorecard } from "@ui/DebateScorecard";
-import { RecapModal } from "@ui/RecapModal";
 import { EvBar } from "@ui/EvBar";
-import { GuidePage } from "@ui/GuidePage";
-import { CandidateScreen } from "@ui/CandidateScreen";
-import { StatsScreen } from "@ui/StatsScreen";
-import { TimelineView } from "@ui/TimelineView";
 import { NewsTicker } from "@ui/NewsTicker";
 import { OnboardingCoach, COACH_DONE_KEY } from "@ui/coach/OnboardingCoach";
 import { getScenario } from "@content/scenarios";
@@ -24,6 +16,7 @@ import { LegalPage } from "@ui/LegalPage";
 import { dailyAssignment, utcDateString } from "@lib/daily";
 import { SCENARIOS_BY_ID } from "@content/scenarioRegistry";
 import { registerSavedCustomScenarios } from "@persistence/local";
+import { Spinner } from "@ui/Skeleton";
 
 // The UK and country shells carry their engines, content, and map geometry —
 // they load on demand so the main bundle stays lean (the US game is the
@@ -32,12 +25,31 @@ const UkApp = lazy(() => import("@ui/uk/UkApp").then((m) => ({ default: m.UkApp 
 const CountryApp = lazy(() => import("@ui/country/CountryApp").then((m) => ({ default: m.CountryApp })));
 const LeaderboardScreen = lazy(() => import("@ui/LeaderboardScreen").then((m) => ({ default: m.LeaderboardScreen })));
 
+// The results screen and every in-game overlay (recap/event/debate/guide/
+// candidates/stats/settings/timeline) only ever mount after a real user
+// action (a turn ends, a button is clicked). None of them are on the first
+// paint / resume path, so they load on demand and keep the main chunk lean.
+const ResultsScreen = lazy(() => import("@ui/ResultsScreen").then((m) => ({ default: m.ResultsScreen })));
+const EventModal = lazy(() => import("@ui/EventModal").then((m) => ({ default: m.EventModal })));
+const DebateScorecard = lazy(() => import("@ui/DebateScorecard").then((m) => ({ default: m.DebateScorecard })));
+const RecapModal = lazy(() => import("@ui/RecapModal").then((m) => ({ default: m.RecapModal })));
+const GuidePage = lazy(() => import("@ui/GuidePage").then((m) => ({ default: m.GuidePage })));
+const CandidateScreen = lazy(() => import("@ui/CandidateScreen").then((m) => ({ default: m.CandidateScreen })));
+const StatsScreen = lazy(() => import("@ui/StatsScreen").then((m) => ({ default: m.StatsScreen })));
+const TimelineView = lazy(() => import("@ui/TimelineView").then((m) => ({ default: m.TimelineView })));
+const SettingsModal = lazy(() => import("@ui/SettingsModal").then((m) => ({ default: m.SettingsModal })));
+const AuthModals = lazy(() => import("@ui/auth/AuthModals").then((m) => ({ default: m.AuthModals })));
+
 const LazyFallback = () => (
   <div className="app screen center"><div className="setup"><p className="sub"><Spinner /></p></div></div>
 );
-import { AuthModals } from "@ui/auth/AuthModals";
-import { SettingsModal } from "@ui/SettingsModal";
-import { Spinner } from "@ui/Skeleton";
+
+// Lightweight fallback for the overlay modals (recap/event/debate/guide/
+// candidates/stats/settings/timeline) — matches their own overlay/modal
+// shell so there's no full-screen flash while the chunk loads.
+const ModalFallback = () => (
+  <div className="overlay"><div className="modal"><p className="sub"><Spinner /></p></div></div>
+);
 import { armAudio, sfx } from "@lib/sfx";
 import { useHotkeys } from "@lib/hotkeys";
 import { Vote, X, Settings } from "lucide-react";
@@ -245,14 +257,16 @@ function GameScreen() {
         </div>
       )}
 
-      {recapOpen && <RecapModal onClose={() => setRecapOpen(false)} />}
-      {!recapOpen && !debateOpen && hasPendingEvent && <EventModal />}
-      {debateOpen && <DebateScorecard />}
-      {guideOpen && <GuidePage onClose={() => setGuideOpen(false)} />}
-      {candOpen && <CandidateScreen scenarioId={game.scenarioId} onClose={() => setCandOpen(false)} />}
-      {statsOpen && <StatsScreen onClose={() => setStatsOpen(false)} />}
-      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} onReplayTutorial={replayTutorial} />}
-      {timelineOpen && replay && <TimelineView log={replay} onClose={() => setTimelineOpen(false)} />}
+      <Suspense fallback={<ModalFallback />}>
+        {recapOpen && <RecapModal onClose={() => setRecapOpen(false)} />}
+        {!recapOpen && !debateOpen && hasPendingEvent && <EventModal />}
+        {debateOpen && <DebateScorecard />}
+        {guideOpen && <GuidePage onClose={() => setGuideOpen(false)} />}
+        {candOpen && <CandidateScreen scenarioId={game.scenarioId} onClose={() => setCandOpen(false)} />}
+        {statsOpen && <StatsScreen onClose={() => setStatsOpen(false)} />}
+        {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} onReplayTutorial={replayTutorial} />}
+        {timelineOpen && replay && <TimelineView log={replay} onClose={() => setTimelineOpen(false)} />}
+      </Suspense>
 
       {/* First-run guided tour; self-gating (localStorage, turn 0, US only).
           key={tourNonce} forces a remount so "Replay tutorial" restarts it from step 1. */}
@@ -312,7 +326,9 @@ export function App() {
   const withModals = (node: React.ReactNode) => (
     <>
       {node}
-      <AuthModals />
+      <Suspense fallback={null}>
+        <AuthModals />
+      </Suspense>
     </>
   );
 
@@ -330,7 +346,7 @@ export function App() {
         </div>,
       );
     }
-    if (game.phase === "result") return withModals(<div className="app screen" key="result"><ResultsScreen /></div>);
+    if (game.phase === "result") return withModals(<div className="app screen" key="result"><Suspense fallback={<LazyFallback />}><ResultsScreen /></Suspense></div>);
     return withModals(<GameScreen />);
   }
 
