@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuthStore } from "@store/authStore";
 import { X } from "lucide-react";
 import { LakesideButton, AuthDivider } from "./LakesideButton";
+import { Spinner } from "@ui/Skeleton";
 
 export function RegisterModal() {
   const register = useAuthStore((s) => s.register);
@@ -51,7 +52,7 @@ export function RegisterModal() {
             </div>
             {error && <p className="muted small" style={{ color: "var(--rose)" }}>{error}</p>}
             <button className="primary" type="submit" disabled={busy} style={{ width: "100%", marginTop: 8 }}>
-              {busy ? "Creating…" : "Register"}
+              {busy ? <Spinner label="Creating…" /> : "Register"}
             </button>
           </form>
           <p className="muted small" style={{ marginTop: 12, textAlign: "center" }}>

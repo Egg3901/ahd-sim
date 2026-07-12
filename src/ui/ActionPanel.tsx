@@ -86,6 +86,17 @@ export function ActionPanel() {
   useEffect(() => {
     if (selectedStateId && states.some((s) => s.id === selectedStateId)) setStateId(selectedStateId);
   }, [selectedStateId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The 1-9 hotkeys pick an action type by its position in ACTIONS below.
+  useEffect(() => {
+    const onPick = (e: Event) => {
+      const idx = (e as CustomEvent<number>).detail;
+      const picked = ACTIONS[idx];
+      if (picked) setType(picked.type);
+    };
+    window.addEventListener("hotkey-pick-action", onPick);
+    return () => window.removeEventListener("hotkey-pick-action", onPick);
+  }, []);
   const [adMode, setAdMode] = useState<AdMode>("positive");
   const [issueId, setIssueId] = useState<IssueId>("economy");
   const [spendM, setSpendM] = useState<number>(8);

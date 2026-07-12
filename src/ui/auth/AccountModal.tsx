@@ -3,6 +3,7 @@ import { useAuthStore } from "@store/authStore";
 import { PACKS_BY_ID } from "@content/packs";
 import { isValidActivationCode, normalizeActivationCode } from "@lib/activationCode";
 import { X, KeyRound, CircleUser, Link2, ShoppingBag, LogOut } from "lucide-react";
+import { Spinner } from "@ui/Skeleton";
 import { LakesideButton } from "./LakesideButton";
 
 function fmtDate(ts: number): string {
@@ -121,7 +122,7 @@ export function AccountModal() {
                 style={{ flex: 1, fontFamily: "monospace", letterSpacing: 1, minWidth: 0 }}
               />
               <button className="primary small" type="submit" disabled={busy || !normalized}>
-                {busy ? "Redeeming…" : "Redeem"}
+                {busy ? <Spinner label="Redeeming…" /> : "Redeem"}
               </button>
             </form>
             {redeemMsg && (
