@@ -1,16 +1,16 @@
-// Lakeside ID: verify the A House Divided game JWT (cookie `auth-token-*` on
-// .ahousedividedgame.com) and map it to a local Electioneer user. Also mints
-// and redeems the 60 second single-use SSO handoff codes that other
+// Lakeside ID: map a verified A House Divided identity (obtained via the
+// central lakeside-auth broker) onto a local Electioneer user. Also mints and
+// redeems the 60 second single-use SSO handoff codes that other
 // lakesidegames.net consumers (the account portal) use.
 //
-// Verification mirrors verifyGameJwt in LSGD-ops-dash/server.js: HS256 over
-// header.payload with the shared AUTH_SECRET, timing-safe compare, honor exp.
-// Player-level identity does not need the Mongo role check the ops dash does.
+// AHD game-JWT verification used to live here (copied from LSGD-ops-dash).
+// That now lives in lakeside-auth; this module only consumes the normalized
+// identity the broker returns after a browser bounce through /auth/ahd.
 
-import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
-import type { Request } from "express";
+import { randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { getDb, type UserRow } from "./db.js";
+import { LakesideAuthClient, type LakesideAuthIdentity } from "./lakesideAuthClient.js";
 
 export interface LakesideIdentity {
   ahdUserId: string;
@@ -27,43 +27,28 @@ export function configuredBaseUrl(): string {
   return (raw && /^https?:\/\//.test(raw) ? raw : DEFAULT_BASE_URL).replace(/\/+$/, "");
 }
 
-function b64urlToBuf(s: string): Buffer {
-  return Buffer.from(s.replace(/-/g, "+").replace(/_/g, "/"), "base64");
+/** Server-to-server client for lakeside-auth, or null when env is incomplete. */
+export function getLakesideAuthClient(): LakesideAuthClient | null {
+  const baseUrl = process.env.LAKESIDE_AUTH_BASE_URL;
+  const internalToken = process.env.LAKESIDE_AUTH_INTERNAL_TOKEN;
+  if (!baseUrl || !internalToken) return null;
+  return new LakesideAuthClient({ baseUrl, internalToken });
 }
 
-export function verifyGameJwt(token: string): Record<string, unknown> | null {
-  const secret = process.env.AUTH_SECRET;
-  if (!secret) return null;
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-    const [h, p, sig] = parts;
-    const expected = createHmac("sha256", secret).update(h + "." + p).digest();
-    const actual = b64urlToBuf(sig);
-    if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) return null;
-    const payload = JSON.parse(b64urlToBuf(p).toString("utf8")) as Record<string, unknown>;
-    if (typeof payload.exp === "number" && Date.now() / 1000 > payload.exp) return null;
-    return payload; // { userId, email, username, role, isAdmin, iat, exp }
-  } catch {
-    return null;
-  }
+/**
+ * Optional AHD-sibling origin for the browser redirect (cookie is scoped to
+ * .ahousedividedgame.com). Falls back to LAKESIDE_AUTH_BASE_URL when unset.
+ */
+export function lakesideAuthAhdOrigin(): string | undefined {
+  const origin = process.env.LAKESIDE_AUTH_AHD_ORIGIN;
+  return origin?.replace(/\/+$/, "") || undefined;
 }
 
-/** Read the game session from the request's cookies, if present and valid. */
-export function getLakesideIdentity(req: Request): LakesideIdentity | null {
-  const cookies = (req.headers["cookie"] ?? "").split(";").map((c) => c.trim());
-  const tokens = cookies
-    .filter((c) => c.startsWith("auth-token-"))
-    .map((c) => c.slice(c.indexOf("=") + 1))
-    .filter(Boolean);
-  for (const token of tokens) {
-    const payload = verifyGameJwt(token);
-    if (!payload) continue;
-    const { userId, email, username } = payload;
-    if (typeof userId !== "string" || typeof email !== "string" || typeof username !== "string") continue;
-    return { ahdUserId: userId, email, username };
-  }
-  return null;
+/** Map a lakeside-auth AHD identity onto the local linking shape, or null. */
+export function identityFromAuth(identity: LakesideAuthIdentity): LakesideIdentity | null {
+  if (identity.provider !== "ahd") return null;
+  if (!identity.id || !identity.email || !identity.username) return null;
+  return { ahdUserId: identity.id, email: identity.email, username: identity.username };
 }
 
 // ── Local account linking ────────────────────────────────────────────────────
@@ -118,6 +103,10 @@ export function linkOrCreateUser(identity: LakesideIdentity): UserRow {
 }
 
 // ── Single-use handoff codes (60s TTL) ───────────────────────────────────────
+// Kept local: lakeside-accounts still calls /api/lakeside/handoff and
+// /api/internal/redeem-handoff on this host. Routing that pair through
+// lakeside-auth would force a Phase-2 change on the portal; identity proof
+// already goes through the broker, which is the part that needed centralizing.
 
 export const HANDOFF_TTL_MS = 60_000;
 

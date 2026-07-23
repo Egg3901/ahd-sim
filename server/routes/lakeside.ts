@@ -1,13 +1,15 @@
 // Lakeside ID routes.
 //
-// Player-facing (cookie only works on sim.ahousedividedgame.com):
-//   GET /api/lakeside/login?return=   game cookie -> local session, via a
-//                                     one-time code appended to the return URL
-//                                     (?lakeside_code=). The SPA exchanges it.
+// Player-facing:
+//   GET /api/lakeside/login?return=   bounce the browser through lakeside-auth
+//                                     (/auth/ahd), redeem the broker code, then
+//                                     redirect to return?lakeside_code= (local
+//                                     one-time code the SPA exchanges).
 //   POST /api/lakeside/exchange       { code } -> { token, user } (public; the
 //                                     code itself is the credential)
 //   GET /api/lakeside/handoff?return= SSO for OTHER lakesidegames.net apps:
-//                                     302 to return?code=<60s single-use>
+//                                     same broker bounce, then 302 to
+//                                     return?code=<60s local single-use>
 //
 // Portal-facing (Authorization: Bearer INTERNAL_TOKEN):
 //   POST /api/internal/redeem-handoff  { code } -> identity, once
@@ -24,8 +26,9 @@ import { Router } from "express";
 import { signToken } from "../auth.js";
 import { unlockedForUserWithPlatform } from "../activation.js";
 import {
-  checkInternalToken, configuredBaseUrl, getLakesideIdentity, linkOrCreateUser,
-  mintHandoffCode, redeemHandoffCode, resolveReturnUrl,
+  checkInternalToken, configuredBaseUrl, getLakesideAuthClient, identityFromAuth,
+  lakesideAuthAhdOrigin, linkOrCreateUser, mintHandoffCode, redeemHandoffCode,
+  resolveReturnUrl, type LakesideIdentity,
 } from "../lakeside.js";
 
 const AHD_LOGIN_URL = "https://www.ahousedividedgame.com/login";
@@ -34,16 +37,50 @@ function baseUrl(): string {
   return configuredBaseUrl();
 }
 
+/** Start URL for a broker bounce that returns to `path` with the same ?return=. */
+function brokerStartUrl(path: "/api/lakeside/login" | "/api/lakeside/handoff", targetReturn: string): string | null {
+  const client = getLakesideAuthClient();
+  if (!client) return null;
+  const callback = new URL(`${baseUrl()}${path}`);
+  callback.searchParams.set("return", targetReturn);
+  const ahdOrigin = lakesideAuthAhdOrigin();
+  return ahdOrigin
+    ? client.loginUrl("ahd", callback.toString(), ahdOrigin)
+    : client.loginUrl("ahd", callback.toString());
+}
+
+/** Redeem a lakeside-auth handoff code into a local LakesideIdentity. */
+async function redeemBrokerCode(code: string): Promise<LakesideIdentity | null> {
+  const client = getLakesideAuthClient();
+  if (!client) return null;
+  try {
+    const result = await client.redeem(code);
+    if (!result) return null;
+    return identityFromAuth(result.identity);
+  } catch {
+    return null;
+  }
+}
+
 export const lakesideRouter = Router();
 
-lakesideRouter.get("/api/lakeside/login", (req, res) => {
+lakesideRouter.get("/api/lakeside/login", async (req, res) => {
   const target = resolveReturnUrl(typeof req.query.return === "string" ? req.query.return : undefined, baseUrl());
   if (!target) return res.status(400).json({ error: "Return URL not allowed" });
-  const identity = getLakesideIdentity(req);
-  if (!identity) return res.redirect(AHD_LOGIN_URL);
-  const url = new URL(target);
-  url.searchParams.set("lakeside_code", mintHandoffCode(identity));
-  res.redirect(url.toString());
+
+  // Callback from lakeside-auth: ?code= is the broker handoff.
+  const brokerCode = typeof req.query.code === "string" ? req.query.code : undefined;
+  if (brokerCode) {
+    const identity = await redeemBrokerCode(brokerCode);
+    if (!identity) return res.redirect(AHD_LOGIN_URL);
+    const url = new URL(target);
+    url.searchParams.set("lakeside_code", mintHandoffCode(identity));
+    return res.redirect(url.toString());
+  }
+
+  const start = brokerStartUrl("/api/lakeside/login", target);
+  if (!start) return res.redirect(AHD_LOGIN_URL);
+  res.redirect(start);
 });
 
 lakesideRouter.post("/api/lakeside/exchange", async (req, res) => {
@@ -59,16 +96,24 @@ lakesideRouter.post("/api/lakeside/exchange", async (req, res) => {
   });
 });
 
-lakesideRouter.get("/api/lakeside/handoff", (req, res) => {
+lakesideRouter.get("/api/lakeside/handoff", async (req, res) => {
   const raw = typeof req.query.return === "string" ? req.query.return : undefined;
   if (!raw) return res.status(400).json({ error: "return required" });
   const target = resolveReturnUrl(raw, baseUrl());
   if (!target) return res.status(400).json({ error: "Return URL not allowed" });
-  const identity = getLakesideIdentity(req);
-  if (!identity) return res.redirect(AHD_LOGIN_URL);
-  const url = new URL(target);
-  url.searchParams.set("code", mintHandoffCode(identity));
-  res.redirect(url.toString());
+
+  const brokerCode = typeof req.query.code === "string" ? req.query.code : undefined;
+  if (brokerCode) {
+    const identity = await redeemBrokerCode(brokerCode);
+    if (!identity) return res.redirect(AHD_LOGIN_URL);
+    const url = new URL(target);
+    url.searchParams.set("code", mintHandoffCode(identity));
+    return res.redirect(url.toString());
+  }
+
+  const start = brokerStartUrl("/api/lakeside/handoff", target);
+  if (!start) return res.redirect(AHD_LOGIN_URL);
+  res.redirect(start);
 });
 
 lakesideRouter.post("/api/internal/redeem-handoff", (req, res) => {
