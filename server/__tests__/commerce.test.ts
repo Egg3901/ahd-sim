@@ -8,11 +8,12 @@ import { describe, it, expect, beforeAll, afterEach, vi } from "vitest";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createHmac, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 
 process.env.CAMPAIGN_DB_PATH = join(mkdtempSync(join(tmpdir(), "campaign-test-")), "test.db");
-process.env.AUTH_SECRET = "test-auth-secret";
 process.env.INTERNAL_TOKEN = "test-internal-token";
+process.env.LAKESIDE_AUTH_BASE_URL = "https://auth.example.test";
+process.env.LAKESIDE_AUTH_INTERNAL_TOKEN = "test-lakeside-auth-token";
 
 const dbMod = await import("../db.ts");
 const activation = await import("../activation.ts");
@@ -27,14 +28,6 @@ function makeUser(overrides: Partial<{ username: string; email: string; ahd: str
     "INSERT INTO users (id, username, email, password_hash, created_at, ahd_user_id) VALUES (?, ?, ?, ?, ?, ?)",
   ).run(id, username, email, "x", Date.now(), overrides.ahd ?? null);
   return { id, username, email };
-}
-
-function gameJwt(payload: Record<string, unknown>, secret = process.env.AUTH_SECRET!): string {
-  const enc = (o: unknown) => Buffer.from(JSON.stringify(o)).toString("base64url");
-  const head = enc({ alg: "HS256", typ: "JWT" });
-  const body = enc(payload);
-  const sig = createHmac("sha256", secret).update(`${head}.${body}`).digest("base64url");
-  return `${head}.${body}.${sig}`;
 }
 
 beforeAll(() => {
@@ -95,18 +88,23 @@ describe("platform entitlements consumer", () => {
 });
 
 describe("lakeside identity", () => {
-  it("reads a valid game JWT cookie and rejects a forged one", () => {
-    const payload = { userId: "ahd123", email: "Player@Example.com", username: "player", exp: Date.now() / 1000 + 600 };
-    const good = { headers: { cookie: `auth-token-game=${gameJwt(payload)}` } };
-    const bad = { headers: { cookie: `auth-token-game=${gameJwt(payload, "wrong-secret")}` } };
-    expect(lakeside.getLakesideIdentity(good as never)?.ahdUserId).toBe("ahd123");
-    expect(lakeside.getLakesideIdentity(bad as never)).toBeNull();
+  it("maps a lakeside-auth AHD identity and rejects incomplete/non-AHD ones", () => {
+    expect(lakeside.identityFromAuth({
+      provider: "ahd", id: "ahd123", email: "Player@Example.com", username: "player",
+    })).toEqual({ ahdUserId: "ahd123", email: "Player@Example.com", username: "player" });
+    expect(lakeside.identityFromAuth({
+      provider: "discord", id: "d1", email: "d@e.com", username: "disc",
+    })).toBeNull();
+    expect(lakeside.identityFromAuth({
+      provider: "ahd", id: "ahd123", username: "player",
+    })).toBeNull();
   });
 
-  it("rejects an expired token", () => {
-    const payload = { userId: "ahd123", email: "p@e.com", username: "p", exp: Date.now() / 1000 - 10 };
-    const req = { headers: { cookie: `auth-token-game=${gameJwt(payload)}` } };
-    expect(lakeside.getLakesideIdentity(req as never)).toBeNull();
+  it("builds a lakeside-auth client from env and a login URL", () => {
+    const client = lakeside.getLakesideAuthClient();
+    expect(client).not.toBeNull();
+    expect(client!.loginUrl("ahd", "https://sim.ahousedividedgame.com/api/lakeside/login?return=%2F"))
+      .toBe("https://auth.example.test/auth/ahd?return=https%3A%2F%2Fsim.ahousedividedgame.com%2Fapi%2Flakeside%2Flogin%3Freturn%3D%252F");
   });
 
   it("link-by-email attaches ahd_user_id to the existing local account", () => {

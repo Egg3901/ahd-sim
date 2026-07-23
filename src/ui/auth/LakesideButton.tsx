@@ -1,9 +1,9 @@
 import { lakesideLoginUrl } from "@lib/api";
 
 // "Sign in with Lakeside Games" door. Always drives
-// sim.ahousedividedgame.com/api/lakeside/login (the only host that can read
-// the Lakeside session cookie) and returns to the current page with a
-// one-time code, so it works from both sim.* and the lakesidegames.net mount.
+// sim.ahousedividedgame.com/api/lakeside/login (which bounces through the
+// lakeside-auth broker) and returns to the current page with a one-time code,
+// so it works from both sim.* and the lakesidegames.net mount.
 export function LakesideButton() {
   return (
     <a className="lakeside-btn" href={lakesideLoginUrl()}>
