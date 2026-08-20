@@ -1,12 +1,14 @@
-# CAMPAIGN — 2020
+# Electioneer
 
-A single-player, turn-based **2020 U.S. general election** campaign simulator
-(Biden/Harris vs. Trump/Pence). Inspired by *President Infinity*'s resource
-management and *New Campaign Trail*'s branching demographic events, with a clean,
-data-forward web UI.
+A single-player, turn-based election campaign simulator. 20 historical elections across
+six countries (US, UK, Canada, Germany, France, Australia), 1974 to 2027. Inspired by
+*President Infinity*'s resource management and *New Campaign Trail*'s branching
+demographic events, with a clean, data-forward web UI.
 
 > You are the campaign manager. Read the map, allocate finite resources each
-> week, answer the moments that matter, and get to 270.
+> week, answer the moments that matter, and rewrite the result.
+
+Play in the browser at [lakesidegames.net/games/electioneer](https://lakesidegames.net/games/electioneer/).
 
 ## Quick start
 
@@ -31,7 +33,7 @@ calibration.
 src/
   engine/        Pure, deterministic, seedable sim. The single source of truth.
     types.ts        Data model (Section 4)
-    rng.ts          Seedable RNG (mulberry32) — determinism for undo/replay/tests
+    rng.ts          Seedable RNG (mulberry32), determinism for undo/replay/tests
     setup.ts        createGame() + per-state baseline-margin solver
     voteModel.ts    The scoring model (Section 5): blocs → state → EV → winner
     actions.ts      9 campaign actions, all routed through the vote model
@@ -39,12 +41,12 @@ src/
     ai.ts           Tipping-point AI opponent (easy/normal/hard)
     turn.ts         advanceTurn(state, actions, seed) → newState  (PURE)
     polls.ts        Polls-with-noise + house effects (a blurred view of truth)
-  content/       DATA ONLY — designers never touch engine code.
+  content/       DATA ONLY, designers never touch engine code.
     issues.ts, blocs.ts, candidates.ts, states.ts, events.ts, mapLayout.ts
   persistence/   SyncProvider interface; LocalSyncProvider (Dexie/IndexedDB);
                  RemoteSyncProvider stub (cloud-save seam, not built)
   store/         Zustand store: canonical state, undo ring buffer, autosave
-  ui/            React SPA — a pure function of engine state
+  ui/            React SPA, a pure function of engine state
 ```
 
 ### The vote model (why the map moves is always legible)
@@ -82,10 +84,16 @@ future server-authoritative multiplayer promotion with no engine rewrite.
 ## Scope
 
 **In:** the 2020 general only, two tickets, 51 contests + ME/NE district splits,
-Electoral College with a defined 269–269 contingent-election ending, weekly turn
+Electoral College with a defined 269-269 contingent-election ending, weekly turn
 loop (9 turns Sept 1 → Nov 3), resource allocation, events, AI opponent,
 polls-with-noise, results + post-mortem, local saves + undo + JSON export/import.
 
 **Out (deferred):** primaries, downballot, multiplayer, other years, modding,
 governance. Cloud saves and the Tauri desktop wrapper are designed-for but not
 built.
+
+## License
+
+[PolyForm Noncommercial 1.0.0](./LICENSE.md). The source is available to read, learn
+from, modify, and run noncommercially. Commercial use, including selling builds or
+hosting it as a paid service, is not licensed.
