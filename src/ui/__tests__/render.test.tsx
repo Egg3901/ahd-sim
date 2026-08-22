@@ -78,7 +78,25 @@ describe("App renders without crashing", () => {
     expect(m.html()).toContain("Thatcher's third");
 
     typeInto(input!, "no such campaign");
-    expect(m.html()).toContain('No elections match "no such campaign"');
+    expect(m.html()).toContain('for "no such campaign"');
+    m.cleanup();
+  });
+
+  it("filters the full catalog by difficulty and access", () => {
+    const m = mount();
+    const filterButtons = [...m.container.querySelectorAll<HTMLButtonElement>('.catalog-filter-group button')];
+    const hardFilter = filterButtons.find((button) => button.textContent === "Hard");
+    expect(hardFilter).not.toBeUndefined();
+    act(() => { hardFilter!.click(); });
+    expect(m.html()).toContain("campaigns");
+    expect(hardFilter!.getAttribute("aria-pressed")).toBe("true");
+
+    if (PAYWALL_ENABLED) {
+      const playable = filterButtons.find((button) => button.textContent === "Playable");
+      act(() => { playable!.click(); });
+      expect(playable!.getAttribute("aria-pressed")).toBe("true");
+      expect(m.html()).toContain("Pick a playable campaign");
+    }
     m.cleanup();
   });
 

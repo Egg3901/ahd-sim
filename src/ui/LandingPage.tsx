@@ -241,6 +241,8 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
   const packPrices = usePackPrices();
   const [country, setCountry] = useState<CountryCode | null>(null);
   const [query, setQuery] = useState("");
+  const [difficultyFilter, setDifficultyFilter] = useState<"all" | ScenarioMeta["difficulty"]>("all");
+  const [accessFilter, setAccessFilter] = useState<"all" | "playable" | "locked">("all");
   const [buyBusy, setBuyBusy] = useState<string | null>(null);
   const [buyError, setBuyError] = useState<string | null>(null);
 
@@ -291,6 +293,15 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
     return [...matches].sort((a, b) => b.year - a.year);
   }, [country, normalizedQuery]);
 
+  const visibleScenarios = scenarios.filter((s) => {
+    if (difficultyFilter !== "all" && s.difficulty !== difficultyFilter) return false;
+    if (accessFilter === "playable" && !canPlay(s.scenarioId)) return false;
+    if (accessFilter === "locked" && canPlay(s.scenarioId)) return false;
+    return true;
+  });
+  const hasCatalogFilter = difficultyFilter !== "all" || accessFilter !== "all";
+  const playableScenarios = visibleScenarios.filter((s) => canPlay(s.scenarioId));
+
   const free = SCENARIO_REGISTRY.filter((s) => s.free);
 
   const play = (s: ScenarioMeta) => {
@@ -301,6 +312,12 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
 
   const locked = (s: ScenarioMeta) => {
     openModal(user ? "activate" : "login", s.scenarioId);
+  };
+
+  const playRandom = () => {
+    if (!playableScenarios.length) return;
+    const pick = playableScenarios[Math.floor(Math.random() * playableScenarios.length)];
+    play(pick);
   };
 
   return (
@@ -360,7 +377,9 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
           <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
             <label>
               {normalizedQuery
-                ? `${scenarios.length} matching election${scenarios.length === 1 ? "" : "s"}${country ? ` in ${COUNTRY_NAMES[country]}` : ""}`
+                ? `${visibleScenarios.length} matching election${visibleScenarios.length === 1 ? "" : "s"}${country ? ` in ${COUNTRY_NAMES[country]}` : ""}`
+                : hasCatalogFilter
+                  ? `${visibleScenarios.length} campaign${visibleScenarios.length === 1 ? "" : "s"}${country ? ` in ${COUNTRY_NAMES[country]}` : ""}`
                 : country
                   ? `${COUNTRY_NAMES[country]}: pick an election`
                   : "Browse all campaigns"}
@@ -368,6 +387,11 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
             <span className="row" style={{ gap: 4 }}>
               {normalizedQuery && (
                 <button className="ghost small" onClick={() => setQuery("")}>Clear search</button>
+              )}
+              {hasCatalogFilter && (
+                <button className="ghost small" onClick={() => { setDifficultyFilter("all"); setAccessFilter("all"); }}>
+                  Reset filters
+                </button>
               )}
               {country && (
                 <button className="ghost small" onClick={() => setCountry(null)}>
@@ -386,8 +410,45 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
               placeholder={country ? `Search ${COUNTRY_NAMES[country]} elections` : "Search by year, country, candidate, or issue"}
             />
           </div>
+          <div className="catalog-filters" aria-label="Filter election scenarios">
+            <span className="catalog-filter-group">
+              <span className="catalog-filter-label">Difficulty</span>
+              {(["all", "easy", "medium", "hard"] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={difficultyFilter === value ? "sel" : ""}
+                  aria-pressed={difficultyFilter === value}
+                  onClick={() => setDifficultyFilter(value)}
+                >
+                  {value === "all" ? "Any" : value[0].toUpperCase() + value.slice(1)}
+                </button>
+              ))}
+            </span>
+            {PAYWALL_ENABLED && (
+              <span className="catalog-filter-group">
+                <span className="catalog-filter-label">Access</span>
+                {(["all", "playable", "locked"] as const).map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={accessFilter === value ? "sel" : ""}
+                    aria-pressed={accessFilter === value}
+                    onClick={() => setAccessFilter(value)}
+                  >
+                    {value === "all" ? "All" : value[0].toUpperCase() + value.slice(1)}
+                  </button>
+                ))}
+              </span>
+            )}
+            {(country || normalizedQuery || hasCatalogFilter) && playableScenarios.length > 0 && (
+              <button type="button" className="catalog-random" onClick={playRandom}>
+                <Play size={12} aria-hidden="true" /> Pick a playable campaign
+              </button>
+            )}
+          </div>
 
-          {!country && !normalizedQuery ? (
+          {!country && !normalizedQuery && !hasCatalogFilter ? (
             <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
               {countries.map((c) => (
                 <button
@@ -410,9 +471,9 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
                 </button>
               ))}
             </div>
-          ) : scenarios.length ? (
+          ) : visibleScenarios.length ? (
             <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
-              {scenarios.map((s) => (
+              {visibleScenarios.map((s) => (
                 <ScenarioCard
                   key={s.scenarioId}
                   s={s}
@@ -424,7 +485,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
             </div>
           ) : (
             <div className="catalog-empty" role="status">
-              No elections match "{query.trim()}"{country ? ` in ${COUNTRY_NAMES[country]}` : ""}.
+              No elections match these filters{normalizedQuery ? ` for "${query.trim()}"` : ""}{country ? ` in ${COUNTRY_NAMES[country]}` : ""}.
             </div>
           )}
         </div>
