@@ -44,6 +44,14 @@ function clickButton(container: HTMLElement, text: string) {
   act(() => { btn.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
 }
 
+function typeInto(input: HTMLInputElement, value: string) {
+  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+  act(() => {
+    setter?.call(input, value);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+}
+
 describe("App renders without crashing", () => {
   beforeEach(reset);
 
@@ -58,6 +66,19 @@ describe("App renders without crashing", () => {
     const html = m.html();
     expect(html).toContain("The Election"); // step 1 of the setup wizard
     expect(html).toContain("The War Room"); // staff-hire step present
+    m.cleanup();
+  });
+
+  it("searches the full scenario catalog without choosing a country first", () => {
+    const m = mount();
+    const input = m.container.querySelector<HTMLInputElement>('input[aria-label="Search election scenarios"]');
+    expect(input).not.toBeNull();
+    typeInto(input!, "Thatcher");
+    expect(m.html()).toContain("3 matching elections");
+    expect(m.html()).toContain("Thatcher's third");
+
+    typeInto(input!, "no such campaign");
+    expect(m.html()).toContain('No elections match "no such campaign"');
     m.cleanup();
   });
 

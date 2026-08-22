@@ -10,7 +10,7 @@ import { EvBar } from "@ui/EvBar";
 import { Sparkline } from "@ui/Sparkline";
 import {
   Vote, Lock, Play, Trophy, KeyRound, ChevronLeft, ChevronRight, Check, X, ShoppingBag,
-  LineChart, Mic2, Globe2, MessageCircleQuestion,
+  LineChart, Mic2, Globe2, MessageCircleQuestion, Search,
 } from "lucide-react";
 import { BRAND } from "../brand";
 
@@ -240,6 +240,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
   const buyPack = useAuthStore((s) => s.buyPack);
   const packPrices = usePackPrices();
   const [country, setCountry] = useState<CountryCode | null>(null);
+  const [query, setQuery] = useState("");
   const [buyBusy, setBuyBusy] = useState<string | null>(null);
   const [buyError, setBuyError] = useState<string | null>(null);
 
@@ -273,10 +274,22 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
     });
   }, []);
 
-  const scenarios = useMemo(
-    () => (country ? SCENARIO_REGISTRY.filter((s) => s.country === country).sort((a, b) => b.year - a.year) : []),
-    [country],
-  );
+  const normalizedQuery = query.trim().toLowerCase();
+  const scenarios = useMemo(() => {
+    const inCountry = country
+      ? SCENARIO_REGISTRY.filter((s) => s.country === country)
+      : SCENARIO_REGISTRY;
+    const matches = normalizedQuery
+      ? inCountry.filter((s) => [
+        s.label,
+        s.description,
+        String(s.year),
+        COUNTRY_NAMES[s.country],
+        s.difficulty,
+      ].some((value) => value.toLowerCase().includes(normalizedQuery)))
+      : inCountry;
+    return [...matches].sort((a, b) => b.year - a.year);
+  }, [country, normalizedQuery]);
 
   const free = SCENARIO_REGISTRY.filter((s) => s.free);
 
@@ -342,22 +355,39 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
           </div>
         </div>
 
-        {/* Full catalog: pick a country, then a date */}
+        {/* Full catalog: search globally or pick a country, then an election. */}
         <div className="field" style={{ textAlign: "left", margin: "36px 0 0" }}>
           <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
             <label>
-              {country
-                ? `${COUNTRY_NAMES[country]}: pick an election`
-                : "Browse by country"}
+              {normalizedQuery
+                ? `${scenarios.length} matching election${scenarios.length === 1 ? "" : "s"}${country ? ` in ${COUNTRY_NAMES[country]}` : ""}`
+                : country
+                  ? `${COUNTRY_NAMES[country]}: pick an election`
+                  : "Browse all campaigns"}
             </label>
-            {country && (
-              <button className="ghost small" onClick={() => setCountry(null)}>
-                <ChevronLeft size={13} style={{ verticalAlign: "-2px" }} /> All countries
-              </button>
-            )}
+            <span className="row" style={{ gap: 4 }}>
+              {normalizedQuery && (
+                <button className="ghost small" onClick={() => setQuery("")}>Clear search</button>
+              )}
+              {country && (
+                <button className="ghost small" onClick={() => setCountry(null)}>
+                  <ChevronLeft size={13} style={{ verticalAlign: "-2px" }} /> All countries
+                </button>
+              )}
+            </span>
+          </div>
+          <div className="catalog-search">
+            <Search size={15} aria-hidden="true" />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              aria-label="Search election scenarios"
+              placeholder={country ? `Search ${COUNTRY_NAMES[country]} elections` : "Search by year, country, candidate, or issue"}
+            />
           </div>
 
-          {!country ? (
+          {!country && !normalizedQuery ? (
             <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
               {countries.map((c) => (
                 <button
@@ -380,7 +410,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
                 </button>
               ))}
             </div>
-          ) : (
+          ) : scenarios.length ? (
             <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
               {scenarios.map((s) => (
                 <ScenarioCard
@@ -391,6 +421,10 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
                   onLocked={() => locked(s)}
                 />
               ))}
+            </div>
+          ) : (
+            <div className="catalog-empty" role="status">
+              No elections match "{query.trim()}"{country ? ` in ${COUNTRY_NAMES[country]}` : ""}.
             </div>
           )}
         </div>

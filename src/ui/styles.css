@@ -780,6 +780,22 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
 .lakeside-credit:hover { color: var(--text); }
 @media (max-width: 560px) { .landing-hero h1 { font-size: 1.9rem; } }
 
+.catalog-search {
+  display: flex; align-items: center; gap: 9px; margin: 8px 0 12px;
+  padding: 9px 12px; color: var(--muted); background: var(--panel);
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+}
+.catalog-search:focus-within { border-color: var(--accent); box-shadow: var(--glow-accent); }
+.catalog-search input {
+  flex: 1; min-width: 0; padding: 0; border: 0; outline: 0;
+  color: var(--text); background: transparent; font: inherit;
+}
+.catalog-search input::placeholder { color: var(--text-3); }
+.catalog-empty {
+  padding: 26px 16px; color: var(--muted); text-align: center;
+  background: var(--panel); border: 1px dashed var(--border); border-radius: var(--radius-lg);
+}
+
 /* Feature blocks: vote model, debates/events, multi-country */
 .feature-grid {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
