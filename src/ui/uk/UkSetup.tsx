@@ -3,7 +3,7 @@ import { useUkStore } from "@store/ukStore";
 import { useAuthStore } from "@store/authStore";
 import { DifficultyPicker, type Difficulty } from "@ui/DifficultyPicker";
 import { UK_ELECTIONS, UK_ELECTION_IDS } from "@content/uk/elections";
-import { ukNativeCover } from "@content/covers";
+import { ScenarioArt } from "@ui/ScenarioArt";
 import { UK_PLAYABLE, playablePartiesIn } from "@engine/ukGame";
 import { leaderFor } from "@content/uk/leaders";
 import { partyName, partyColor, partyShort } from "./parties";
@@ -118,13 +118,16 @@ export function UkSetup({ onBack, initialElection, initialSeed, initialParty }: 
               <label>Election year: each ships its real regional results & leaders</label>
               <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
                 {ids.map((id) => {
-                  const cover = ukNativeCover(id);
                   return (
                     <button key={id} type="button"
-                      className={`scenario-card${election === id ? " sel" : ""}${cover ? " has-cover" : ""}`}
-                      style={cover ? { alignItems: "stretch", textAlign: "left" } : undefined}
+                      className={`scenario-card has-cover${election === id ? " sel" : ""}`}
+                      style={{ alignItems: "stretch", textAlign: "left" }}
                       onClick={() => chooseElection(id)}>
-                      {cover && <img className="scenario-cover" src={cover} alt="" loading="lazy" decoding="async" />}
+                      <ScenarioArt
+                        scenarioId={`uk-${id}`}
+                        country="UK"
+                        year={UK_ELECTIONS[id].year}
+                      />
                       <span className="scenario-year">{UK_ELECTIONS[id].year}</span>
                       <span className="scenario-match">{UK_ELECTIONS[id].label}</span>
                     </button>

@@ -81,6 +81,13 @@ describe("App renders without crashing", () => {
     typeInto(input!, "Thatcher");
     expect(m.html()).toContain("3 matching elections");
     expect(m.html()).toContain("Thatcher's third");
+    expect(m.container.querySelectorAll("[data-scenario-art]")).toHaveLength(0);
+    const visualView = [...m.container.querySelectorAll<HTMLButtonElement>('.catalog-filter-group button')]
+      .find((button) => button.textContent === "Visual");
+    act(() => { visualView!.click(); });
+    const campaignArt = [...m.container.querySelectorAll<HTMLElement>("[data-scenario-art]")];
+    expect(campaignArt).toHaveLength(3);
+    expect(new Set(campaignArt.map((art) => art.dataset.scenarioArt)).size).toBe(3);
 
     typeInto(input!, "no such campaign");
     expect(m.html()).toContain('for "no such campaign"');

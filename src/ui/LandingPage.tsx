@@ -1,11 +1,12 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { PAYWALL_ENABLED, SCENARIO_REGISTRY, type CountryCode, type ScenarioMeta } from "@content/scenarioRegistry";
 import { PACKS } from "@content/packs";
-import { countryCover, scenarioCover } from "@content/covers";
+import { countryCover } from "@content/covers";
 import { useAuthStore } from "@store/authStore";
 import { usePackPrices } from "@lib/usePackPrices";
 import { UserMenu } from "@ui/auth/UserMenu";
 import { DailyCard } from "@ui/DailyCard";
+import { ScenarioArt } from "@ui/ScenarioArt";
 import { EvBar } from "@ui/EvBar";
 import { Sparkline } from "@ui/Sparkline";
 import {
@@ -66,16 +67,21 @@ function ScenarioCard({ s, unlocked, onPlay, onLocked, showCover = true }: {
   onLocked: () => void;
   showCover?: boolean;
 }) {
-  const cover = showCover ? scenarioCover(s.scenarioId) : undefined;
   return (
     <button
       type="button"
-      className={`scenario-card${cover ? " has-cover" : ""}`}
-      style={{ position: "relative", textAlign: "left", alignItems: cover ? "stretch" : "flex-start", opacity: unlocked ? 1 : 0.75, minHeight: cover ? undefined : 96 }}
+      className={`scenario-card${showCover ? " has-cover" : ""}`}
+      style={{ position: "relative", textAlign: "left", alignItems: showCover ? "stretch" : "flex-start", opacity: unlocked ? 1 : 0.75, minHeight: showCover ? undefined : 96 }}
       onClick={unlocked ? onPlay : onLocked}
       title={s.description}
     >
-      <CoverImg src={cover} alt="" />
+      {showCover && (
+        <ScenarioArt
+          scenarioId={s.scenarioId}
+          country={s.country}
+          year={s.year}
+        />
+      )}
       <span className="row" style={{ gap: 8, alignItems: "center", width: "100%" }}>
         <span style={{ fontSize: 18 }}>{s.flag}</span>
         <span className="scenario-year" style={{ fontSize: 15 }}>{s.label.split("·")[0].trim()}</span>
@@ -243,6 +249,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
   const [query, setQuery] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState<"all" | ScenarioMeta["difficulty"]>("all");
   const [accessFilter, setAccessFilter] = useState<"all" | "playable" | "locked">("all");
+  const [catalogView, setCatalogView] = useState<"compact" | "visual">("compact");
   const [buyBusy, setBuyBusy] = useState<string | null>(null);
   const [buyError, setBuyError] = useState<string | null>(null);
 
@@ -441,6 +448,20 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
                 ))}
               </span>
             )}
+            <span className="catalog-filter-group" aria-label="Catalog view">
+              <span className="catalog-filter-label">View</span>
+              {(["compact", "visual"] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={catalogView === value ? "sel" : ""}
+                  aria-pressed={catalogView === value}
+                  onClick={() => setCatalogView(value)}
+                >
+                  {value[0].toUpperCase() + value.slice(1)}
+                </button>
+              ))}
+            </span>
             {(country || normalizedQuery || hasCatalogFilter) && playableScenarios.length > 0 && (
               <button type="button" className="catalog-random" onClick={playRandom}>
                 <Play size={12} aria-hidden="true" /> Pick a playable campaign
@@ -480,6 +501,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
                   unlocked={canPlay(s.scenarioId)}
                   onPlay={() => play(s)}
                   onLocked={() => locked(s)}
+                  showCover={catalogView === "visual"}
                 />
               ))}
             </div>
@@ -565,7 +587,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
             <img src="lakeside-mark.svg" alt="Lakeside Games logo" width={20} height={20} />
             by Lakeside Games
           </a>
-          <span>Cover photos: Wikimedia Commons / public domain</span>
+          <span>Country photos: Wikimedia Commons / public domain</span>
         </div>
       </div>
     </div>
