@@ -1,99 +1,71 @@
-# Electioneer
+# Ballotline
 
-A single-player, turn-based election campaign simulator. 20 historical elections across
-six countries (US, UK, Canada, Germany, France, Australia), 1974 to 2027. Inspired by
-*President Infinity*'s resource management and *New Campaign Trail*'s branching
-demographic events, with a clean, data-forward web UI.
+Ballotline is a single-player, turn-based election campaign simulator with 49
+election scenarios across the United States, United Kingdom, Canada, Germany,
+France, and Australia. Its scenarios span 1951 to 2027 and model each country's
+electoral system, parties, regions, and campaign pressures.
 
 > You are the campaign manager. Read the map, allocate finite resources each
 > week, answer the moments that matter, and rewrite the result.
 
-Play in the browser at [lakesidegames.net/games/electioneer](https://lakesidegames.net/games/electioneer/).
+Play in the browser at
+[lakesidegames.net/games/ballotline](https://lakesidegames.net/games/ballotline/).
+The legacy `/games/electioneer/` address and the internal `electioneer` product
+identifier remain supported for existing links, purchases, and saves.
 
 ## Quick start
 
 ```bash
 npm install
-npm run dev        # play at the printed localhost URL
-npm test           # engine unit + calibration tests
-npm run calibrate  # just the 2020 calibration suite
-npm run build      # static SPA → dist/ (Tauri-wrappable as-is)
+npm run dev
+npm test
+npm run calibrate
+npm run build
 ```
 
-No backend. The whole game runs client-side; saves go to IndexedDB.
+The browser game runs as a React SPA. Local campaigns are stored in IndexedDB.
+The optional Node server provides accounts, leaderboards, entitlement checks,
+activation codes, and cloud-facing platform integration.
 
 ## Architecture
 
-The simulation engine is the core asset and is kept **completely isolated**:
-`src/engine` is pure TypeScript with **zero React/DOM/browser dependencies**, so
-it runs in the browser, in a Tauri shell, in tests, or headless for batch
-calibration.
+The simulation core is kept separate from the interface. `src/engine` is pure
+TypeScript with no React, DOM, or browser dependencies, so it can run in the
+browser, in the Tauri desktop shell, in tests, or headless for calibration.
 
-```
+```text
 src/
-  engine/        Pure, deterministic, seedable sim. The single source of truth.
-    types.ts        Data model (Section 4)
-    rng.ts          Seedable RNG (mulberry32), determinism for undo/replay/tests
-    setup.ts        createGame() + per-state baseline-margin solver
-    voteModel.ts    The scoring model (Section 5): blocs → state → EV → winner
-    actions.ts      9 campaign actions, all routed through the vote model
-    events.ts       Events engine (applies authored event data)
-    ai.ts           Tipping-point AI opponent (easy/normal/hard)
-    turn.ts         advanceTurn(state, actions, seed) → newState  (PURE)
-    polls.ts        Polls-with-noise + house effects (a blurred view of truth)
-  content/       DATA ONLY, designers never touch engine code.
-    issues.ts, blocs.ts, candidates.ts, states.ts, events.ts, mapLayout.ts
-  persistence/   SyncProvider interface; LocalSyncProvider (Dexie/IndexedDB);
-                 RemoteSyncProvider stub (cloud-save seam, not built)
-  store/         Zustand store: canonical state, undo ring buffer, autosave
-  ui/            React SPA, a pure function of engine state
+  engine/        Deterministic, seedable simulation and country adapters
+  content/       Elections, candidates, parties, events, regions, and maps
+  persistence/   Local and remote save providers
+  store/         Zustand state, autosave, replay, and entitlement state
+  ui/            React game, setup, guide, leaderboard, and results screens
+server/          Accounts, scores, identity linking, and entitlements
+src-tauri/       Desktop shell
 ```
 
-### The vote model (why the map moves is always legible)
+The United States engine models state polling, demographic blocs, electoral
+votes, campaign actions, events, debates, and an AI opponent. Country adapters
+extend the same campaign loop to parliamentary, proportional, preferential,
+and runoff systems. Every game is seedable, which supports reproducible tests,
+daily challenges, replay, and balance simulations.
 
-Each state's `prior2020BidenShare` (the real result) anchors a per-state
-**baseline margin solve**: a single scalar is fitted so the turnout-weighted
-aggregate of that state's demographic blocs reproduces 2020 exactly. Everything
-the campaign does writes **margin deltas** into `campaignMargin` and logs a
-human-readable **cause**. A bloc's two-party support is simply:
+## Content and calibration
 
-```
-support_Biden(bloc) = sigmoid(baselineMargin + campaignMargin + momentumTerm)
-```
+The scenario registry is the source of truth for the current 49 elections.
+Historical scenarios use authored candidates, starting conditions, maps, and
+events. Calibration suites check that neutral play remains close to historical
+baselines while still allowing campaign decisions to change the outcome.
 
-Because every shift is an additive, logged cause, the "week in review" recap and
-the end-game post-mortem can trace any poll move back to the ad, rally, event
-answer, or gaffe that caused it (Pillar C).
+## Product identity
 
-### Determinism
-
-`advanceTurn(state, actions, seed)` is pure: same inputs → same next state. This
-powers undo (a snapshot ring buffer in the store), reproducible tests, and a
-future server-authoritative multiplayer promotion with no engine rewrite.
-
-## Calibration (the correctness test)
-
-`npm run calibrate` asserts that **neutral, do-nothing play reproduces history**:
-
-- Exactly **538** electoral votes across all contests (incl. ME/NE districts).
-- **Biden 306 / Trump 232**, ~52% two-party popular vote.
-- All seven battlegrounds (AZ, GA, WI, PA, NV, NC, FL) within 6 points.
-- 1000 noisy neutral sims center near Biden ~306 EV, with the tossups genuinely
-  swinging both ways.
-
-## Scope
-
-**In:** the 2020 general only, two tickets, 51 contests + ME/NE district splits,
-Electoral College with a defined 269-269 contingent-election ending, weekly turn
-loop (9 turns Sept 1 → Nov 3), resource allocation, events, AI opponent,
-polls-with-noise, results + post-mortem, local saves + undo + JSON export/import.
-
-**Out (deferred):** primaries, downballot, multiplayer, other years, modding,
-governance. Cloud saves and the Tauri desktop wrapper are designed-for but not
-built.
+The player-facing name is Ballotline. Compatibility-sensitive identifiers such
+as the package name, desktop application identifier, entitlement game key,
+database records, backup paths, and checkout query value remain `electioneer`.
+Do not rename those without a coordinated data and deployment migration.
 
 ## License
 
-[PolyForm Noncommercial 1.0.0](./LICENSE.md). The source is available to read, learn
-from, modify, and run noncommercially. Commercial use, including selling builds or
-hosting it as a paid service, is not licensed.
+[PolyForm Noncommercial 1.0.0](./LICENSE.md). The source is available to read,
+learn from, modify, and run noncommercially. Commercial use, including selling
+builds or hosting the game as a paid service, is not licensed.

@@ -317,7 +317,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
           <h1>{BRAND.name}</h1>
           <p className="sub">
             Run a real campaign turn by turn: allocate a budget, pick rally states, run ads, survive debates,
-            and watch the polling average move in response. {SCENARIO_REGISTRY.length} historical elections
+            and watch the polling average move in response. {SCENARIO_REGISTRY.length} election scenarios
             across {new Set(SCENARIO_REGISTRY.map((s) => s.country)).size} countries.
             {PAYWALL_ENABLED
               ? " Two scenarios and the daily challenge are free forever."
@@ -463,7 +463,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
         <div className="landing-foot">
           <button className="ghost small" onClick={() => onGo({ kind: "legal", tab: "privacy" })}>Privacy</button>
           <button className="ghost small" onClick={() => onGo({ kind: "legal", tab: "terms" })}>Terms</button>
-          <a className="ghost small" href={`mailto:support@${BRAND.domain}`}>Contact</a>
+          <a className="ghost small" href={`mailto:${BRAND.supportEmail}`}>Contact</a>
           <a className="ghost small" href="https://lakesidegames.net/store/" target="_blank" rel="noopener">Store</a>
           <span className="muted small" title="Coming soon">Discord (coming soon)</span>
           <a className="lakeside-credit" href="https://lakesidegames.net" target="_blank" rel="noopener">

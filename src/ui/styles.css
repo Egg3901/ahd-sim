@@ -27,7 +27,7 @@
   --ink-300: rgba(234, 240, 246, 0.8); /* prose / prompt body */
   --ink-500: rgba(234, 240, 246, 0.64); /* muted / labels */
 
-  /* ── Brand accent (Electioneer red, Lakeside per-game accent) ────── */
+  /* Brand accent (Ballotline red, Lakeside per-game accent). */
   --accent: #e05c4b;
   --accent-bright: #e97463;
   --accent-ink: #0a0f14; /* text on filled accent */

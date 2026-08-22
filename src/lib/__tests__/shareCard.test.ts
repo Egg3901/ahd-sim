@@ -14,14 +14,14 @@ describe("buildShareText", () => {
       score: 8420,
     });
     expect(text).toBe(
-      "Electioneer Daily · 2026-07-08\n" +
+      "Ballotline Daily · 2026-07-08\n" +
       "🇩🇪 2021 · Scholz v. Laschet — as SPD\n" +
       "🏆 371 seats · Score 8,420\n" +
-      BRAND.domain, // interim staging host until the real domain is purchased
+      BRAND.shareUrl,
     );
   });
 
-  it("brands from BRAND (name + domain)", () => {
+  it("brands from BRAND (name + share URL)", () => {
     const text = buildShareText({
       date: "2026-01-01", label: "2024 · Harris v. Trump", flag: "🇺🇸",
       role: "Democrats", won: false, unitLine: "226 EVs", score: 312,
@@ -29,7 +29,7 @@ describe("buildShareText", () => {
     const lines = text.split("\n");
     expect(lines).toHaveLength(4);
     expect(lines[0]).toBe(`${BRAND.name} Daily · 2026-01-01`);
-    expect(lines[3]).toBe(BRAND.domain);
+    expect(lines[3]).toBe(BRAND.shareUrl);
   });
 
   it("swaps the trophy for a ballot box on a loss and formats the score", () => {

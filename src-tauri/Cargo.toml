@@ -1,7 +1,7 @@
 [package]
 name = "electioneer"
 version = "0.1.0"
-description = "Electioneer desktop shell (Tauri)"
+description = "Ballotline desktop shell (Tauri)"
 edition = "2021"
 rust-version = "1.77"
 
