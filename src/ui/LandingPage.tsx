@@ -176,7 +176,7 @@ const FAQ_ITEMS: { q: string; a: string }[] = [
   },
   {
     q: "Where do I buy packs?",
-    a: `Through lakesidegames.net/store. After checkout the pack unlocks automatically on your account, or you can redeem a code from the "Unlock with a code" prompt on a locked scenario.`,
+    a: `Through lakesidegames.net/account/store. After checkout the pack unlocks automatically on your account, or you can redeem a code from the "Unlock with a code" prompt on a locked scenario.`,
   },
   {
     q: "Can I play offline or without an account?",
@@ -329,9 +329,9 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
             <span className="mark"><Vote size={18} /></span>{BRAND.name}
           </span>
           <span className="row" style={{ gap: 6 }}>
-            <button className="ghost small" onClick={() => { window.location.href = "https://lakesidegames.net/store/"; }}>
+            <a className="ghost small" href={BRAND.storeUrl}>
               <ShoppingBag size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Store
-            </button>
+            </a>
             <button className="ghost small" onClick={() => onGo({ kind: "leaderboard" })}>
               <Trophy size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Leaderboard
             </button>
@@ -512,9 +512,9 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
                 <li><Check size={13} /> One time purchase, yours to keep, no subscription</li>
                 <li><Check size={13} /> Bought and delivered through the Lakeside store</li>
               </ul>
-              <button className="ghost small" style={{ marginTop: 8 }} onClick={() => { window.location.href = "https://lakesidegames.net/store/"; }}>
+              <a className="ghost small" style={{ marginTop: 8 }} href={BRAND.storeUrl}>
                 <ShoppingBag size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Browse packs on lakesidegames.net
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -559,7 +559,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
           <button className="ghost small" onClick={() => onGo({ kind: "legal", tab: "privacy" })}>Privacy</button>
           <button className="ghost small" onClick={() => onGo({ kind: "legal", tab: "terms" })}>Terms</button>
           <a className="ghost small" href={`mailto:${BRAND.supportEmail}`}>Contact</a>
-          <a className="ghost small" href="https://lakesidegames.net/store/" target="_blank" rel="noopener">Store</a>
+          <a className="ghost small" href={BRAND.storeUrl}>Store</a>
           <span className="muted small" title="Coming soon">Discord (coming soon)</span>
           <a className="lakeside-credit" href="https://lakesidegames.net" target="_blank" rel="noopener">
             <img src="lakeside-mark.svg" alt="Lakeside Games logo" width={20} height={20} />

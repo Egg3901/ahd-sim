@@ -8,6 +8,7 @@ export const BRAND = {
   eyebrow: "RUN THE RACE",
   domain: "lakesidegames.net",
   url: "https://lakesidegames.net/games/ballotline/",
+  storeUrl: "https://lakesidegames.net/account/store",
   shareUrl: "lakesidegames.net/games/ballotline",
   supportEmail: "support@lakesidegames.net",
   // Attribution line for footers/about.

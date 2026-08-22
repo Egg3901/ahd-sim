@@ -9,6 +9,7 @@ import { createRoot } from "react-dom/client";
 import { App } from "../../App";
 import { useGameStore } from "@store/gameStore";
 import { PAYWALL_ENABLED } from "@content/scenarioRegistry";
+import { BRAND } from "../../brand";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -61,6 +62,10 @@ describe("App renders without crashing", () => {
     expect(m.html()).toContain(PAYWALL_ENABLED ? "Play free" : "Start here");
     expect(m.html()).toContain("Harris v. Trump");
     expect(m.html()).toContain("Scenario packs");
+    const storeLinks = [...m.container.querySelectorAll<HTMLAnchorElement>('a[href]')]
+      .filter((link) => link.textContent?.includes("Store") || link.textContent?.includes("Browse packs"));
+    expect(storeLinks.length).toBeGreaterThan(0);
+    expect(storeLinks.every((link) => link.href === BRAND.storeUrl)).toBe(true);
     // Entering a free U.S. scenario shows the setup wizard on that year.
     clickButton(m.container, "Biden v. Trump");
     const html = m.html();

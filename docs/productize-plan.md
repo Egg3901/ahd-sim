@@ -33,7 +33,7 @@ hobby prototype; the repo was well past that):
   diminishing-returns curve (`src/engine/actions.ts`); going negative dents
   your own media narrative
 - Freemium commerce through the external Lakeside platform
-  (lakesidegames.net/store): 2 free scenarios + daily challenge, 32 in paid
+  (lakesidegames.net/account/store): 2 free scenarios + daily challenge, 47 in paid
   packs, entitlement consumption and code redemption already wired. No Stripe
   or Paddle work was needed.
 - Privacy-friendly analytics (self-hosted umami, inert until configured),
