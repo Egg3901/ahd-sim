@@ -1,10 +1,27 @@
 // Thin fetch wrapper for the campaign backend. In dev, Vite proxies /api to the
-// server process; in production both sit behind the same origin. All calls are
-// best-effort: the game itself never depends on the network.
+// server process; on sim.ahousedividedgame.com the SPA and API share an origin.
+// On every other mount (lakesidegames.net/games/electioneer, Cloudflare Pages
+// previews) there is NO /api/* on the page origin: requests would hit the SPA
+// fallback and return index.html with HTTP 200, which the client would read as
+// empty successful payloads. All calls are therefore addressed to the campaign
+// server host explicitly. They stay best-effort: the game itself never depends
+// on the network.
 
 const TOKEN_KEY = "campaign_token";
 const USER_KEY = "campaign_user";
 const GUEST_KEY = "campaign_guest_id";
+
+// Host that actually serves the campaign API. Relative (same-origin) on sim and
+// in dev; the sim origin everywhere else.
+export function apiBase(): string {
+  if (typeof window === "undefined") return "";
+  const { hostname } = window.location;
+  const sameOriginApi =
+    hostname === "sim.ahousedividedgame.com" ||
+    hostname === "localhost" ||
+    hostname === "127.0.0.1";
+  return sameOriginApi ? "" : "https://sim.ahousedividedgame.com";
+}
 
 export interface ApiUser {
   id: string;
@@ -68,9 +85,18 @@ export class ApiError extends Error {
   }
 }
 
+// Unwraps a JSON response, guaranteeing an object (never null/array) so the
+// destructures downstream cannot blow up on a malformed payload.
+async function readJsonObject(res: Response): Promise<Record<string, unknown>> {
+  const body: unknown = await res.json().catch(() => null);
+  return body && typeof body === "object" && !Array.isArray(body)
+    ? (body as Record<string, unknown>)
+    : {};
+}
+
 async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getToken();
-  const res = await fetch(path.replace(/^\//, ""), {
+  const res = await fetch(`${apiBase()}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
@@ -78,9 +104,23 @@ async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
       ...(init.headers ?? {}),
     },
   });
-  const body = await res.json().catch(() => ({}));
+  const body = await readJsonObject(res);
   if (!res.ok) throw new ApiError(res.status, (body as { error?: string }).error ?? `HTTP ${res.status}`);
   return body as T;
+}
+
+// Server payloads must carry the full Unlocked shape; anything less (an old
+// proxy cache, an SPA-fallback HTML masquerading as a 200, a partial response)
+// resolves to undefined fields that would poison the auth store. Normalize
+// defensively: missing fields become empty lists, never undefined.
+function normalizeUnlocked(value: unknown): Unlocked {
+  const obj = value && typeof value === "object" && !Array.isArray(value)
+    ? (value as { scenarioIds?: unknown; packIds?: unknown })
+    : {};
+  return {
+    scenarioIds: Array.isArray(obj.scenarioIds) ? obj.scenarioIds.map(String) : [],
+    packIds: Array.isArray(obj.packIds) ? obj.packIds.map(String) : [],
+  };
 }
 
 export const api = {
@@ -90,13 +130,15 @@ export const api = {
   login: (email: string, password: string) =>
     call<{ token: string; user: ApiUser }>("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
 
-  me: () => call<{ user: ApiUser; unlocked: Unlocked }>("/api/auth/me"),
+  me: () => call<{ user: ApiUser; unlocked: Unlocked }>("/api/auth/me").then((r) => ({ ...r, unlocked: normalizeUnlocked(r.unlocked) })),
 
   activate: (code: string) =>
     call<{ scenarioId?: string; packId?: string; packName?: string; unlocked: Unlocked }>(
-      "/api/auth/activate", { method: "POST", body: JSON.stringify({ code }) }),
+      "/api/auth/activate", { method: "POST", body: JSON.stringify({ code }) })
+    .then((r) => ({ ...r, unlocked: normalizeUnlocked(r.unlocked) })),
 
-  activations: () => call<{ unlocked: Unlocked }>("/api/auth/activations"),
+  activations: () => call<{ unlocked: Unlocked }>("/api/auth/activations")
+    .then((r) => ({ ...r, unlocked: normalizeUnlocked(r.unlocked) })),
 
   // Product catalog with platform prices (single source of truth on the
   // platform; the server falls back to bundled prices if it is unreachable).
@@ -107,11 +149,12 @@ export const api = {
   // the platform checkout (see lakesideCheckoutUrl); the account view lists the
   // current user's purchases via this same-origin proxy so INTERNAL_TOKEN stays
   // server-side.
-  myEntitlements: () => call<{ purchases: Purchase[] }>("/api/my-entitlements"),
+  myEntitlements: () => call<{ purchases: Purchase[] }>("/api/my-entitlements").then((r) => ({ purchases: Array.isArray(r.purchases) ? r.purchases : [] })),
 
   lakesideExchange: (code: string) =>
     call<{ token: string; user: ApiUser; unlocked: Unlocked }>(
-      "/api/lakeside/exchange", { method: "POST", body: JSON.stringify({ code }) }),
+      "/api/lakeside/exchange", { method: "POST", body: JSON.stringify({ code }) })
+    .then((r) => ({ ...r, unlocked: normalizeUnlocked(r.unlocked) })),
 
   leaderboard: (scenarioId: string, difficulty?: string, limit = 20) =>
     call<{ entries: LeaderboardEntry[] }>(
@@ -141,8 +184,9 @@ export const api = {
   // ── Cloud saves (signed-in cross-device sync) ──
   // These mirror the local Dexie saves for a logged-in player. All callers must
   // treat failures as "stay local only"; the RemoteSyncProvider wraps them so
-  // gameplay never depends on the network.
-  listSaves: () => call<{ saves: RemoteSaveMeta[] }>("/api/saves"),
+  // gameplay never depends on the network. listSaves normalizes a malformed
+  // payload to an empty list so the caller's .map can never throw.
+  listSaves: () => call<{ saves: RemoteSaveMeta[] }>("/api/saves").then((r) => ({ saves: Array.isArray(r.saves) ? r.saves : [] })),
   getSave: (id: string) => call<RemoteSaveRecord>(`/api/saves/${encodeURIComponent(id)}`),
   putSave: (id: string, record: RemoteSavePut) =>
     call<{ ok: boolean; id: string; updatedAt: number }>(
@@ -245,13 +289,12 @@ export interface DailyChampions {
 // served from sim.ahousedividedgame.com or lakesidegames.net/games/electioneer.
 export function lakesideLoginUrl(): string {
   const loc = window.location;
-  const onSim = loc.hostname === "sim.ahousedividedgame.com";
   // Same-origin relative endpoint on sim (and in dev, where Vite proxies /api);
   // cross to sim explicitly from the lakesidegames.net mount.
-  const endpoint = onSim || loc.hostname === "localhost" || loc.hostname === "127.0.0.1"
-    ? "api/lakeside/login"
-    : "https://sim.ahousedividedgame.com/api/lakeside/login";
-  const ret = onSim ? loc.pathname + loc.search : loc.origin + loc.pathname + loc.search;
+  const endpoint = `${apiBase()}/api/lakeside/login`;
+  const ret = loc.hostname === "sim.ahousedividedgame.com"
+    ? loc.pathname + loc.search
+    : loc.origin + loc.pathname + loc.search;
   return `${endpoint}?return=${encodeURIComponent(ret)}`;
 }
 
