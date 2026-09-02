@@ -92,7 +92,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   loadPurchases: async () => {
     try {
       const { purchases } = await api.myEntitlements();
-      set({ purchases });
+      set({ purchases: Array.isArray(purchases) ? purchases : [] });
     } catch {
       /* account view shows an empty list; nothing to do */
     }
@@ -117,6 +117,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     }
     try {
       const { user, unlocked } = await api.me();
+      // A 200 without a usable user (SPA-fallback HTML parsed as {}, an old
+      // cache, a partial response) must not wipe the signed-in state or push
+      // undefined into `unlocked`; treat it like an unreachable server.
+      if (!user || typeof user !== "object" || typeof user.id !== "string") {
+        set({ serverDown: true });
+        return;
+      }
       set({ user, unlocked, serverDown: false });
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
