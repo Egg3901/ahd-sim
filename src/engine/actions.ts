@@ -12,6 +12,7 @@ import type { Rng } from "./rng";
 import { BLOCS } from "@content/blocs";
 import { OPPONENT_OF } from "@content/candidates";
 import { staffEffects } from "@content/staff";
+import type { PlanBonus } from "./planBonuses";
 
 // All action effects route THROUGH the vote model: they write margin deltas
 // (Biden − Trump) into blocs' campaignMargin, plus enthusiasm / momentum /
@@ -88,13 +89,20 @@ const findState = (game: GameState, id?: string) =>
 // ── ADVERTISING ───────────────────────────────────────────────────────────
 // Positive: raise own appeal. Contrast: lower opponent. Issue: raise salience
 // of a chosen issue where you're strong. Cost scales with media-market cost.
-function applyAdvertise(game: GameState, action: CampaignAction, rng: Rng, mult = 1) {
+function applyAdvertise(
+  game: GameState,
+  action: CampaignAction,
+  rng: Rng,
+  mult = 1,
+  planMultiplier = 1,
+) {
   const state = findState(game, action.stateId);
   if (!state) return;
   const c = action.candidate;
   const spend = Math.max(0, action.spend ?? 0);
   const res = game.resources[c];
   const actualSpend = Math.min(spend, res.cash);
+  if (actualSpend <= 0) return;
   res.cash -= actualSpend;
 
   // Track lifetime ad spend (drives the Grassroots achievement).
@@ -113,7 +121,7 @@ function applyAdvertise(game: GameState, action: CampaignAction, rng: Rng, mult 
 
   if (mode === "issue" && action.issueId) {
     // Issue ads raise that issue's national salience (toward your strong suit).
-    const bump = Math.min(0.12, effectiveMillions * 0.015);
+    const bump = Math.min(0.12, effectiveMillions * 0.015) * planMultiplier;
     game.salience[action.issueId] = Math.min(1, (game.salience[action.issueId] ?? 0.5) + bump);
     game.causes.push({
       turn: game.turn,
@@ -393,27 +401,45 @@ function applyIssuePivot(game: GameState, action: CampaignAction, mult = 1) {
   }
 }
 
-export function applyAction(game: GameState, action: CampaignAction, rng: Rng) {
-  // Every action costs exactly one slot from the weekly pool (the 7-day plan).
-  // Out of slots → the action can't run. Cash costs (ads, etc.) are charged on
-  // top inside the individual handlers.
+export function applyAction(
+  game: GameState,
+  action: CampaignAction,
+  rng: Rng,
+  planMultiplier = 1,
+  planBonuses: readonly PlanBonus[] = [],
+) {
+  // Every action costs exactly one slot from the weekly pool. Invalid or
+  // unaffordable actions do not burn a slot; a deliberate GOTV attempt with no
+  // field operation still does, because the failed push is itself the result.
   const res = game.resources[action.candidate];
   if (res.actions < 1) return;
-  res.actions -= 1;
   // The player's campaigning is amplified by the difficulty handicap (1.0 for
   // the AI and on hard); it scales persuasion only, not cash/infra/prep.
-  const mult = action.candidate === game.playerCandidate ? (game.playerEdge ?? 1) : 1;
+  const mult = (action.candidate === game.playerCandidate ? (game.playerEdge ?? 1) : 1) * planMultiplier;
+  const causeCount = game.causes.length;
   switch (action.type) {
-    case "advertise": return applyAdvertise(game, action, rng, mult);
-    case "rally": return applyRally(game, action, rng, mult);
-    case "surrogate": return applySurrogate(game, action, rng, mult);
-    case "fundraise": return applyFundraise(game, action, rng);
-    case "ground_game": return applyGroundGame(game, action);
-    case "gotv": return applyGotv(game, action, mult);
-    case "oppo_research": return applyOppoResearch(game, action, rng, mult);
-    case "debate_prep": return applyDebatePrep(game, action);
-    case "policy_prep": return applyPolicyPrep(game, action);
-    case "issue_pivot": return applyIssuePivot(game, action, mult);
+    case "advertise": applyAdvertise(game, action, rng, mult, planMultiplier); break;
+    case "rally": applyRally(game, action, rng, mult); break;
+    case "surrogate": applySurrogate(game, action, rng, mult); break;
+    case "fundraise": applyFundraise(game, action, rng); break;
+    case "ground_game": applyGroundGame(game, action); break;
+    case "gotv": applyGotv(game, action, mult); break;
+    case "oppo_research": applyOppoResearch(game, action, rng, mult); break;
+    case "debate_prep": applyDebatePrep(game, action); break;
+    case "policy_prep": applyPolicyPrep(game, action); break;
+    case "issue_pivot": applyIssuePivot(game, action, mult); break;
+  }
+  if (game.causes.length === causeCount) return;
+  res.actions -= 1;
+  // Only celebrate a combo when the payoff action produced an effect. This
+  // keeps an unaffordable ad or a no-op pivot from earning a false recap item.
+  for (const bonus of planBonuses) {
+    game.causes.push({
+      turn: game.turn,
+      stateId: action.stateId,
+      cause: `Plan bonus: ${bonus.name} (+${Math.round((bonus.multiplier - 1) * 100)}%)`,
+      marginDelta: 0,
+    });
   }
 }
 

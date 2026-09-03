@@ -234,6 +234,10 @@ export function GuidePage({ onClose }: { onClose: () => void }) {
                 <li><strong>Event phase:</strong> Random or scheduled events surface. Some require immediate decisions; others apply automatically.</li>
                 <li><strong>Resolution:</strong> Polls update, momentum shifts, resources refresh. A week-in-review recap shows what moved and why.</li>
               </ol>
+              <h3>Plan Bonuses</h3>
+              <p className="guide-text">
+                Actions resolve from Day 1 through Day 7. Set up a move on an earlier day and follow through later to make it stronger. Rally before advertising in the same target for +20%, build field offices before GOTV there for +25%, do policy prep before an issue push for +20%, or research the opposition before contrast ads for +25%. The planner lights up every chain you complete.
+              </p>
               <h3>Resource Limits</h3>
               <ul className="guide-list">
                 <li><strong>Cash:</strong> Spend on ads, surrogates, field offices, GOTV, oppo research. Replenished via fundraising.</li>

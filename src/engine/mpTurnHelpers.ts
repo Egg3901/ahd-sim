@@ -43,7 +43,11 @@ export function buildCauseRecap(
       marginDelta: info.delta,
     });
   }
-  recap.sort((a, b) => Math.abs(b.marginDelta ?? 0) - Math.abs(a.marginDelta ?? 0));
+  recap.sort((a, b) => {
+    const aBonus = a.label.startsWith("Plan bonus:") ? 1 : 0;
+    const bBonus = b.label.startsWith("Plan bonus:") ? 1 : 0;
+    return bBonus - aBonus || Math.abs(b.marginDelta ?? 0) - Math.abs(a.marginDelta ?? 0);
+  });
   recap.unshift(header);
   return recap.slice(0, limit);
 }

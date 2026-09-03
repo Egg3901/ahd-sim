@@ -15,6 +15,9 @@ import {
   type NewGameOptions,
   type Projection,
   type CandidateId,
+  orderedPlan,
+  planBonusMultiplier,
+  planBonusesForAction,
 } from "@engine/index";
 import { EVENTS_BY_ID } from "@content/events";
 import { STAFF_BY_ID, staffEffects } from "@content/staff";
@@ -132,9 +135,14 @@ function resumeReplayLog(game: GameState, log: ReplayLog | null): ReplayLog {
 function projectWithQueue(game: GameState): Projection {
   const clone: GameState = structuredClone(game);
   const rng = createRng(`preview:${game.seed}:${game.turn}`);
-  for (const action of clone.queuedActions) {
+  const plan = orderedPlan(clone.queuedActions);
+  const completed: CampaignAction[] = [];
+  for (const action of plan) {
     if (action.candidate !== clone.playerCandidate) continue;
-    applyAction(clone, action, rng);
+    const bonuses = planBonusesForAction(action, completed);
+    const causeCount = clone.causes.length;
+    applyAction(clone, action, rng, planBonusMultiplier(bonuses), bonuses);
+    if (clone.causes.length > causeCount) completed.push(action);
   }
   return projectElection(clone);
 }

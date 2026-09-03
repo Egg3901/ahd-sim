@@ -3,6 +3,7 @@ import { useGameStore } from "@store/gameStore";
 import type { ActionType, AdMode, CampaignAction, IssueId } from "@engine/index";
 import { ISSUES, ISSUE_IDS } from "@content/issues";
 import { money } from "./format";
+import { PlanBonusStrip } from "./PlanBonusStrip";
 import {
   Tv,
   Megaphone,
@@ -212,6 +213,8 @@ export function ActionPanel() {
           </>
         )}
       </div>
+
+      <PlanBonusStrip plan={plan} />
 
       {/* 7-day week. Each day holds up to 3 actions; "+" drops the configured
           action above onto that day. The pool runs out before all 21 slots. */}

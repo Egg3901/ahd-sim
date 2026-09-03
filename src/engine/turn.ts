@@ -6,6 +6,7 @@ import { queueEventsForTurn, resolveAiEvents, aiChooseEvent, resolveEvent, resol
 import { projectElection, computeResult } from "./voteModel";
 import { nationalPoll } from "./polls";
 import { OPPONENT_OF, CANDIDATES } from "@content/candidates";
+import { orderedPlan, planBonusMultiplier, planBonusesForAction } from "./planBonuses";
 
 // Appends a trend sample for the current state to game.timeline. Called once at
 // game start (the opening baseline) and once at the end of every advanced week.
@@ -73,7 +74,11 @@ function buildRecap(game: GameState, turn: number, evBefore: number): TurnRecapI
       marginDelta: info.delta,
     });
   }
-  recap.sort((a, b) => Math.abs(b.marginDelta ?? 0) - Math.abs(a.marginDelta ?? 0));
+  recap.sort((a, b) => {
+    const aBonus = a.label.startsWith("Plan bonus:") ? 1 : 0;
+    const bBonus = b.label.startsWith("Plan bonus:") ? 1 : 0;
+    return bBonus - aBonus || Math.abs(b.marginDelta ?? 0) - Math.abs(a.marginDelta ?? 0);
+  });
 
   const evAfter = projectElection(game).ev.dem;
   recap.unshift({
@@ -134,10 +139,14 @@ export function advanceTurn(
 
   // 3. Apply the player's queued actions in day order (Day 1 → Day 7), so the
   //    week plays out as scheduled, then the AI's plan.
-  const playerActions = actions
-    .filter((a) => a.candidate === player)
-    .sort((a, b) => (a.day ?? 1) - (b.day ?? 1));
-  for (const action of playerActions) applyAction(game, action, rng);
+  const playerActions = orderedPlan(actions.filter((a) => a.candidate === player));
+  const completedActions: CampaignAction[] = [];
+  for (const action of playerActions) {
+    const bonuses = planBonusesForAction(action, completedActions);
+    const causeCount = game.causes.length;
+    applyAction(game, action, rng, planBonusMultiplier(bonuses), bonuses);
+    if (game.causes.length > causeCount) completedActions.push(action);
+  }
   const aiActions = planAiActions(game, rng, cfg);
   for (const action of aiActions) applyAction(game, action, rng);
 
