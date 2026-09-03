@@ -3,6 +3,8 @@ import { createGame } from "../setup";
 import { advanceTurn, beginGame } from "../turn";
 import { computeResult, projectElection } from "../voteModel";
 import { resolveEvent } from "../events";
+import { applyAction } from "../actions";
+import { createRng } from "../rng";
 import type { CampaignAction, GameState } from "../types";
 
 function playToEnd(game: GameState, actionsFor: (g: GameState) => CampaignAction[]): GameState {
@@ -121,5 +123,37 @@ describe("turn loop", () => {
       return a.demShare < n.demShare - 0.001;
     });
     expect(someRedder).toBe(true);
+  });
+
+  it("resolves click-order-independent daily plans and reports earned plan bonuses", () => {
+    const game = beginGame(createGame({ seed: "weekly-chain", playerCandidate: "dem" }));
+    const actions: CampaignAction[] = [
+      { type: "advertise", candidate: "dem", stateId: "PA", adMode: "positive", spend: 2_000_000, day: 4 },
+      { type: "rally", candidate: "dem", stateId: "PA", day: 1 },
+    ];
+
+    const next = advanceTurn(game, actions, "weekly-chain");
+    const rallyIndex = next.causes.findIndex((c) => c.turn === 0 && c.cause === "Rally in PA");
+    const adIndex = next.causes.findIndex((c) => c.turn === 0 && c.cause === "Positive ads in PA");
+    expect(rallyIndex).toBeGreaterThanOrEqual(0);
+    expect(adIndex).toBeGreaterThan(rallyIndex);
+    expect(next.lastRecap.some((item) => item.label === "Plan bonus: Own the news cycle (+20%)")).toBe(true);
+  });
+
+  it("does not burn an action slot or award a chain when its setup cannot run", () => {
+    const game = beginGame(createGame({ seed: "failed-setup", playerCandidate: "dem" }));
+    game.resources.dem.cash = 1_000_000;
+    const actions: CampaignAction[] = [
+      { type: "ground_game", candidate: "dem", stateId: "PA", day: 1 },
+      { type: "gotv", candidate: "dem", stateId: "PA", day: 2 },
+    ];
+
+    const slotsBefore = game.resources.dem.actions;
+    applyAction(game, actions[0], createRng("failed-setup"));
+    expect(game.resources.dem.actions).toBe(slotsBefore);
+
+    const next = advanceTurn(game, actions, "failed-setup");
+    expect(next.causes.some((c) => c.cause === "Built field offices in PA")).toBe(false);
+    expect(next.causes.some((c) => c.cause.startsWith("Plan bonus: Turnout machine"))).toBe(false);
   });
 });
