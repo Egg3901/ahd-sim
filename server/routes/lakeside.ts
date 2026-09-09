@@ -28,7 +28,7 @@ import { unlockedForUserWithPlatform } from "../activation.js";
 import {
   checkInternalToken, configuredBaseUrl, getLakesideAuthClient, identityFromAuth,
   lakesideAuthAhdOrigin, linkOrCreateUser, mintHandoffCode, redeemHandoffCode,
-  resolveReturnUrl, type LakesideIdentity,
+  resolveReturnUrl, AccountLinkConflictError, type LakesideIdentity,
 } from "../lakeside.js";
 
 const AHD_LOGIN_URL = "https://www.ahousedividedgame.com/login";
@@ -88,7 +88,13 @@ lakesideRouter.post("/api/lakeside/exchange", async (req, res) => {
   if (typeof code !== "string" || !code) return res.status(400).json({ error: "Code required" });
   const identity = redeemHandoffCode(code);
   if (!identity) return res.status(401).json({ error: "Sign in link expired, try again" });
-  const user = linkOrCreateUser(identity);
+  let user;
+  try {
+    user = linkOrCreateUser(identity);
+  } catch (error) {
+    if (error instanceof AccountLinkConflictError) return res.status(409).json({ error: error.message, code: "ACCOUNT_LINK_REQUIRES_PROOF" });
+    throw error;
+  }
   res.json({
     token: signToken({ userId: user.id, username: user.username }),
     user: { id: user.id, username: user.username, email: user.email },

@@ -107,13 +107,8 @@ describe("lakeside identity", () => {
       .toBe("https://auth.example.test/auth/ahd?return=https%3A%2F%2Fsim.ahousedividedgame.com%2Fapi%2Flakeside%2Flogin%3Freturn%3D%252F");
   });
 
-  it("link-by-email attaches ahd_user_id to the existing local account", () => {
-    const local = makeUser({ email: "linkme@example.com" });
-    const linked = lakeside.linkOrCreateUser({ ahdUserId: "ahd_link_1", email: "LinkMe@Example.com", username: "whatever" });
-    expect(linked.id).toBe(local.id);
-    const row = dbMod.getDb().prepare("SELECT ahd_user_id FROM users WHERE id = ?").get(local.id) as { ahd_user_id: string };
-    expect(row.ahd_user_id).toBe("ahd_link_1");
-    // Second sign-in resolves by ahd_user_id, same account.
+  it("a proven provider link resolves the same account after an email change", () => {
+    const local = makeUser({ email: "linkme@example.com", ahd: "ahd_link_1" });
     expect(lakeside.linkOrCreateUser({ ahdUserId: "ahd_link_1", email: "other@example.com", username: "x" }).id).toBe(local.id);
   });
 
@@ -123,22 +118,15 @@ describe("lakeside identity", () => {
     expect(u.email).toBe("brand-new@example.com");
   });
 
-  it("closes the local password door when linking an email-collision account (takeover fix)", () => {
-    // Simulate a squatter who pre-registered the victim's email locally with a
-    // password they know (makeUser stores password_hash = "x").
-    const squat = makeUser({ email: "victim@example.com" });
-    const before = dbMod.getDb().prepare("SELECT password_hash FROM users WHERE id = ?").get(squat.id) as { password_hash: string };
-    expect(before.password_hash).toBe("x");
-
-    // The verified AHD owner signs in for the first time.
-    const linked = lakeside.linkOrCreateUser({ ahdUserId: "ahd_victim", email: "victim@example.com", username: "victim" });
-    expect(linked.id).toBe(squat.id);
-    expect(linked.ahd_user_id).toBe("ahd_victim");
-
-    // The squatter's known password no longer opens the account.
-    const after = dbMod.getDb().prepare("SELECT password_hash FROM users WHERE id = ?").get(squat.id) as { password_hash: string };
-    expect(after.password_hash).not.toBe("x");
-    expect(after.password_hash.length).toBeGreaterThan(20); // a real bcrypt hash
+  it("email collisions never replace a password or an existing provider link", () => {
+    for (const ahd of [null, "existing-provider-id"]) {
+      const local = makeUser({ email: `collision-${ahd}@example.com`, ahd });
+      const query = dbMod.getDb().prepare("SELECT ahd_user_id, password_hash FROM users WHERE id = ?");
+      const before = query.get(local.id);
+      expect(() => lakeside.linkOrCreateUser({ ahdUserId: "attacker", email: local.email.toUpperCase(), username: "attacker" }))
+        .toThrow(lakeside.AccountLinkConflictError);
+      expect(query.get(local.id)).toEqual(before);
+    }
   });
 });
 
@@ -194,5 +182,33 @@ describe("code redemption purchases backfill", () => {
     expect(row.pack_id).toBe("global");
     expect(row.amount_cents).toBe(0);
     expect(row.ahd_user_id).toBe("ahd_code_1");
+  });
+});
+
+describe('account-link conflict HTTP response', () => {
+  it('returns 409 without issuing a token or changing the existing account', async () => {
+    const { default: express } = await import('express');
+    const { lakesideRouter } = await import('../routes/lakeside.ts');
+    const local = makeUser({ email: 'http-collision@example.com', ahd: 'real-owner' });
+    const code = lakeside.mintHandoffCode({ ahdUserId: 'different-owner', email: local.email, username: 'different' });
+    const app = express();
+    app.use(express.json());
+    app.use(lakesideRouter);
+    const server = app.listen(0, '127.0.0.1');
+    await new Promise<void>(resolve => server.once('listening', resolve));
+    try {
+      const port = (server.address() as { port: number }).port;
+      const response = await fetch(`http://127.0.0.1:${port}/api/lakeside/exchange`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }),
+      });
+      expect(response.status).toBe(409);
+      const body = await response.json();
+      expect(body.code).toBe('ACCOUNT_LINK_REQUIRES_PROOF');
+      expect(body.token).toBeUndefined();
+      const row = dbMod.getDb().prepare('SELECT ahd_user_id, password_hash FROM users WHERE id = ?').get(local.id);
+      expect(row).toEqual({ ahd_user_id: 'real-owner', password_hash: 'x' });
+    } finally {
+      await new Promise<void>(resolve => server.close(() => resolve()));
+    }
   });
 });
