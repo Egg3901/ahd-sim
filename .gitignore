@@ -10,6 +10,7 @@ coverage
 # TypeScript incremental build cache
 *.tsbuildinfo
 src-tauri/target/
+src-tauri/gen/schemas/
 
 # server runtime data
 server/data
