@@ -85,14 +85,14 @@ after the first 50 qualified players provide real data.
 
 ## Asset checklist
 
-- [ ] Five clean 1920 x 1080 gameplay screenshots
+- [x] Three clean 1920 x 1080 launch screenshots
 - [ ] One 30 to 45 second gameplay trailer
 - [ ] Square icon and social avatar
 - [ ] 16:9 social card with the product promise and real gameplay
 - [ ] Vertical 9:16 gameplay clip template
 - [ ] Steam capsule set made from real game art
 - [ ] App Store and Play Store screenshot sets made from the native builds
-- [ ] Press kit with logo, screenshots, short description, contact, and factsheet
+- [x] Initial press kit with logo, screenshots, short description, contact, and factsheet
 
 Do not use generated likenesses of real politicians in promotional art. Use
 real in-game captures and the established abstract campaign icon.
