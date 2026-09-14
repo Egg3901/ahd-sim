@@ -4,13 +4,14 @@ import { PACKS } from "@content/packs";
 import { countryCover } from "@content/covers";
 import { useAuthStore } from "@store/authStore";
 import { usePackPrices } from "@lib/usePackPrices";
+import { DISTRIBUTION } from "@lib/distribution";
 import { UserMenu } from "@ui/auth/UserMenu";
 import { DailyCard } from "@ui/DailyCard";
 import { ScenarioArt } from "@ui/ScenarioArt";
 import { EvBar } from "@ui/EvBar";
 import { Sparkline } from "@ui/Sparkline";
 import {
-  Vote, Lock, Play, Trophy, KeyRound, ChevronLeft, ChevronRight, Check, X, ShoppingBag,
+  Lock, Play, Trophy, KeyRound, ChevronLeft, ChevronRight, Check, X, ShoppingBag,
   LineChart, Mic2, Globe2, MessageCircleQuestion, Search,
 } from "lucide-react";
 import { BRAND } from "../brand";
@@ -199,11 +200,27 @@ const FAQ_ITEMS: { q: string; a: string }[] = [
 ];
 
 function FaqSection() {
+  const items = FAQ_ITEMS.map((item) => {
+    if (DISTRIBUTION.externalStore) return item;
+    if (item.q === "What do I get if I pay?") {
+      return { q: item.q, a: `Scenario packs unlock more elections. They are one time purchases managed by ${DISTRIBUTION.nativeStoreName}, not subscriptions.` };
+    }
+    if (item.q === "Where do I buy packs?") {
+      return { q: item.q, a: `Purchases and purchase restoration will be handled by ${DISTRIBUTION.nativeStoreName} in this edition.` };
+    }
+    if (item.q === "What's your refund policy?") {
+      return { q: item.q, a: `Purchases in this edition follow ${DISTRIBUTION.nativeStoreName} policies.` };
+    }
+    if (item.q === "What platforms does this run on?") {
+      return { q: item.q, a: "Margin of Victory is available on the web and is being packaged for desktop and mobile." };
+    }
+    return item;
+  });
   return (
     <div className="field" style={{ textAlign: "left", margin: "36px 0 0" }}>
       <label><MessageCircleQuestion size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Frequently asked</label>
       <div className="faq-list">
-        {FAQ_ITEMS.map((item) => (
+        {items.map((item) => (
           <details className="faq-item" key={item.q}>
             <summary>{item.q}</summary>
             <p className="muted small" style={{ lineHeight: 1.55 }}>{item.a}</p>
@@ -333,12 +350,14 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
       <div className="landing-topbar">
         <div className="landing-topbar-inner">
           <span className="landing-brand">
-            <span className="mark"><Vote size={18} /></span>{BRAND.name}
+            <span className="mark"><img src="brand/margin-of-victory-icon.png" alt="" width={24} height={24} /></span>{BRAND.name}
           </span>
           <span className="row" style={{ gap: 6 }}>
-            <a className="ghost small" href={BRAND.storeUrl}>
-              <ShoppingBag size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Store
-            </a>
+            {DISTRIBUTION.externalStore && (
+              <a className="ghost small" href={BRAND.storeUrl}>
+                <ShoppingBag size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Store
+              </a>
+            )}
             <button className="ghost small" onClick={() => onGo({ kind: "leaderboard" })}>
               <Trophy size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Leaderboard
             </button>
@@ -532,11 +551,17 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
               <ul className="pricing-list">
                 <li><Check size={13} /> {SCENARIO_REGISTRY.length - free.length} additional elections across {PACKS.length} packs</li>
                 <li><Check size={13} /> One time purchase, yours to keep, no subscription</li>
-                <li><Check size={13} /> Bought and delivered through the Lakeside store</li>
+                <li><Check size={13} /> {DISTRIBUTION.externalStore ? "Bought and delivered through the Lakeside store" : `Purchased and restored through ${DISTRIBUTION.nativeStoreName}`}</li>
               </ul>
-              <a className="ghost small" style={{ marginTop: 8 }} href={BRAND.storeUrl}>
-                <ShoppingBag size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Browse packs on lakesidegames.net
-              </a>
+              {DISTRIBUTION.externalStore ? (
+                <a className="ghost small" style={{ marginTop: 8 }} href={BRAND.storeUrl}>
+                  <ShoppingBag size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Browse packs on lakesidegames.net
+                </a>
+              ) : (
+                <p className="muted small" style={{ marginTop: 8 }}>
+                  Purchases and restoration will be handled by {DISTRIBUTION.nativeStoreName}.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -559,10 +584,12 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
                     <span className="pack-price">${((packPrices[p.id] ?? p.price) / 100).toFixed(2)}</span>
                     {owned ? (
                       <span className="muted small">Owned</span>
-                    ) : PAYWALL_ENABLED ? (
+                    ) : PAYWALL_ENABLED && DISTRIBUTION.externalStore ? (
                       <button className="primary small" disabled={buyBusy === p.id} onClick={() => buy(p.id)}>
                         {buyBusy === p.id ? "Opening…" : "Buy"}
                       </button>
+                    ) : PAYWALL_ENABLED ? (
+                      <span className="pack-beta-note">Available through {DISTRIBUTION.nativeStoreName}</span>
                     ) : (
                       <span className="pack-beta-note">Free during open beta</span>
                     )}
@@ -581,7 +608,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
           <button className="ghost small" onClick={() => onGo({ kind: "legal", tab: "privacy" })}>Privacy</button>
           <button className="ghost small" onClick={() => onGo({ kind: "legal", tab: "terms" })}>Terms</button>
           <a className="ghost small" href={`mailto:${BRAND.supportEmail}`}>Contact</a>
-          <a className="ghost small" href={BRAND.storeUrl}>Store</a>
+          {DISTRIBUTION.externalStore && <a className="ghost small" href={BRAND.storeUrl}>Store</a>}
           <span className="muted small" title="Coming soon">Discord (coming soon)</span>
           <a className="lakeside-credit" href="https://lakesidegames.net" target="_blank" rel="noopener">
             <img src="lakeside-mark.svg" alt="Lakeside Games logo" width={20} height={20} />
