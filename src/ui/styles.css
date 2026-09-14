@@ -308,6 +308,19 @@ h1, h2, h3 { margin: 0; font-weight: 700; }
 .plan-chip .x { display: inline-flex; cursor: pointer; color: var(--muted); margin-left: 1px; }
 .plan-chip .x:hover { color: var(--rose); }
 
+.plan-bonus-box { margin: 10px 0 8px; padding: 8px 9px; background: var(--well);
+  border: 1px solid var(--border); border-radius: var(--radius-md); }
+.plan-bonus-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  margin-bottom: 7px; font-size: 10px; color: var(--muted); }
+.plan-bonus-head strong { color: var(--text); font-size: 11px; }
+.plan-bonus-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.plan-bonus { display: inline-flex; align-items: center; gap: 4px; padding: 3px 7px;
+  border: 1px solid var(--border); border-radius: var(--radius-pill); color: var(--muted);
+  font-size: 10px; transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease); }
+.plan-bonus strong { color: inherit; }
+.plan-bonus.active { color: var(--green); border-color: var(--edge-up); background: var(--surface-raised);
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.1); }
+
 .queue { display: flex; flex-direction: column; gap: 7px; }
 .qitem { display: flex; justify-content: space-between; align-items: center; font-size: 12px;
   padding: 9px 11px; background: var(--well); border-radius: var(--radius-md); border: 1px solid var(--border);

@@ -19,6 +19,12 @@ import {
   finalizeMpCampaignTurn,
   resolvePendingChoiceGate,
 } from "./mpTurnHelpers";
+import {
+  orderedPlan,
+  planBonusMultiplier,
+  planBonusesForAction,
+  type PlanBonus,
+} from "./planBonuses";
 
 // Parties a human may lead (GB-wide majors). NI parties + 'oth' are AI/fixed.
 export const UK_PLAYABLE: PartyId[] = ["lab", "con", "ld", "ref", "grn", "snp", "pc"];
@@ -285,7 +291,13 @@ function topRivalIn(region: StateContest, party: PartyId): PartyId | undefined {
     .sort((x, y) => (shareByParty[y] ?? 0) - (shareByParty[x] ?? 0))[0];
 }
 
-function applyUkAction(g: UkGameState, a: UkAction, rng: Rng) {
+function applyUkAction(
+  g: UkGameState,
+  a: UkAction,
+  rng: Rng,
+  planMultiplier = 1,
+  planBonuses: readonly PlanBonus[] = [],
+) {
   const res = g.resources[a.party];
   if (res.actions < 1) return;
   const leader = g.leaders[a.party];
@@ -293,6 +305,7 @@ function applyUkAction(g: UkGameState, a: UkAction, rng: Rng) {
   const compSkill = 0.85 + leader.competence / 400;
   const region = findRegion(g, a.regionId);
   const spend = (need: number) => { if (res.funds < need) return false; res.funds -= need; return true; };
+  const causeCount = g.causes.length;
 
   switch (a.type) {
     case "canvass": {
@@ -315,7 +328,7 @@ function applyUkAction(g: UkGameState, a: UkAction, rng: Rng) {
       if (!region) return;
       if (!spend(1)) return;
       res.actions -= 1;
-      addAppeal(g, region, a.party, `${leader.name} GOTV drive in ${region.abbr}`, 0.06 * (0.85 + leader.energy / 300));
+      addAppeal(g, region, a.party, `${leader.name} GOTV drive in ${region.abbr}`, 0.06 * (0.85 + leader.energy / 300) * planMultiplier);
       break;
     }
     case "rally": {
@@ -343,10 +356,10 @@ function applyUkAction(g: UkGameState, a: UkAction, rng: Rng) {
       const mode = a.mode ?? "positive";
       const targets = region ? [region] : standsIn(g, a.party);
       // Diminishing returns on spend; national spend spreads thinner per region.
-      const power = 0.02 * Math.sqrt(cost / 1.5) * (0.85 + leader.machine / 300);
+      const power = 0.02 * Math.sqrt(cost / 1.5) * (0.85 + leader.machine / 300) * planMultiplier;
       const per = region ? power : power * 0.8;
       if (mode === "issue" && a.issueId) {
-        g.salience[a.issueId] = clamp((g.salience[a.issueId] ?? 0.4) + 0.05, 0, 1);
+        g.salience[a.issueId] = clamp((g.salience[a.issueId] ?? 0.4) + 0.05 * planMultiplier, 0, 1);
         for (const t of targets) addAppeal(g, t, a.party, `${leader.name} issue broadcast`, per * 0.7);
       } else if (mode === "contrast") {
         const scope = region ? [region] : targets;
@@ -388,8 +401,8 @@ function applyUkAction(g: UkGameState, a: UkAction, rng: Rng) {
     case "issue_pivot": {
       // Reframe the campaign onto a chosen issue: raise its salience + a lift.
       res.actions -= 1;
-      if (a.issueId) g.salience[a.issueId] = clamp((g.salience[a.issueId] ?? 0.4) + 0.08, 0, 1);
-      for (const t of standsIn(g, a.party)) addAppeal(g, t, a.party, `${leader.name} pivots the campaign`, 0.008 * skill);
+      if (a.issueId) g.salience[a.issueId] = clamp((g.salience[a.issueId] ?? 0.4) + 0.08 * planMultiplier, 0, 1);
+      for (const t of standsIn(g, a.party)) addAppeal(g, t, a.party, `${leader.name} pivots the campaign`, 0.008 * skill * planMultiplier);
       break;
     }
     case "fundraise": {
@@ -398,6 +411,16 @@ function applyUkAction(g: UkGameState, a: UkAction, rng: Rng) {
       res.funds += haul;
       g.causes.push({ turn: g.turn, cause: `${leader.name} fundraising (+£${haul.toFixed(1)}M)`, marginDelta: 0 });
       break;
+    }
+  }
+  if (g.causes.length > causeCount) {
+    for (const bonus of planBonuses) {
+      g.causes.push({
+        turn: g.turn,
+        stateId: a.regionId,
+        cause: `Plan bonus: ${bonus.name} (+${Math.round((bonus.multiplier - 1) * 100)}%)`,
+        marginDelta: 0,
+      });
     }
   }
 }
@@ -585,7 +608,14 @@ export function ukAdvanceTurn(g: UkGameState, opts: UkAdvanceOptions = {}): UkGa
   const turn = next.turn;
 
   // 1. Player's queued actions.
-  for (const a of next.queuedActions) applyUkAction(next, a, rng);
+  const playerPlan = orderedPlan(next.queuedActions);
+  const completedActions: UkAction[] = [];
+  for (const a of playerPlan) {
+    const bonuses = planBonusesForAction(a, completedActions);
+    const causeCount = next.causes.length;
+    applyUkAction(next, a, rng, planBonusMultiplier(bonuses), bonuses);
+    if (next.causes.length > causeCount) completedActions.push(a);
+  }
   next.queuedActions = [];
 
   // 2. AI for every other active major party.
@@ -642,7 +672,14 @@ export function projectUkPreview(g: UkGameState): UkResult {
   if (g.queuedActions.length === 0) return computeUkResult(g);
   const clone = structuredClone(g);
   const rng = createRng(clone.rngState);
-  for (const a of clone.queuedActions) applyUkAction(clone, a, rng);
+  const plan = orderedPlan(clone.queuedActions);
+  const completed: UkAction[] = [];
+  for (const a of plan) {
+    const bonuses = planBonusesForAction(a, completed);
+    const causeCount = clone.causes.length;
+    applyUkAction(clone, a, rng, planBonusMultiplier(bonuses), bonuses);
+    if (clone.causes.length > causeCount) completed.push(a);
+  }
   for (const region of clone.regions)
     for (const bloc of region.blocs) bloc.support = blocPartyShares(bloc) as typeof bloc.support;
   return computeUkResult(clone);

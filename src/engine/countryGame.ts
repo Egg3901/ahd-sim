@@ -20,6 +20,12 @@ import {
   finalizeMpCampaignTurn,
   resolvePendingChoiceGate,
 } from "./mpTurnHelpers";
+import {
+  orderedPlan,
+  planBonusMultiplier,
+  planBonusesForAction,
+  type PlanBonus,
+} from "./planBonuses";
 
 // ── Content bundle: everything a country ships ────────────────────────────
 export interface CountryBlocDef {
@@ -495,7 +501,13 @@ function topRivalIn(region: StateContest, party: PartyId): PartyId | undefined {
     .sort((x, y) => (shareByParty[y] ?? 0) - (shareByParty[x] ?? 0))[0];
 }
 
-export function applyCountryAction(g: CountryGameState, a: CountryAction, rng: Rng) {
+export function applyCountryAction(
+  g: CountryGameState,
+  a: CountryAction,
+  rng: Rng,
+  planMultiplier = 1,
+  planBonuses: readonly PlanBonus[] = [],
+) {
   const res = g.resources[a.party];
   if (!res || res.actions < 1) return;
   const leader = g.leaders[a.party];
@@ -503,6 +515,7 @@ export function applyCountryAction(g: CountryGameState, a: CountryAction, rng: R
   const compSkill = 0.85 + leader.competence / 400;
   const region = findRegion(g, a.regionId);
   const spend = (need: number) => { if (res.funds < need) return false; res.funds -= need; return true; };
+  const causeCount = g.causes.length;
 
   switch (a.type) {
     case "canvass": {
@@ -523,7 +536,7 @@ export function applyCountryAction(g: CountryGameState, a: CountryAction, rng: R
       if (!region) return;
       if (!spend(1)) return;
       res.actions -= 1;
-      addAppeal(g, region, a.party, `${leader.name} GOTV drive in ${region.abbr}`, 0.06 * (0.85 + leader.energy / 300));
+      addAppeal(g, region, a.party, `${leader.name} GOTV drive in ${region.abbr}`, 0.06 * (0.85 + leader.energy / 300) * planMultiplier);
       break;
     }
     case "rally": {
@@ -547,10 +560,10 @@ export function applyCountryAction(g: CountryGameState, a: CountryAction, rng: R
       res.actions -= 1;
       const mode = a.mode ?? "positive";
       const targets = region ? [region] : standsIn(g, a.party);
-      const power = 0.02 * Math.sqrt(cost / 1.5) * (0.85 + leader.machine / 300);
+      const power = 0.02 * Math.sqrt(cost / 1.5) * (0.85 + leader.machine / 300) * planMultiplier;
       const per = region ? power : power * 0.8;
       if (mode === "issue" && a.issueId) {
-        g.salience[a.issueId] = clamp((g.salience[a.issueId] ?? 0.4) + 0.05, 0, 1);
+        g.salience[a.issueId] = clamp((g.salience[a.issueId] ?? 0.4) + 0.05 * planMultiplier, 0, 1);
         for (const t of targets) addAppeal(g, t, a.party, `${leader.name} issue broadcast`, per * 0.7);
       } else if (mode === "contrast") {
         for (const t of targets) {
@@ -587,8 +600,8 @@ export function applyCountryAction(g: CountryGameState, a: CountryAction, rng: R
     }
     case "issue_pivot": {
       res.actions -= 1;
-      if (a.issueId) g.salience[a.issueId] = clamp((g.salience[a.issueId] ?? 0.4) + 0.08, 0, 1);
-      for (const t of standsIn(g, a.party)) addAppeal(g, t, a.party, `${leader.name} pivots the campaign`, 0.008 * skill);
+      if (a.issueId) g.salience[a.issueId] = clamp((g.salience[a.issueId] ?? 0.4) + 0.08 * planMultiplier, 0, 1);
+      for (const t of standsIn(g, a.party)) addAppeal(g, t, a.party, `${leader.name} pivots the campaign`, 0.008 * skill * planMultiplier);
       break;
     }
     case "fundraise": {
@@ -597,6 +610,16 @@ export function applyCountryAction(g: CountryGameState, a: CountryAction, rng: R
       res.funds += haul;
       g.causes.push({ turn: g.turn, cause: `${leader.name} fundraising (+${haul.toFixed(1)}M)`, marginDelta: 0 });
       break;
+    }
+  }
+  if (g.causes.length > causeCount) {
+    for (const bonus of planBonuses) {
+      g.causes.push({
+        turn: g.turn,
+        stateId: a.regionId,
+        cause: `Plan bonus: ${bonus.name} (+${Math.round((bonus.multiplier - 1) * 100)}%)`,
+        marginDelta: 0,
+      });
     }
   }
 }
@@ -786,7 +809,14 @@ export function countryAdvanceTurn(g: CountryGameState, country: CountryBundle, 
   const seatsBefore = computeCountryResult(next, country).seats[next.playerParty] ?? 0;
   const turn = next.turn;
 
-  for (const a of next.queuedActions) applyCountryAction(next, a, rng);
+  const playerPlan = orderedPlan(next.queuedActions);
+  const completedActions: CountryAction[] = [];
+  for (const a of playerPlan) {
+    const bonuses = planBonusesForAction(a, completedActions);
+    const causeCount = next.causes.length;
+    applyCountryAction(next, a, rng, planBonusMultiplier(bonuses), bonuses);
+    if (next.causes.length > causeCount) completedActions.push(a);
+  }
   next.queuedActions = [];
 
   if (!opts.disableAi) {
@@ -823,7 +853,14 @@ export function projectCountryPreview(g: CountryGameState, country: CountryBundl
   if (g.queuedActions.length === 0) return computeCountryResult(g, country);
   const clone = structuredClone(g);
   const rng = createRng(clone.rngState);
-  for (const a of clone.queuedActions) applyCountryAction(clone, a, rng);
+  const plan = orderedPlan(clone.queuedActions);
+  const completed: CountryAction[] = [];
+  for (const a of plan) {
+    const bonuses = planBonusesForAction(a, completed);
+    const causeCount = clone.causes.length;
+    applyCountryAction(clone, a, rng, planBonusMultiplier(bonuses), bonuses);
+    if (clone.causes.length > causeCount) completed.push(a);
+  }
   for (const region of clone.regions)
     for (const bloc of region.blocs) bloc.support = blocPartyShares(bloc) as typeof bloc.support;
   return computeCountryResult(clone, country);

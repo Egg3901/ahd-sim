@@ -3,6 +3,7 @@ import { useCountryStore } from "@store/countryStore";
 import type { CountryAction, CountryActionType, CountryAdMode } from "@engine/countryGame";
 import type { PartyId } from "@engine/system";
 import { partyShort } from "./helpers";
+import { PlanBonusStrip } from "../PlanBonusStrip";
 import {
   Radio, Megaphone, Users, Banknote, Building2, Vote,
   DoorOpen, Search, GraduationCap, BookOpen, ArrowLeftRight, Plus, X,
@@ -189,6 +190,8 @@ export function CountryActionPanel() {
           </div>
         )}
       </div>
+
+      <PlanBonusStrip plan={plan} />
 
       <div className="weekplan">
         {DAYS.map((d) => {

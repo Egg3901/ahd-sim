@@ -4,6 +4,7 @@ import type { UkAction, UkActionType, UkAdMode } from "@engine/ukGame";
 import type { PartyId } from "@engine/system";
 import { UK_ISSUES, UK_ISSUES_BY_ID, type UkIssueId } from "@content/uk/issues";
 import { partyShort } from "./parties";
+import { PlanBonusStrip } from "../PlanBonusStrip";
 import {
   Radio, Megaphone, Users, PoundSterling, Building2, Vote,
   DoorOpen, Search, GraduationCap, BookOpen, ArrowLeftRight, Plus, X,
@@ -195,6 +196,8 @@ export function UkActionPanel() {
           </div>
         )}
       </div>
+
+      <PlanBonusStrip plan={plan} />
 
       {/* 7-day week. Each day holds up to 3 actions; "+" drops the configured
           action onto that day. The pool runs out before all 21 slots. */}

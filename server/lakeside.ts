@@ -52,8 +52,8 @@ export function identityFromAuth(identity: LakesideAuthIdentity): LakesideIdenti
 }
 
 // ── Local account linking ────────────────────────────────────────────────────
-// Rule from the contract: match ahd_user_id first, else lowercased email (and
-// attach the link), else create a fresh local user with an unusable password.
+// Resolve by the stable provider ID. A matching email cannot prove account
+// ownership or authorize replacing an existing link or password.
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
 
@@ -68,6 +68,10 @@ function availableUsername(db: ReturnType<typeof getDb>, wanted: string): string
   return candidate;
 }
 
+export class AccountLinkConflictError extends Error {
+  constructor() { super("An existing account needs ownership verification before linking. Sign in using its existing method."); }
+}
+
 export function linkOrCreateUser(identity: LakesideIdentity): UserRow {
   const db = getDb();
   const email = identity.email.toLowerCase();
@@ -79,20 +83,8 @@ export function linkOrCreateUser(identity: LakesideIdentity): UserRow {
   // local password door is closed until the player deliberately sets one.
   const unusablePassword = () => bcrypt.hashSync(randomBytes(32).toString("hex"), 10);
 
-  // Email match is NOT trusted for silent linking: local registration accepts
-  // any unverified email, so an attacker could pre-register a victim's address
-  // (with a password they know) and inherit the victim's AHD identity + future
-  // purchases on first SSO. The AHD identity's email IS verified (owned at the
-  // game), so we make it authoritative: attach this ahd_user_id to the colliding
-  // row AND rotate its password_hash to an unusable value, which severs any
-  // local-password access a squatter set up. The legitimate AHD owner keeps the
-  // account and its data, reached through Lakeside sign-in.
-  const byEmail = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as UserRow | undefined;
-  if (byEmail) {
-    db.prepare("UPDATE users SET ahd_user_id = ?, password_hash = ? WHERE id = ?")
-      .run(identity.ahdUserId, unusablePassword(), byEmail.id);
-    return { ...byEmail, ahd_user_id: identity.ahdUserId };
-  }
+  const byEmail = db.prepare("SELECT id FROM users WHERE email = ?").get(email);
+  if (byEmail) throw new AccountLinkConflictError();
 
   const id = randomUUID();
   const username = availableUsername(db, identity.username);

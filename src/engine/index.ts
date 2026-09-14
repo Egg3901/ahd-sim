@@ -25,6 +25,16 @@ export {
 } from "./voteModel";
 export { applyAction, issueAlignment, clamp } from "./actions";
 export {
+  PLAN_BONUSES,
+  activePlanBonusIds,
+  orderedPlan,
+  planBonusMultiplier,
+  planBonusesForAction,
+  type PlanActionLike,
+  type PlanBonus,
+  type PlanBonusId,
+} from "./planBonuses";
+export {
   resolveEvent,
   applyEventEffect,
   choiceAvailable,
