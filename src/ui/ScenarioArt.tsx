@@ -45,7 +45,7 @@ export function ScenarioArt({
     >
       <span className="scenario-art-top">
         <span>{COUNTRY_FLAGS[country]} {COUNTRY_NAMES[country]}</span>
-        <span>Ballotline archive</span>
+        <span>Margin of Victory archive</span>
       </span>
       <span className="scenario-art-year">{year}</span>
       <span className="scenario-art-title">Campaign file / {scenarioId.toUpperCase()}</span>

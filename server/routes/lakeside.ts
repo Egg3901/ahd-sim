@@ -18,8 +18,7 @@
 // Why a one-time code instead of an HTML token-drop page for login: the SPA
 // stores its JWT in localStorage, which is per-origin. A page served by
 // sim.ahousedividedgame.com can only write sim's localStorage, so it would
-// break the canonical /games/ballotline mount or the legacy
-// /games/electioneer mount. Redirecting back to the
+// break the /games/electioneer mount. Redirecting back to the
 // caller's own origin with a short-lived code lets the SPA store the token in
 // the right origin, and the same flow works on both hosts.
 

@@ -26,7 +26,7 @@ function bundled(): CatalogItem[] {
 let cache: { at: number; items: CatalogItem[] } | null = null;
 
 /**
- * The Ballotline catalog with platform prices. Fetches the platform catalog
+ * The Margin of Victory catalog with platform prices. Fetches the platform catalog
  * (5 min cache) and overlays its prices onto the bundled membership; on any
  * failure returns the bundled fallback so prices always render.
  */

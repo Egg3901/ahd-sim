@@ -20,7 +20,7 @@ Valve has changed capsule sizes before.
 
 **No AI-generated images of real politicians, anywhere, for any purpose.**
 Every screenshot and every piece of store art must be a capture of the
-actual Ballotline client running a real or in-game campaign. Do not
+actual Margin of Victory client running a real or in-game campaign. Do not
 generate, composite, or imply likenesses of real world political figures
 in store assets. This applies to capsules, screenshots, and the library
 hero alike.

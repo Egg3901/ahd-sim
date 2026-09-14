@@ -1,4 +1,4 @@
-# Productize Plan: Ballotline (ahd-sim)
+# Productize Plan: Margin of Victory (ahd-sim)
 
 Handoff document for the productization pass completed 2026-07-12. Seven feature
 branches were built in parallel worktrees, merged to `main` one at a time with
@@ -163,7 +163,7 @@ that single v2.
 
 **product/packaging** (desktop scaffold + Steam kit)
 - `src-tauri/tauri.conf.json`, `Cargo.toml`, `build.rs`, `src/main.rs` (new):
-  Tauri v2 app "Ballotline", devUrl :5173, frontendDist ../dist, window
+  Tauri v2 app "Margin of Victory", devUrl :5173, frontendDist ../dist, window
   1280x800 min 900x600
 - `package.json` / lockfile: `tauri:dev`, `tauri:build` scripts,
   @tauri-apps/cli dev dep

@@ -18,10 +18,10 @@ export interface ShareCardOpts {
 
 /**
  * Compact multi-line share string, e.g.:
- *   Ballotline Daily · 2026-07-08
+ *   Margin of Victory Daily · 2026-07-08
  *   🇩🇪 2021 · Scholz v. Laschet — as SPD
  *   🏆 371 seats · Score 8,420
- *   lakesidegames.net/games/ballotline
+ *   lakesidegames.net/games/electioneer
  */
 export function buildShareText(o: ShareCardOpts): string {
   return [

@@ -134,6 +134,6 @@ of your licenses.
 
 Required Notice: Copyright Lakeside Games (https://lakesidegames.net)
 
-"Ballotline" and "Lakeside Games" are trademarks of Lakeside Games and
+"Margin of Victory" and "Lakeside Games" are trademarks of Lakeside Games and
 are not licensed under these terms. Official builds and store releases
 are published exclusively by Lakeside Games.

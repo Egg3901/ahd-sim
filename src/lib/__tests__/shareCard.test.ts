@@ -14,7 +14,7 @@ describe("buildShareText", () => {
       score: 8420,
     });
     expect(text).toBe(
-      "Ballotline Daily · 2026-07-08\n" +
+      "Margin of Victory Daily · 2026-07-08\n" +
       "🇩🇪 2021 · Scholz v. Laschet — as SPD\n" +
       "🏆 371 seats · Score 8,420\n" +
       BRAND.shareUrl,

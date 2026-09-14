@@ -1,6 +1,6 @@
 // Platform entitlements consumer. Commerce lives on the Lakeside platform now
 // (lakesidegames.net/account); this game is a consumer. We ask the platform
-// which Ballotline products a signed-in identity owns and treat those as pack
+// which Margin of Victory products a signed-in identity owns and treat those as pack
 // unlocks. Local activation-code unlocks are separate and OR'd on top by the
 // caller (see activation.ts).
 //
@@ -88,7 +88,7 @@ export function identityForUser(userId: string): Identity | null {
 }
 
 /**
- * Fetch the platform's Ballotline purchases for an identity. Cached ~30s per
+ * Fetch the platform's Margin of Victory purchases for an identity. Cached ~30s per
  * identity. Returns [] on any failure.
  */
 export async function fetchPlatformPurchases(identity: Identity): Promise<PlatformPurchase[]> {
@@ -140,7 +140,7 @@ export async function fetchPlatformPurchases(identity: Identity): Promise<Platfo
   }
 }
 
-/** The distinct Ballotline product (pack) ids the identity owns. */
+/** The distinct Margin of Victory product (pack) ids the identity owns. */
 export async function ownedProductIds(identity: Identity): Promise<string[]> {
   const purchases = await fetchPlatformPurchases(identity);
   return [...new Set(purchases.map((p) => p.productId))];

@@ -13,7 +13,7 @@ scenario you build yourself.
 
 ## Long description
 
-Ballotline is a turn by turn election campaign simulator. You are not
+Margin of Victory is a turn by turn election campaign simulator. You are not
 watching an election happen. You are running one.
 
 Each turn you choose how to spend your time and money: ads, rallies, fundraising,
@@ -53,4 +53,4 @@ conditions each day, so you can compare your result against how you did
 the day before or against friends running the same race.
 
 If you want to understand how a campaign actually works, not just watch
-polling numbers move, Ballotline is built for that.
+polling numbers move, Margin of Victory is built for that.

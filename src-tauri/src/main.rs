@@ -1,4 +1,4 @@
-// Entry point for the Ballotline desktop shell.
+// Entry point for the Margin of Victory desktop shell.
 // Tauri v2 loads the built Vite output (frontendDist in tauri.conf.json)
 // or the dev server (devUrl) and renders it in a native webview. There is
 // no custom Rust logic yet: the game runs entirely against localStorage/
@@ -8,5 +8,5 @@
 fn main() {
     tauri::Builder::default()
         .run(tauri::generate_context!())
-        .expect("error while running Ballotline");
+        .expect("error while running Margin of Victory");
 }

@@ -1,6 +1,6 @@
-# Ballotline
+# Margin of Victory
 
-Ballotline is a single-player, turn-based election campaign simulator with 49
+Margin of Victory is a single-player, turn-based election campaign simulator with 49
 election scenarios across the United States, United Kingdom, Canada, Germany,
 France, and Australia. Its scenarios span 1951 to 2027 and model each country's
 electoral system, parties, regions, and campaign pressures.
@@ -9,9 +9,9 @@ electoral system, parties, regions, and campaign pressures.
 > week, answer the moments that matter, and rewrite the result.
 
 Play in the browser at
-[lakesidegames.net/games/ballotline](https://lakesidegames.net/games/ballotline/).
-The legacy `/games/electioneer/` address and the internal `electioneer` product
-identifier remain supported for existing links, purchases, and saves.
+[lakesidegames.net/games/electioneer](https://lakesidegames.net/games/electioneer/).
+The existing `/games/electioneer/` address and internal `electioneer` product
+identifier remain unchanged so existing links, purchases, and saves keep working.
 
 ## Quick start
 
@@ -59,7 +59,7 @@ baselines while still allowing campaign decisions to change the outcome.
 
 ## Product identity
 
-The player-facing name is Ballotline. Compatibility-sensitive identifiers such
+The player-facing name is Margin of Victory. Compatibility-sensitive identifiers such
 as the package name, desktop application identifier, entitlement game key,
 database records, backup paths, and checkout query value remain `electioneer`.
 Do not rename those without a coordinated data and deployment migration.

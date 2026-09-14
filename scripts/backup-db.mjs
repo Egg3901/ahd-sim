@@ -1,4 +1,4 @@
-// Nightly SQLite backup for the Ballotline campaign server.
+// Nightly SQLite backup for the Margin of Victory campaign server.
 // Uses better-sqlite3's online backup API (safe against a live WAL database),
 // writes dated snapshots, and prunes to the newest KEEP copies.
 // Run via the electioneer-backup.timer systemd unit.
