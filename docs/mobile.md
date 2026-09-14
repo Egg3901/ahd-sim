@@ -15,8 +15,9 @@ npm run tauri:android:build
 
 The Android build uses Vite mode `android`. That mode disables every external
 Lakeside store link and checkout action. Google Play Billing and purchase
-restoration are not implemented yet, so a paid Android release must not ship
-until that adapter is complete and tested with a Play Console test product.
+restoration are not implemented yet. The free base app may be tested, but pack
+sales must not launch until the adapter is complete and tested with Play
+Console products.
 
 ## iOS
 

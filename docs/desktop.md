@@ -30,17 +30,16 @@ npm run tauri:steam:build
 ```
 
 The Steam mode removes external Lakeside store links and checkout actions.
-Steam ownership verification is not implemented, so the Steam build must not
-be sold until that adapter is complete.
+The base Steam client is free. Pack DLC ownership verification is not
+implemented, so paid DLC must not launch until that adapter is complete.
 
 ## Remaining release work
 
 - Build and smoke-test Windows packages on Windows.
 - Build, sign, and notarize macOS packages on macOS.
 - Acquire signing identities before public direct downloads.
-- Implement and test Steam ownership before a Steam release.
+- Implement and test Steam DLC ownership before selling packs on Steam.
 - Verify install, upgrade, uninstall, save retention, and offline startup on
   every supported desktop operating system.
 
-Unsigned local packages are suitable for development, not a paid public
-release.
+Unsigned local packages are suitable for development, not public distribution.
