@@ -369,16 +369,40 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
       <div className="landing-body">
         <NoticeBanner />
         <header className="landing-hero">
-          <div className="kicker">Turn-based election campaign sim · {BRAND.eyebrow}</div>
-          <h1>{BRAND.name}</h1>
-          <p className="sub">
-            Run a real campaign turn by turn: allocate a budget, pick rally states, run ads, survive debates,
-            and watch the polling average move in response. {SCENARIO_REGISTRY.length} election scenarios
-            across {new Set(SCENARIO_REGISTRY.map((s) => s.country)).size} countries.
-            {PAYWALL_ENABLED
-              ? " Two scenarios and the daily challenge are free forever."
-              : " All of them are free to play right now."}
-          </p>
+          <div className="landing-hero-copy">
+            <div className="kicker">Turn-based election campaign sim · {BRAND.eyebrow}</div>
+            <h1>{BRAND.name}</h1>
+            <p className="sub">
+              Run a real campaign turn by turn: allocate a budget, target battlegrounds, survive debates,
+              and watch the map move. {SCENARIO_REGISTRY.length} elections across {new Set(SCENARIO_REGISTRY.map((s) => s.country)).size} countries.
+              {PAYWALL_ENABLED
+                ? " Two complete scenarios and the daily challenge are free forever."
+                : " All of them are free to play right now."}
+            </p>
+            <div className="landing-hero-actions">
+              <button className="primary" onClick={() => play(free[0])}><Play size={15} /> Play free</button>
+              <button className="ghost" onClick={() => document.getElementById("campaign-catalog")?.scrollIntoView({ behavior: "smooth" })}>
+                Browse 49 campaigns
+              </button>
+            </div>
+            <div className="landing-proof" aria-label="Product highlights">
+              <span>No account needed</span><span>20 to 40 minute campaigns</span><span>No subscription</span>
+            </div>
+          </div>
+          <div className="landing-hero-art" aria-label="Campaigns from around the world">
+            <div className="hero-art-card hero-art-main">
+              <CoverImg src={countryCover("US")} alt="United States election campaigns" />
+              <span><b>17 US elections</b><small>Fight for 270</small></span>
+            </div>
+            <div className="hero-art-card hero-art-side hero-art-uk">
+              <CoverImg src={countryCover("UK")} alt="United Kingdom election campaigns" />
+              <span><b>United Kingdom</b><small>Win a working majority</small></span>
+            </div>
+            <div className="hero-art-card hero-art-side hero-art-world">
+              <CoverImg src={countryCover("FR")} alt="French election campaigns" />
+              <span><b>Six countries</b><small>Six voting systems</small></span>
+            </div>
+          </div>
         </header>
 
         <FeaturesSection />
@@ -389,7 +413,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
         </div>
 
         {/* Featured starters, text-led (portraits live in the setup wizard) */}
-        <div className="field" style={{ textAlign: "left", margin: "36px 0 0" }}>
+        <div className="field" id="campaign-catalog" style={{ textAlign: "left", margin: "36px 0 0", scrollMarginTop: 76 }}>
           <label>{PAYWALL_ENABLED ? "Play free, no account needed" : "Start here, no account needed"}</label>
           <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
             {free.map((s) => (
