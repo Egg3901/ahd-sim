@@ -1,5 +1,5 @@
 // Lakeside ID: map a verified A House Divided identity (obtained via the
-// central lakeside-auth broker) onto a local Electioneer user. Also mints and
+// central lakeside-auth broker) onto a local Margin of Victory user. Also mints and
 // redeems the 60 second single-use SSO handoff codes that other
 // lakesidegames.net consumers (the account portal) use.
 //

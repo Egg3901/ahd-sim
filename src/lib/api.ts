@@ -286,7 +286,7 @@ export interface DailyChampions {
 // button always drives that host's /api/lakeside/login. It bounces back to the
 // CURRENT page (any allowed origin) with a one-time ?lakeside_code=, which the
 // SPA exchanges for its normal token. Works identically whether the app is
-// served from sim.ahousedividedgame.com or lakesidegames.net/games/electioneer.
+// served from sim.ahousedividedgame.com or the /games/electioneer mount.
 export function lakesideLoginUrl(): string {
   const loc = window.location;
   // Same-origin relative endpoint on sim (and in dev, where Vite proxies /api);

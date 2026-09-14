@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useCountryStore } from "@store/countryStore";
 import { useAuthStore } from "@store/authStore";
 import { playablePartiesIn, type CountryBundle } from "@engine/countryGame";
-import { countryNativeCover } from "@content/covers";
+import { ScenarioArt } from "@ui/ScenarioArt";
+import type { CountryCode } from "@content/scenarioRegistry";
 import { partyColor, partyName, partyShort } from "./helpers";
 import { Avatar } from "@ui/Avatar";
 import { Vote, Dices, ChevronLeft, Flag } from "lucide-react";
@@ -59,13 +60,16 @@ export function CountrySetup({ country, onBack, initialElection, initialSeed, in
               <label>Election</label>
               <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
                 {ids.map((id) => {
-                  const cover = countryNativeCover(country.id, id);
                   return (
                     <button key={id} type="button"
-                      className={`scenario-card${election === id ? " sel" : ""}${cover ? " has-cover" : ""}`}
-                      style={cover ? { alignItems: "stretch", textAlign: "left" } : undefined}
+                      className={`scenario-card has-cover${election === id ? " sel" : ""}`}
+                      style={{ alignItems: "stretch", textAlign: "left" }}
                       onClick={() => setElection(id)}>
-                      {cover && <img className="scenario-cover" src={cover} alt="" loading="lazy" decoding="async" />}
+                      <ScenarioArt
+                        scenarioId={`${country.id.toLowerCase()}-${id}`}
+                        country={country.id as CountryCode}
+                        year={country.elections[id].year}
+                      />
                       <span className="scenario-year">{country.elections[id].year}</span>
                       <span className="scenario-match">{country.elections[id].label}</span>
                     </button>

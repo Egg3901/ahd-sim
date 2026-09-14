@@ -1,16 +1,18 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { PAYWALL_ENABLED, SCENARIO_REGISTRY, type CountryCode, type ScenarioMeta } from "@content/scenarioRegistry";
 import { PACKS } from "@content/packs";
-import { countryCover, scenarioCover } from "@content/covers";
+import { countryCover } from "@content/covers";
 import { useAuthStore } from "@store/authStore";
 import { usePackPrices } from "@lib/usePackPrices";
+import { DISTRIBUTION } from "@lib/distribution";
 import { UserMenu } from "@ui/auth/UserMenu";
 import { DailyCard } from "@ui/DailyCard";
+import { ScenarioArt } from "@ui/ScenarioArt";
 import { EvBar } from "@ui/EvBar";
 import { Sparkline } from "@ui/Sparkline";
 import {
-  Vote, Lock, Play, Trophy, KeyRound, ChevronLeft, ChevronRight, Check, X, ShoppingBag,
-  LineChart, Mic2, Globe2, MessageCircleQuestion,
+  Lock, Play, Trophy, KeyRound, ChevronLeft, ChevronRight, Check, X, ShoppingBag,
+  LineChart, Mic2, Globe2, MessageCircleQuestion, Search,
 } from "lucide-react";
 import { BRAND } from "../brand";
 
@@ -66,16 +68,21 @@ function ScenarioCard({ s, unlocked, onPlay, onLocked, showCover = true }: {
   onLocked: () => void;
   showCover?: boolean;
 }) {
-  const cover = showCover ? scenarioCover(s.scenarioId) : undefined;
   return (
     <button
       type="button"
-      className={`scenario-card${cover ? " has-cover" : ""}`}
-      style={{ position: "relative", textAlign: "left", alignItems: cover ? "stretch" : "flex-start", opacity: unlocked ? 1 : 0.75, minHeight: cover ? undefined : 96 }}
+      className={`scenario-card${showCover ? " has-cover" : ""}`}
+      style={{ position: "relative", textAlign: "left", alignItems: showCover ? "stretch" : "flex-start", opacity: unlocked ? 1 : 0.75, minHeight: showCover ? undefined : 96 }}
       onClick={unlocked ? onPlay : onLocked}
       title={s.description}
     >
-      <CoverImg src={cover} alt="" />
+      {showCover && (
+        <ScenarioArt
+          scenarioId={s.scenarioId}
+          country={s.country}
+          year={s.year}
+        />
+      )}
       <span className="row" style={{ gap: 8, alignItems: "center", width: "100%" }}>
         <span style={{ fontSize: 18 }}>{s.flag}</span>
         <span className="scenario-year" style={{ fontSize: 15 }}>{s.label.split("·")[0].trim()}</span>
@@ -176,7 +183,7 @@ const FAQ_ITEMS: { q: string; a: string }[] = [
   },
   {
     q: "Where do I buy packs?",
-    a: `Through lakesidegames.net/store. After checkout the pack unlocks automatically on your account, or you can redeem a code from the "Unlock with a code" prompt on a locked scenario.`,
+    a: `Through lakesidegames.net/account/store. After checkout the pack unlocks automatically on your account, or you can redeem a code from the "Unlock with a code" prompt on a locked scenario.`,
   },
   {
     q: "Can I play offline or without an account?",
@@ -193,11 +200,27 @@ const FAQ_ITEMS: { q: string; a: string }[] = [
 ];
 
 function FaqSection() {
+  const items = FAQ_ITEMS.map((item) => {
+    if (DISTRIBUTION.externalStore) return item;
+    if (item.q === "What do I get if I pay?") {
+      return { q: item.q, a: `Scenario packs unlock more elections. They are one time purchases managed by ${DISTRIBUTION.nativeStoreName}, not subscriptions.` };
+    }
+    if (item.q === "Where do I buy packs?") {
+      return { q: item.q, a: `Purchases and purchase restoration will be handled by ${DISTRIBUTION.nativeStoreName} in this edition.` };
+    }
+    if (item.q === "What's your refund policy?") {
+      return { q: item.q, a: `Purchases in this edition follow ${DISTRIBUTION.nativeStoreName} policies.` };
+    }
+    if (item.q === "What platforms does this run on?") {
+      return { q: item.q, a: "Margin of Victory is available on the web and is being packaged for desktop and mobile." };
+    }
+    return item;
+  });
   return (
     <div className="field" style={{ textAlign: "left", margin: "36px 0 0" }}>
       <label><MessageCircleQuestion size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Frequently asked</label>
       <div className="faq-list">
-        {FAQ_ITEMS.map((item) => (
+        {items.map((item) => (
           <details className="faq-item" key={item.q}>
             <summary>{item.q}</summary>
             <p className="muted small" style={{ lineHeight: 1.55 }}>{item.a}</p>
@@ -240,6 +263,10 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
   const buyPack = useAuthStore((s) => s.buyPack);
   const packPrices = usePackPrices();
   const [country, setCountry] = useState<CountryCode | null>(null);
+  const [query, setQuery] = useState("");
+  const [difficultyFilter, setDifficultyFilter] = useState<"all" | ScenarioMeta["difficulty"]>("all");
+  const [accessFilter, setAccessFilter] = useState<"all" | "playable" | "locked">("all");
+  const [catalogView, setCatalogView] = useState<"compact" | "visual">("compact");
   const [buyBusy, setBuyBusy] = useState<string | null>(null);
   const [buyError, setBuyError] = useState<string | null>(null);
 
@@ -273,10 +300,31 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
     });
   }, []);
 
-  const scenarios = useMemo(
-    () => (country ? SCENARIO_REGISTRY.filter((s) => s.country === country).sort((a, b) => b.year - a.year) : []),
-    [country],
-  );
+  const normalizedQuery = query.trim().toLowerCase();
+  const scenarios = useMemo(() => {
+    const inCountry = country
+      ? SCENARIO_REGISTRY.filter((s) => s.country === country)
+      : SCENARIO_REGISTRY;
+    const matches = normalizedQuery
+      ? inCountry.filter((s) => [
+        s.label,
+        s.description,
+        String(s.year),
+        COUNTRY_NAMES[s.country],
+        s.difficulty,
+      ].some((value) => value.toLowerCase().includes(normalizedQuery)))
+      : inCountry;
+    return [...matches].sort((a, b) => b.year - a.year);
+  }, [country, normalizedQuery]);
+
+  const visibleScenarios = scenarios.filter((s) => {
+    if (difficultyFilter !== "all" && s.difficulty !== difficultyFilter) return false;
+    if (accessFilter === "playable" && !canPlay(s.scenarioId)) return false;
+    if (accessFilter === "locked" && canPlay(s.scenarioId)) return false;
+    return true;
+  });
+  const hasCatalogFilter = difficultyFilter !== "all" || accessFilter !== "all";
+  const playableScenarios = visibleScenarios.filter((s) => canPlay(s.scenarioId));
 
   const free = SCENARIO_REGISTRY.filter((s) => s.free);
 
@@ -290,18 +338,26 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
     openModal(user ? "activate" : "login", s.scenarioId);
   };
 
+  const playRandom = () => {
+    if (!playableScenarios.length) return;
+    const pick = playableScenarios[Math.floor(Math.random() * playableScenarios.length)];
+    play(pick);
+  };
+
   return (
     <div className="landing">
       {/* Sticky topbar: game brand left, auth right */}
       <div className="landing-topbar">
         <div className="landing-topbar-inner">
           <span className="landing-brand">
-            <span className="mark"><Vote size={18} /></span>{BRAND.name}
+            <span className="mark"><img src="brand/margin-of-victory-icon.png" alt="" width={24} height={24} /></span>{BRAND.name}
           </span>
           <span className="row" style={{ gap: 6 }}>
-            <button className="ghost small" onClick={() => { window.location.href = "https://lakesidegames.net/store/"; }}>
-              <ShoppingBag size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Store
-            </button>
+            {DISTRIBUTION.externalStore && (
+              <a className="ghost small" href={BRAND.storeUrl}>
+                <ShoppingBag size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Store
+              </a>
+            )}
             <button className="ghost small" onClick={() => onGo({ kind: "leaderboard" })}>
               <Trophy size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Leaderboard
             </button>
@@ -317,7 +373,7 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
           <h1>{BRAND.name}</h1>
           <p className="sub">
             Run a real campaign turn by turn: allocate a budget, pick rally states, run ads, survive debates,
-            and watch the polling average move in response. {SCENARIO_REGISTRY.length} historical elections
+            and watch the polling average move in response. {SCENARIO_REGISTRY.length} election scenarios
             across {new Set(SCENARIO_REGISTRY.map((s) => s.country)).size} countries.
             {PAYWALL_ENABLED
               ? " Two scenarios and the daily challenge are free forever."
@@ -342,22 +398,97 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
           </div>
         </div>
 
-        {/* Full catalog: pick a country, then a date */}
+        {/* Full catalog: search globally or pick a country, then an election. */}
         <div className="field" style={{ textAlign: "left", margin: "36px 0 0" }}>
           <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
             <label>
-              {country
-                ? `${COUNTRY_NAMES[country]}: pick an election`
-                : "Browse by country"}
+              {normalizedQuery
+                ? `${visibleScenarios.length} matching election${visibleScenarios.length === 1 ? "" : "s"}${country ? ` in ${COUNTRY_NAMES[country]}` : ""}`
+                : hasCatalogFilter
+                  ? `${visibleScenarios.length} campaign${visibleScenarios.length === 1 ? "" : "s"}${country ? ` in ${COUNTRY_NAMES[country]}` : ""}`
+                : country
+                  ? `${COUNTRY_NAMES[country]}: pick an election`
+                  : "Browse all campaigns"}
             </label>
-            {country && (
-              <button className="ghost small" onClick={() => setCountry(null)}>
-                <ChevronLeft size={13} style={{ verticalAlign: "-2px" }} /> All countries
+            <span className="row" style={{ gap: 4 }}>
+              {normalizedQuery && (
+                <button className="ghost small" onClick={() => setQuery("")}>Clear search</button>
+              )}
+              {hasCatalogFilter && (
+                <button className="ghost small" onClick={() => { setDifficultyFilter("all"); setAccessFilter("all"); }}>
+                  Reset filters
+                </button>
+              )}
+              {country && (
+                <button className="ghost small" onClick={() => setCountry(null)}>
+                  <ChevronLeft size={13} style={{ verticalAlign: "-2px" }} /> All countries
+                </button>
+              )}
+            </span>
+          </div>
+          <div className="catalog-search">
+            <Search size={15} aria-hidden="true" />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              aria-label="Search election scenarios"
+              placeholder={country ? `Search ${COUNTRY_NAMES[country]} elections` : "Search by year, country, candidate, or issue"}
+            />
+          </div>
+          <div className="catalog-filters" aria-label="Filter election scenarios">
+            <span className="catalog-filter-group">
+              <span className="catalog-filter-label">Difficulty</span>
+              {(["all", "easy", "medium", "hard"] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={difficultyFilter === value ? "sel" : ""}
+                  aria-pressed={difficultyFilter === value}
+                  onClick={() => setDifficultyFilter(value)}
+                >
+                  {value === "all" ? "Any" : value[0].toUpperCase() + value.slice(1)}
+                </button>
+              ))}
+            </span>
+            {PAYWALL_ENABLED && (
+              <span className="catalog-filter-group">
+                <span className="catalog-filter-label">Access</span>
+                {(["all", "playable", "locked"] as const).map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={accessFilter === value ? "sel" : ""}
+                    aria-pressed={accessFilter === value}
+                    onClick={() => setAccessFilter(value)}
+                  >
+                    {value === "all" ? "All" : value[0].toUpperCase() + value.slice(1)}
+                  </button>
+                ))}
+              </span>
+            )}
+            <span className="catalog-filter-group" aria-label="Catalog view">
+              <span className="catalog-filter-label">View</span>
+              {(["compact", "visual"] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={catalogView === value ? "sel" : ""}
+                  aria-pressed={catalogView === value}
+                  onClick={() => setCatalogView(value)}
+                >
+                  {value[0].toUpperCase() + value.slice(1)}
+                </button>
+              ))}
+            </span>
+            {(country || normalizedQuery || hasCatalogFilter) && playableScenarios.length > 0 && (
+              <button type="button" className="catalog-random" onClick={playRandom}>
+                <Play size={12} aria-hidden="true" /> Pick a playable campaign
               </button>
             )}
           </div>
 
-          {!country ? (
+          {!country && !normalizedQuery && !hasCatalogFilter ? (
             <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
               {countries.map((c) => (
                 <button
@@ -380,17 +511,22 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
                 </button>
               ))}
             </div>
-          ) : (
+          ) : visibleScenarios.length ? (
             <div className="scenario-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
-              {scenarios.map((s) => (
+              {visibleScenarios.map((s) => (
                 <ScenarioCard
                   key={s.scenarioId}
                   s={s}
                   unlocked={canPlay(s.scenarioId)}
                   onPlay={() => play(s)}
                   onLocked={() => locked(s)}
+                  showCover={catalogView === "visual"}
                 />
               ))}
+            </div>
+          ) : (
+            <div className="catalog-empty" role="status">
+              No elections match these filters{normalizedQuery ? ` for "${query.trim()}"` : ""}{country ? ` in ${COUNTRY_NAMES[country]}` : ""}.
             </div>
           )}
         </div>
@@ -415,11 +551,17 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
               <ul className="pricing-list">
                 <li><Check size={13} /> {SCENARIO_REGISTRY.length - free.length} additional elections across {PACKS.length} packs</li>
                 <li><Check size={13} /> One time purchase, yours to keep, no subscription</li>
-                <li><Check size={13} /> Bought and delivered through the Lakeside store</li>
+                <li><Check size={13} /> {DISTRIBUTION.externalStore ? "Bought and delivered through the Lakeside store" : `Purchased and restored through ${DISTRIBUTION.nativeStoreName}`}</li>
               </ul>
-              <button className="ghost small" style={{ marginTop: 8 }} onClick={() => { window.location.href = "https://lakesidegames.net/store/"; }}>
-                <ShoppingBag size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Browse packs on lakesidegames.net
-              </button>
+              {DISTRIBUTION.externalStore ? (
+                <a className="ghost small" style={{ marginTop: 8 }} href={BRAND.storeUrl}>
+                  <ShoppingBag size={13} style={{ verticalAlign: "-2px", marginRight: 4 }} />Browse packs on lakesidegames.net
+                </a>
+              ) : (
+                <p className="muted small" style={{ marginTop: 8 }}>
+                  Purchases and restoration will be handled by {DISTRIBUTION.nativeStoreName}.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -442,10 +584,12 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
                     <span className="pack-price">${((packPrices[p.id] ?? p.price) / 100).toFixed(2)}</span>
                     {owned ? (
                       <span className="muted small">Owned</span>
-                    ) : PAYWALL_ENABLED ? (
+                    ) : PAYWALL_ENABLED && DISTRIBUTION.externalStore ? (
                       <button className="primary small" disabled={buyBusy === p.id} onClick={() => buy(p.id)}>
                         {buyBusy === p.id ? "Opening…" : "Buy"}
                       </button>
+                    ) : PAYWALL_ENABLED ? (
+                      <span className="pack-beta-note">Available through {DISTRIBUTION.nativeStoreName}</span>
                     ) : (
                       <span className="pack-beta-note">Free during open beta</span>
                     )}
@@ -463,14 +607,14 @@ export function LandingPage({ onGo }: { onGo: (dest: LandingDestination) => void
         <div className="landing-foot">
           <button className="ghost small" onClick={() => onGo({ kind: "legal", tab: "privacy" })}>Privacy</button>
           <button className="ghost small" onClick={() => onGo({ kind: "legal", tab: "terms" })}>Terms</button>
-          <a className="ghost small" href={`mailto:support@${BRAND.domain}`}>Contact</a>
-          <a className="ghost small" href="https://lakesidegames.net/store/" target="_blank" rel="noopener">Store</a>
+          <a className="ghost small" href={`mailto:${BRAND.supportEmail}`}>Contact</a>
+          {DISTRIBUTION.externalStore && <a className="ghost small" href={BRAND.storeUrl}>Store</a>}
           <span className="muted small" title="Coming soon">Discord (coming soon)</span>
           <a className="lakeside-credit" href="https://lakesidegames.net" target="_blank" rel="noopener">
             <img src="lakeside-mark.svg" alt="Lakeside Games logo" width={20} height={20} />
             by Lakeside Games
           </a>
-          <span>Cover photos: Wikimedia Commons / public domain</span>
+          <span>Country photos: Wikimedia Commons / public domain</span>
         </div>
       </div>
     </div>

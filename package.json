@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "CAMPAIGN — a turn-based 2020 U.S. general election campaign simulator",
+  "description": "Margin of Victory, a turn-based historical election campaign simulator",
   "scripts": {
     "dev": "vite",
     "server": "tsx server/index.ts",
@@ -16,7 +16,14 @@
     "typecheck": "tsc --noEmit",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "tauri:android:init": "tauri android init",
+    "tauri:android:dev": "tauri android dev",
+    "tauri:android:build": "tauri android build",
+    "tauri:ios:init": "tauri ios init",
+    "tauri:ios:dev": "tauri ios dev",
+    "tauri:ios:build": "tauri ios build",
+    "tauri:steam:build": "tauri build --config src-tauri/tauri.steam.conf.json"
   },
   "dependencies": {
     "@sentry/browser": "^10.64.0",

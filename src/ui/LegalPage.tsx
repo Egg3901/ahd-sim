@@ -54,7 +54,7 @@ function Privacy() {
       <p>The game is not directed at children under 13, and we do not knowingly collect their data.</p>
 
       <h4>Contact</h4>
-      <p className="muted">Questions or data requests: <strong>support@{BRAND.domain || "electioneer.example"}</strong></p>
+      <p className="muted">Questions or data requests: <strong>{BRAND.supportEmail}</strong></p>
     </>
   );
 }

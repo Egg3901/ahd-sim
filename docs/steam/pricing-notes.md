@@ -11,29 +11,20 @@ with Steam and does not carry over to a Steam release automatically.
 
 ## What a Steam release actually needs
 
-A Steam build cannot use the existing Lakeside checkout for the Steam
-version of the game. Steam requires its own payment path if the game is
-sold through Steam:
+A Steam build cannot use the existing Lakeside checkout. The base game is
+free, and scenario packs are sold as Steam DLC:
 
-- **Steamworks entitlements**: the game needs to check Steam ownership
+- **Steamworks DLC entitlements**: the game needs to check pack ownership
   (via the Steamworks SDK, `ISteamUser`/`ISteamApps` or the `steamworks.js`/
   equivalent wrapper for a webview based app like this one) rather than any
-  existing account or license system, so a Steam customer's purchase is
-  recognized correctly.
-- **In-app purchases, if any exist or are planned**: those would need to go
-  through Steam's Microtransaction API rather than the Lakeside checkout,
-  or the Steam build would need to disable/replace whatever purchase flow
-  exists in the web version.
+  existing account or license system, so each purchased pack is recognized.
 - **Steamworks integration in the Tauri shell**: since this is a Tauri
   desktop wrapper around a web app (see `docs/desktop.md`), the Steamworks
   SDK calls need to happen from the Rust side (or a Tauri plugin) and be
   exposed to the web frontend through Tauri's IPC, since the SDK itself is
   native, not something the webview can call directly.
-- **Steam pricing setup**: base price, regional pricing, and any discount
-  or bundle plans are configured in the Steamworks partner backend
-  separately from anything in this repo, once a price is decided.
+- **Steam pricing setup**: the base app is free. DLC prices, regional pricing,
+  the complete collection bundle, and discounts are configured in Steamworks.
 
-None of this exists in the codebase yet. This note exists so the pricing
-question is not silently skipped: before a Steam listing goes live, someone
-needs to decide the price and build the Steamworks entitlement check, and
-neither of those is done.
+None of the Steamworks DLC adapter exists yet. Do not sell Steam packs until
+ownership and restoration have been tested against real Steam test DLC.

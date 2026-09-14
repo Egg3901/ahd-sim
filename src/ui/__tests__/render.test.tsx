@@ -9,6 +9,7 @@ import { createRoot } from "react-dom/client";
 import { App } from "../../App";
 import { useGameStore } from "@store/gameStore";
 import { PAYWALL_ENABLED } from "@content/scenarioRegistry";
+import { BRAND } from "../../brand";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -44,6 +45,14 @@ function clickButton(container: HTMLElement, text: string) {
   act(() => { btn.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
 }
 
+function typeInto(input: HTMLInputElement, value: string) {
+  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+  act(() => {
+    setter?.call(input, value);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+}
+
 describe("App renders without crashing", () => {
   beforeEach(reset);
 
@@ -53,11 +62,53 @@ describe("App renders without crashing", () => {
     expect(m.html()).toContain(PAYWALL_ENABLED ? "Play free" : "Start here");
     expect(m.html()).toContain("Harris v. Trump");
     expect(m.html()).toContain("Scenario packs");
+    const storeLinks = [...m.container.querySelectorAll<HTMLAnchorElement>('a[href]')]
+      .filter((link) => link.textContent?.includes("Store") || link.textContent?.includes("Browse packs"));
+    expect(storeLinks.length).toBeGreaterThan(0);
+    expect(storeLinks.every((link) => link.href === BRAND.storeUrl)).toBe(true);
     // Entering a free U.S. scenario shows the setup wizard on that year.
     clickButton(m.container, "Biden v. Trump");
     const html = m.html();
     expect(html).toContain("The Election"); // step 1 of the setup wizard
     expect(html).toContain("The War Room"); // staff-hire step present
+    m.cleanup();
+  });
+
+  it("searches the full scenario catalog without choosing a country first", () => {
+    const m = mount();
+    const input = m.container.querySelector<HTMLInputElement>('input[aria-label="Search election scenarios"]');
+    expect(input).not.toBeNull();
+    typeInto(input!, "Thatcher");
+    expect(m.html()).toContain("3 matching elections");
+    expect(m.html()).toContain("Thatcher's third");
+    expect(m.container.querySelectorAll("[data-scenario-art]")).toHaveLength(0);
+    const visualView = [...m.container.querySelectorAll<HTMLButtonElement>('.catalog-filter-group button')]
+      .find((button) => button.textContent === "Visual");
+    act(() => { visualView!.click(); });
+    const campaignArt = [...m.container.querySelectorAll<HTMLElement>("[data-scenario-art]")];
+    expect(campaignArt).toHaveLength(3);
+    expect(new Set(campaignArt.map((art) => art.dataset.scenarioArt)).size).toBe(3);
+
+    typeInto(input!, "no such campaign");
+    expect(m.html()).toContain('for "no such campaign"');
+    m.cleanup();
+  });
+
+  it("filters the full catalog by difficulty and access", () => {
+    const m = mount();
+    const filterButtons = [...m.container.querySelectorAll<HTMLButtonElement>('.catalog-filter-group button')];
+    const hardFilter = filterButtons.find((button) => button.textContent === "Hard");
+    expect(hardFilter).not.toBeUndefined();
+    act(() => { hardFilter!.click(); });
+    expect(m.html()).toContain("campaigns");
+    expect(hardFilter!.getAttribute("aria-pressed")).toBe("true");
+
+    if (PAYWALL_ENABLED) {
+      const playable = filterButtons.find((button) => button.textContent === "Playable");
+      act(() => { playable!.click(); });
+      expect(playable!.getAttribute("aria-pressed")).toBe("true");
+      expect(m.html()).toContain("Pick a playable campaign");
+    }
     m.cleanup();
   });
 

@@ -18,17 +18,17 @@ export interface ShareCardOpts {
 
 /**
  * Compact multi-line share string, e.g.:
- *   Electioneer Daily · 2026-07-08
+ *   Margin of Victory Daily · 2026-07-08
  *   🇩🇪 2021 · Scholz v. Laschet — as SPD
  *   🏆 371 seats · Score 8,420
- *   electioneer.game
+ *   lakesidegames.net/games/electioneer
  */
 export function buildShareText(o: ShareCardOpts): string {
   return [
     `${BRAND.name} Daily · ${o.date}`,
     `${o.flag} ${o.label} — as ${o.role}`,
     `${o.won ? "🏆" : "🗳️"} ${o.unitLine} · Score ${o.score.toLocaleString("en-US")}`,
-    BRAND.domain,
+    BRAND.shareUrl,
   ].join("\n");
 }
 
